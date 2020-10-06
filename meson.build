@@ -1,0 +1,8 @@
+project('wavey', 'cpp')
+gtkmm = dependency('gtkmm-3.0')
+gl = dependency('gl')
+glm = dependency('glm')
+portaudio = dependency('portaudio-2.0')
+sndfile = dependency('sndfile')
+src = files('audio_buffer.cpp', 'audio_system.cpp', 'gl_waveform.cpp', 'main.cpp', 'quad_renderer.cpp', 'state.cpp', 'wave_shader.cpp', 'zoom_window.cpp')
+executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile])

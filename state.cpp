@@ -26,3 +26,11 @@ void State::UpdateGpuBuffers() {
         }
     }
 }
+
+void State::DeleteGpuBuffers() {
+    for (Track& t : tracks) {
+        if (!t.gpu_buffer) {
+            t.gpu_buffer.reset();
+        }
+    }
+}

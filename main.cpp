@@ -51,6 +51,7 @@ class MainWindow : public Gtk::Window {
     }
 
     void Unrealize() {
+        state->DeleteGpuBuffers();
         wave_shader.Terminate();
         quad_renderer.Terminate();
     }

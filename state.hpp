@@ -20,6 +20,7 @@ class State {
     void LoadFile(std::string file_name);
     void TogglePlayback();
     void UpdateGpuBuffers();
+    void DeleteGpuBuffers();
     std::vector<Track> tracks;
     ZoomWindow zoom_window;
     float selection_start = 0.f;

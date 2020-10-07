@@ -27,6 +27,7 @@ class State {
     float selection_start = 0.f;
     float selection_end = -1.f;
     int selected_track = 0;
+    int last_played_track = 0;
 
    private:
     AudioSystem* audio;

@@ -92,15 +92,24 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
             t.gpu_buffer->Draw(c);
         }
     }
+
+    // Selection.
     if (state->selection_end >= 0.f) {
         glm::vec4 color_selection(.5f, .9f, .5f, .1f);
         prim_renderer.DrawQuad(mvp, glm::vec2(state->selection_start, z.Bottom()),
                                glm::vec2(state->selection_end, z.Top()), color_selection);
     }
 
+    // Marker (start of selection).
+    glm::vec4 color_marker(.5f, .9f, .5f, .5f);
+    prim_renderer.DrawLine(mvp, glm::vec2(state->selection_start, z.Bottom()),
+                           glm::vec2(state->selection_start, z.Top()), color_marker);
+
+    // Play position indicator.
     if (playing) {
-        glm::vec4 color_play_indicator(.5f, .9f, .5f, 1.f);
-        prim_renderer.DrawLine(mvp, glm::vec2(play_time, z.Bottom()), glm::vec2(play_time, z.Top()),
+        glm::vec4 color_play_indicator(.9f, .5f, .5f, 1.f);
+        prim_renderer.DrawLine(mvp, glm::vec2(play_time, state->last_played_track + 1),
+                               glm::vec2(play_time, state->last_played_track),
                                color_play_indicator);
         glarea.queue_render();
     }

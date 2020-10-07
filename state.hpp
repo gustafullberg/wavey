@@ -19,6 +19,7 @@ class State {
     State(AudioSystem* audio) : audio(audio){};
     void LoadFile(std::string file_name);
     void TogglePlayback();
+    void UpdateGpuBuffers();
     std::vector<Track> tracks;
     ZoomWindow zoom_window;
     float selection_start = 0.f;

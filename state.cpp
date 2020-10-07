@@ -18,3 +18,11 @@ void State::TogglePlayback() {
         audio->TogglePlayback(*tracks[selected_track].audio_buffer, selection_start, selection_end);
     }
 }
+
+void State::UpdateGpuBuffers() {
+    for (Track& t : tracks) {
+        if (!t.gpu_buffer) {
+            t.gpu_buffer = std::make_unique<GLWaveform>(*t.audio_buffer);
+        }
+    }
+}

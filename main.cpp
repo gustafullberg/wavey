@@ -56,29 +56,27 @@ class MainWindow : public Gtk::Window {
     }
 
     bool Render(const Glib::RefPtr<Gdk::GLContext> context) {
+        state->UpdateGpuBuffers();
+
         glClearColor(0.2f, 0.2f, 0.2f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         const ZoomWindow& z = state->zoom_window;
-        for (int buffer_number = 0; buffer_number < state->tracks.size(); buffer_number++) {
-            if (buffer_number == state->selected_track) {
-                quad_renderer.Draw(0.f, z.GetY(buffer_number), 1.f,
-                                   z.GetY(buffer_number + 1) - z.GetY(buffer_number));
+        for (int i = 0; i < state->tracks.size(); i++) {
+            Track& t = state->tracks[i];
+            if (i == state->selected_track) {
+                quad_renderer.Draw(0.f, z.GetY(i), 1.f, z.GetY(i + 1) - z.GetY(i));
                 quad_renderer.Draw(0.f, 1.f, 0.5f, 0.2f);
             }
 
-            const AudioBuffer& ab = *state->tracks[buffer_number].audio_buffer;
-
-            if (!state->tracks[buffer_number].gpu_buffer) {
-                state->tracks[buffer_number].gpu_buffer = std::make_unique<GLWaveform>(ab);
-            }
+            const AudioBuffer& ab = *t.audio_buffer;
 
             for (size_t c = 0; c < ab.NumChannels(); c++) {
-                wave_shader.Draw(z.Left(), z.Right(), z.Top(), z.Bottom(), buffer_number, c,
-                                 ab.NumChannels(), ab.Samplerate());
-                state->tracks[buffer_number].gpu_buffer->Draw(c);
+                wave_shader.Draw(z.Left(), z.Right(), z.Top(), z.Bottom(), i, c, ab.NumChannels(),
+                                 ab.Samplerate());
+                t.gpu_buffer->Draw(c);
             }
         }
         if (state->selection_end >= 0.f) {

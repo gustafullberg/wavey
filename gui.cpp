@@ -28,7 +28,6 @@ Gui::Gui(State* state) : state(state) {
     glarea.add_events(Gdk::BUTTON_RELEASE_MASK);
     glarea.add_events(Gdk::POINTER_MOTION_MASK);
     glarea.add_events(Gdk::SCROLL_MASK);
-    glarea.set_auto_render(false);
     box.pack_start(glarea);
 
     // btn.set_label("Test");
@@ -56,6 +55,9 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     state->UpdateGpuBuffers();
 
     glClear(GL_COLOR_BUFFER_BIT);
+
+    float play_time;
+    bool playing = state->Playing(&play_time);
 
     const ZoomWindow& z = state->zoom_window;
     glm::mat4 mvp = glm::ortho(z.Left(), z.Right(), z.Bottom(), z.Top(), -1.f, 1.f);
@@ -95,6 +97,14 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         prim_renderer.DrawQuad(mvp, glm::vec2(state->selection_start, z.Bottom()),
                                glm::vec2(state->selection_end, z.Top()), color_selection);
     }
+
+    if (playing) {
+        glm::vec4 color_play_indicator(.5f, .9f, .5f, 1.f);
+        prim_renderer.DrawLine(mvp, glm::vec2(play_time, z.Bottom()), glm::vec2(play_time, z.Top()),
+                               color_play_indicator);
+        glarea.queue_render();
+    }
+
     return true;
 }
 
@@ -110,6 +120,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 bool Gui::KeyRelease(GdkEventKey* key_event) {
     if (key_event->keyval == GDK_KEY_space) {
         state->TogglePlayback();
+        glarea.queue_render();
     }
     return true;
 }

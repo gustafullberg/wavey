@@ -34,3 +34,7 @@ void State::DeleteGpuBuffers() {
         }
     }
 }
+
+bool State::Playing(float* time) {
+    return audio->Playing(time);
+}

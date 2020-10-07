@@ -11,6 +11,7 @@ class AudioSystem {
     ~AudioSystem();
     void TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, float end);
     void Play(std::shared_ptr<AudioBuffer> ab, float start, float end);
+    bool Playing(float* time);
 
     std::shared_ptr<AudioBuffer> playingBuffer;
     int index;

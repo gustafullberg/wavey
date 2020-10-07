@@ -21,6 +21,7 @@ class State {
     void TogglePlayback();
     void UpdateGpuBuffers();
     void DeleteGpuBuffers();
+    bool Playing(float* time);
     std::vector<Track> tracks;
     ZoomWindow zoom_window;
     float selection_start = 0.f;

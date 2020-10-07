@@ -41,9 +41,18 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, float end) 
     }
     index = std::floor(start * ab->Samplerate());
     index = std::max(index, 0);
+    index = std::min(index, ab->NumFrames());
     end_index = end > 0.f ? std::floor(end * ab->Samplerate()) : ab->NumFrames();
-    end_index = std::min(end_index, static_cast<int>(ab->NumFrames()));
+    end_index = std::min(end_index, ab->NumFrames());
     Pa_StartStream(stream);
+}
+
+bool AudioSystem::Playing(float* time) {
+    if (stream && Pa_IsStreamActive(stream)) {
+        *time = static_cast<float>(index) / playingBuffer->Samplerate();
+        return true;
+    }
+    return false;
 }
 
 int AudioSystem::Callback(const void* input_buffer,

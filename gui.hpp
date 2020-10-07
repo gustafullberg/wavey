@@ -3,6 +3,7 @@
 
 #include <gtkmm.h>
 #include "quad_renderer.hpp"
+#include "line_renderer.hpp"
 #include "state.hpp"
 #include "wave_shader.hpp"
 
@@ -26,6 +27,7 @@ class Gui : public Gtk::Window {
     // Gtk::Button btn;
     WaveShader wave_shader;
     QuadRenderer quad_renderer;
+    LineRenderer line_renderer;
     int win_width = 0;
     int win_height = 0;
     bool mouse_down = false;

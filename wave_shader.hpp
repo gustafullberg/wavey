@@ -3,19 +3,13 @@
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
+#include <glm/glm.hpp>
 
 class WaveShader {
    public:
     void Init();
     void Terminate();
-    void Draw(float left,
-              float right,
-              float top,
-              float bottom,
-              float track,
-              float channel,
-              float num_channels,
-              float samplerate);
+    void Draw(const glm::mat4& mvp, float samplerate);
 
    private:
     GLuint program = 0;

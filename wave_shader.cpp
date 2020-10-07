@@ -1,6 +1,4 @@
 #include "wave_shader.hpp"
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
@@ -54,20 +52,8 @@ void WaveShader::Terminate() {
     glDeleteProgram(program);
 }
 
-void WaveShader::Draw(float left,
-                      float right,
-                      float top,
-                      float bottom,
-                      float track,
-                      float channel,
-                      float num_channels,
-                      float samplerate) {
+void WaveShader::Draw(const glm::mat4& mvp, float samplerate) {
     glUseProgram(program);
-    const float trackOffset = track;
-    const float channelOffset = (2.f * channel + 1.f) / (2.f * num_channels);
-    glm::mat4 mvp = glm::ortho(left, right, bottom, top, -1.f, 1.f);
-    mvp = glm::translate(mvp, glm::vec3(0.f, trackOffset + channelOffset, 0.f));
-    mvp = glm::scale(mvp, glm::vec3(1.f, -0.45f / num_channels, 1.f));
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
     float sample_time = 1.f / samplerate;
     glUniform1f(1, sample_time);

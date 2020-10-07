@@ -176,7 +176,8 @@ int main(int argc, char** argv) {
         state.LoadFile(argv[i]);
     }
     argc = 1;
-    auto app = Gtk::Application::create(argc, argv, "test.wavelet");
+    auto app = Gtk::Application::create(argc, argv, "com.github.gustafullberg.wavy",
+                                        Gio::APPLICATION_NON_UNIQUE);
     MainWindow win(&state);
     app->run(win);
     return 0;

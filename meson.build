@@ -1,4 +1,4 @@
-project('wavey', 'cpp')
+project('wavey', 'cpp', default_options : ['cpp_std=c++17'])
 gtkmm = dependency('gtkmm-3.0')
 gl = dependency('gl')
 glm = dependency('glm')

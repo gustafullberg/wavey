@@ -13,7 +13,7 @@ AudioSystem::~AudioSystem() {
     Pa_Terminate();
 }
 
-void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, float end) {
+void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end) {
     if (stream && Pa_IsStreamActive(stream)) {
         Pa_AbortStream(stream);
     } else {
@@ -21,7 +21,7 @@ void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, f
     }
 }
 
-void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, float end) {
+void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end) {
     if (stream && (num_channels != ab->NumChannels() || samplerate != ab->Samplerate())) {
         Pa_CloseStream(stream);
         stream = nullptr;
@@ -36,13 +36,13 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, float end) 
                              paFramesPerBufferUnspecified, Callback, this);
     }
     playingBuffer = ab;
-    if (end >= 0 && start > end) {
-        std::swap(start, end);
+    if (end && start > *end) {
+        std::swap(start, *end);
     }
     index = std::floor(start * ab->Samplerate());
     index = std::max(index, 0);
     index = std::min(index, ab->NumFrames());
-    end_index = end > 0.f ? std::floor(end * ab->Samplerate()) : ab->NumFrames();
+    end_index = end ? std::floor(*end * ab->Samplerate()) : ab->NumFrames();
     end_index = std::min(end_index, ab->NumFrames());
     Pa_StartStream(stream);
 }

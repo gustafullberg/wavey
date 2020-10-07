@@ -92,16 +92,16 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     }
 
     // Selection.
-    if (state->selection_end >= 0.f) {
+    if (state->Selection()) {
         glm::vec4 color_selection(.5f, .9f, .5f, .1f);
-        prim_renderer.DrawQuad(mvp, glm::vec2(state->selection_start, z.Bottom()),
-                               glm::vec2(state->selection_end, z.Top()), color_selection);
+        prim_renderer.DrawQuad(mvp, glm::vec2(state->Cursor(), z.Bottom()),
+                               glm::vec2(*state->Selection(), z.Top()), color_selection);
     }
 
     // Cursor.
     glm::vec4 color_cursor(.5f, .9f, .5f, .5f);
-    prim_renderer.DrawLine(mvp, glm::vec2(state->selection_start, z.Bottom()),
-                           glm::vec2(state->selection_start, z.Top()), color_cursor);
+    prim_renderer.DrawLine(mvp, glm::vec2(state->Cursor(), z.Bottom()),
+                           glm::vec2(state->Cursor(), z.Top()), color_cursor);
 
     // Play position indicator.
     if (playing) {
@@ -129,14 +129,13 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     }
 
     // Zoom to selection.
-    if (key_event->keyval == GDK_KEY_e && ctrl && state->selection_end > 0.f) {
-        state->zoom_window.ZoomRange(state->selection_start, state->selection_end);
+    if (key_event->keyval == GDK_KEY_e && ctrl && state->Selection()) {
+        state->zoom_window.ZoomRange(state->Cursor(), *state->Selection());
     }
 
     // Cursor to the beginning.
     if (key_event->keyval == GDK_KEY_Home) {
-        state->selection_start = 0.f;
-        state->selection_end = -1.f;
+        state->SetCursor(0.f);
     }
 
     // Pan width arrow keys.
@@ -160,13 +159,12 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
     if (button_event->button == 1) {
         if (button_event->type == GDK_BUTTON_PRESS) {
             const float time = state->zoom_window.GetTime(button_event->x / win_width);
-            state->selection_start = time;
-            state->selection_end = -1.f;
+            state->SetCursor(time);
             mouse_down = true;
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->tracks.size()) {
-                state->selection_start = 0.f;
-                state->selection_end = state->tracks[state->selected_track].audio_buffer->Length();
+                state->SetCursor(0.f);
+                state->SetSelection(state->tracks[state->selected_track].audio_buffer->Length());
             }
         }
         glarea.queue_render();
@@ -177,13 +175,7 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
 bool Gui::ButtonRelease(GdkEventButton* button_event) {
     if (button_event->button == 1) {
         if (button_event->type == GDK_BUTTON_RELEASE) {
-            const float time = state->zoom_window.GetTime(button_event->x / win_width);
-            if (time > state->selection_start) {
-                state->selection_end = time;
-            } else if (time < state->selection_start) {
-                state->selection_end = state->selection_start;
-                state->selection_start = time;
-            }
+            state->FixSelection();
             glarea.queue_render();
         }
         mouse_down = false;
@@ -194,7 +186,7 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
 bool Gui::PointerMove(GdkEventMotion* motion_event) {
     if (mouse_down) {
         const float time = state->zoom_window.GetTime(motion_event->x / win_width);
-        state->selection_end = time;
+        state->SetSelection(time);
         glarea.queue_render();
     }
 

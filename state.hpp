@@ -22,16 +22,30 @@ class State {
     void UpdateGpuBuffers();
     void DeleteGpuBuffers();
     bool Playing(float* time);
+    float Cursor() { return cursor; }
+    void SetCursor(float time) {
+        cursor = time;
+        selection.reset();
+    }
+    void FixSelection() {
+        if (Selection()) {
+            if (*selection < cursor) {
+                std::swap(cursor, *selection);
+            }
+        }
+    }
+    std::optional<float> Selection() { return selection; }
+    void SetSelection(float time) { selection = time; }
     std::vector<Track> tracks;
     ZoomWindow zoom_window;
-    float selection_start = 0.f;
-    float selection_end = -1.f;
     int selected_track = 0;
     int last_played_track = 0;
 
    private:
     AudioSystem* audio;
     int next_id = 0;
+    float cursor = 0.f;
+    std::optional<float> selection;
 };
 
 #endif

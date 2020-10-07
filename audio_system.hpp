@@ -3,14 +3,15 @@
 
 #include <portaudio.h>
 #include <memory>
+#include <optional>
 #include "audio_buffer.hpp"
 
 class AudioSystem {
    public:
     AudioSystem();
     ~AudioSystem();
-    void TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, float end);
-    void Play(std::shared_ptr<AudioBuffer> ab, float start, float end);
+    void TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end);
+    void Play(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end);
     bool Playing(float* time);
 
     std::shared_ptr<AudioBuffer> playingBuffer;

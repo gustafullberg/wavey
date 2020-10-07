@@ -2,16 +2,17 @@
 #define AUDIO_SYSTEM_HPP
 
 #include <portaudio.h>
+#include <memory>
 #include "audio_buffer.hpp"
 
 class AudioSystem {
    public:
     AudioSystem();
     ~AudioSystem();
-    void TogglePlayback(const AudioBuffer* ab, float start, float end);
-    void Play(const AudioBuffer* ab, float start, float end);
+    void TogglePlayback(const AudioBuffer& ab, float start, float end);
+    void Play(const AudioBuffer& ab, float start, float end);
 
-    const AudioBuffer* playingBuffer;
+    std::unique_ptr<AudioBuffer> playingBuffer;
     int index;
     int end_index;
 

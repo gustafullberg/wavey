@@ -12,7 +12,7 @@
 class MainWindow : public Gtk::Window {
    public:
     MainWindow(State* state) : state(state) {
-        set_title("Wavelet");
+        set_title("Wavey");
 
         signal_key_press_event().connect(sigc::mem_fun(*this, &MainWindow::KeyPress));
         signal_key_release_event().connect(sigc::mem_fun(*this, &MainWindow::KeyRelease));
@@ -23,10 +23,10 @@ class MainWindow : public Gtk::Window {
         add(box);
 
         glarea.set_required_version(3, 3);
-        glarea.signal_realize().connect(sigc::mem_fun(*this, &MainWindow::realize));
-        glarea.signal_unrealize().connect(sigc::mem_fun(*this, &MainWindow::unrealize));
-        glarea.signal_render().connect(sigc::mem_fun(*this, &MainWindow::render));
-        glarea.signal_resize().connect(sigc::mem_fun(*this, &MainWindow::resize));
+        glarea.signal_realize().connect(sigc::mem_fun(*this, &MainWindow::Realize));
+        glarea.signal_unrealize().connect(sigc::mem_fun(*this, &MainWindow::Unrealize));
+        glarea.signal_render().connect(sigc::mem_fun(*this, &MainWindow::Render));
+        glarea.signal_resize().connect(sigc::mem_fun(*this, &MainWindow::Resize));
         glarea.signal_button_press_event().connect(sigc::mem_fun(*this, &MainWindow::ButtonPress));
         glarea.signal_button_release_event().connect(
             sigc::mem_fun(*this, &MainWindow::ButtonRelease));
@@ -44,45 +44,41 @@ class MainWindow : public Gtk::Window {
         show_all();
     }
 
-    void realize() {
+    void Realize() {
         glarea.make_current();
         wave_shader.Init();
         quad_renderer.Init();
     }
 
-    void unrealize() {
+    void Unrealize() {
         wave_shader.Terminate();
         quad_renderer.Terminate();
     }
 
-    bool render(const Glib::RefPtr<Gdk::GLContext> context) {
+    bool Render(const Glib::RefPtr<Gdk::GLContext> context) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         const ZoomWindow& z = state->zoom_window;
-        if (state->buffers.size()) {
-            int buffer_number = 0;
-            for (const auto buffer : state->buffers) {
-                if (buffer_number == state->selected_track) {
-                    quad_renderer.Draw(0.f, z.GetY(buffer_number), 1.f,
-                                       z.GetY(buffer_number + 1) - z.GetY(buffer_number));
-                    quad_renderer.Draw(0.f, 1.f, 0.5f, 0.2f);
-                }
-                int id = buffer.first;
-                const AudioBuffer* ab = buffer.second;
+        for (int buffer_number = 0; buffer_number < state->tracks.size(); buffer_number++) {
+            if (buffer_number == state->selected_track) {
+                quad_renderer.Draw(0.f, z.GetY(buffer_number), 1.f,
+                                   z.GetY(buffer_number + 1) - z.GetY(buffer_number));
+                quad_renderer.Draw(0.f, 1.f, 0.5f, 0.2f);
+            }
 
-                if (state->waveforms.find(id) == state->waveforms.end()) {
-                    state->waveforms[id] = new GLWaveform(*ab);
-                }
+            const AudioBuffer& ab = *state->tracks[buffer_number].audio_buffer;
 
-                for (size_t c = 0; c < ab->NumChannels(); c++) {
-                    wave_shader.Draw(z.Left(), z.Right(), z.Top(), z.Bottom(), buffer_number, c,
-                                     ab->NumChannels(), ab->Samplerate());
-                    state->waveforms[id]->Draw(c);
-                }
-                buffer_number++;
+            if (!state->tracks[buffer_number].gpu_buffer) {
+                state->tracks[buffer_number].gpu_buffer = std::make_unique<GLWaveform>(ab);
+            }
+
+            for (size_t c = 0; c < ab.NumChannels(); c++) {
+                wave_shader.Draw(z.Left(), z.Right(), z.Top(), z.Bottom(), buffer_number, c,
+                                 ab.NumChannels(), ab.Samplerate());
+                state->tracks[buffer_number].gpu_buffer->Draw(c);
             }
         }
         if (state->selection_end >= 0.f) {
@@ -92,7 +88,7 @@ class MainWindow : public Gtk::Window {
         return true;
     }
 
-    void resize(int width, int height) {
+    void Resize(int width, int height) {
         win_width = width;
         win_height = height;
     }
@@ -108,11 +104,8 @@ class MainWindow : public Gtk::Window {
 
     bool ButtonPress(GdkEventButton* button_event) {
         const float time = state->zoom_window.GetTime(button_event->x / win_width);
-        std::cout << "Button pressed at " << time << std::endl;
         state->selection_start = time;
         state->selection_end = -1.f;
-        std::cout << "Selection start " << state->selection_start << " end " << state->selection_end
-                  << std::endl;
 
         glarea.queue_render();
         mouse_down = true;
@@ -121,15 +114,12 @@ class MainWindow : public Gtk::Window {
 
     bool ButtonRelease(GdkEventButton* button_event) {
         const float time = state->zoom_window.GetTime(button_event->x / win_width);
-        std::cout << "Button released at " << time << std::endl;
         if (time > state->selection_start) {
             state->selection_end = time;
         } else if (time < state->selection_start) {
             state->selection_end = state->selection_start;
             state->selection_start = time;
         }
-        std::cout << "Selection start " << state->selection_start << " end " << state->selection_end
-                  << std::endl;
 
         glarea.queue_render();
         mouse_down = false;

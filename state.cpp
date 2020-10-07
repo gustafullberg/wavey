@@ -1,23 +1,20 @@
 #include "state.hpp"
 
 void State::LoadFile(std::string file_name) {
-    AudioBuffer* ab = new AudioBuffer();
+    std::unique_ptr<AudioBuffer> ab = std::make_unique<AudioBuffer>();
     ab->LoadFile(file_name);
     if (*ab) {
-        buffers[next_id++] = ab;
-        zoom_window.LoadFile(static_cast<float>(ab->NumFrames()) / ab->Samplerate());
+        float length = ab->Length();
+        Track track;
+        track.path = file_name;
+        track.audio_buffer = std::move(ab);
+        tracks.push_back(std::move(track));
+        zoom_window.LoadFile(length);
     }
 }
 
 void State::TogglePlayback() {
-    if (buffers.size()) {
-        auto it = buffers.begin();
-        for (int i = 0; i < selected_track; i++) {
-            ++it;
-            if (it == buffers.end())
-                return;
-        }
-        const AudioBuffer* ab = it->second;
-        audio->TogglePlayback(ab, selection_start, selection_end);
+    if (selected_track >= 0 && selected_track < tracks.size()) {
+        audio->TogglePlayback(*tracks[selected_track].audio_buffer, selection_start, selection_end);
     }
 }

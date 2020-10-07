@@ -1,11 +1,24 @@
 #ifndef ZOOM_WINDOW_HPP
 #define ZOOM_WINDOW_HPP
 
+#include <algorithm>
+
 class ZoomWindow {
    public:
     void LoadFile(float length);
     void ZoomIn(float x) { Zoom(x, 0.75f); }
     void ZoomOut(float x) { Zoom(x, 1.f / 0.75f); }
+    void ZoomOutFull() {
+        x_left = 0.f;
+        x_right = x_max;
+    }
+    void ZoomRange(float start, float end) {
+        if (start > end) {
+            std::swap(start, end);
+        }
+        x_left = std::max(start, 0.f);
+        x_right = std::min(end, x_max);
+    }
     void PanLeft();
     void PanRight();
     float Left() const { return x_left; }

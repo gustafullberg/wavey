@@ -123,6 +123,17 @@ void Gui::Resize(int width, int height) {
 }
 
 bool Gui::KeyPress(GdkEventKey* key_event) {
+    bool ctrl = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::CONTROL_MASK;
+
+    if (key_event->keyval == GDK_KEY_f && ctrl) {
+        state->zoom_window.ZoomOutFull();
+    }
+
+    if (key_event->keyval == GDK_KEY_e && ctrl && state->selection_end > 0.f) {
+        state->zoom_window.ZoomRange(state->selection_start, state->selection_end);
+    }
+
+    glarea.queue_render();
     return true;
 }
 

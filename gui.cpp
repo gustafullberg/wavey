@@ -164,8 +164,10 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             state->selection_end = -1.f;
             mouse_down = true;
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
-            state->selection_start = 0.f;
-            state->selection_end = state->tracks[state->selected_track].audio_buffer->Length();
+            if (state->tracks.size()) {
+                state->selection_start = 0.f;
+                state->selection_end = state->tracks[state->selected_track].audio_buffer->Length();
+            }
         }
         glarea.queue_render();
     }
@@ -174,7 +176,7 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
 
 bool Gui::ButtonRelease(GdkEventButton* button_event) {
     if (button_event->button == 1) {
-        if (button_event->type == GDK_BUTTON_PRESS) {
+        if (button_event->type == GDK_BUTTON_RELEASE) {
             const float time = state->zoom_window.GetTime(button_event->x / win_width);
             if (time > state->selection_start) {
                 state->selection_end = time;

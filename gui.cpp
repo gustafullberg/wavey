@@ -39,8 +39,7 @@ Gui::Gui(State* state) : state(state) {
 void Gui::Realize() {
     glarea.make_current();
     wave_shader.Init();
-    quad_renderer.Init();
-    line_renderer.Init();
+    prim_renderer.Init();
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
     glEnable(GL_BLEND);
@@ -50,8 +49,7 @@ void Gui::Realize() {
 void Gui::Unrealize() {
     state->DeleteGpuBuffers();
     wave_shader.Terminate();
-    quad_renderer.Terminate();
-    line_renderer.Terminate();
+    prim_renderer.Terminate();
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
@@ -60,11 +58,14 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     const ZoomWindow& z = state->zoom_window;
+    glm::mat4 mvp = glm::ortho(z.Left(), z.Right(), z.Bottom(), z.Top(), -1.f, 1.f);
+
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
         const Track& t = state->tracks[i];
         if (i == state->selected_track) {
-            quad_renderer.Draw(0.f, z.GetY(i), 1.f, z.GetY(i + 1) - z.GetY(i));
-            quad_renderer.Draw(0.f, 1.f, 0.5f, 0.2f);
+            glm::vec4 color_selection(.5f, .9f, .5f, .1f);
+            prim_renderer.DrawQuad(mvp, glm::vec2(z.Left(), i + 1), glm::vec2(z.Right(), i),
+                                   color_selection);
         }
 
         const int num_channels = t.audio_buffer->NumChannels();
@@ -74,21 +75,25 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         for (int c = 0; c < num_channels; c++) {
             const float trackOffset = i;
             const float channelOffset = (2.f * c + 1.f) / (2.f * num_channels);
-            glm::mat4 mvp = glm::ortho(z.Left(), z.Right(), z.Bottom(), z.Top(), -1.f, 1.f);
-            mvp = glm::translate(mvp, glm::vec3(0.f, trackOffset + channelOffset, 0.f));
-            mvp = glm::scale(mvp, glm::vec3(1.f, -0.45f / num_channels, 1.f));
+            glm::mat4 mvp_channel =
+                glm::translate(mvp, glm::vec3(0.f, trackOffset + channelOffset, 0.f));
+            mvp_channel = glm::scale(mvp_channel, glm::vec3(1.f, -0.45f / num_channels, 1.f));
 
             glm::vec4 color_line(.5f, .9f, .5f, .1f);
-            line_renderer.Draw(mvp, glm::vec2(0.f, -1.f), glm::vec2(length, -1.f), color_line);
-            line_renderer.Draw(mvp, glm::vec2(0.f, 1.f), glm::vec2(length, 1.f), color_line);
-            line_renderer.Draw(mvp, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f), color_line);
-            wave_shader.Draw(mvp, samplerate);
+            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, -1.f), glm::vec2(length, -1.f),
+                                   color_line);
+            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 1.f), glm::vec2(length, 1.f),
+                                   color_line);
+            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f),
+                                   color_line);
+            wave_shader.Draw(mvp_channel, samplerate);
             t.gpu_buffer->Draw(c);
         }
     }
     if (state->selection_end >= 0.f) {
-        quad_renderer.Draw(z.GetX(state->selection_start), 0.f,
-                           z.GetX(state->selection_end) - z.GetX(state->selection_start), 1.f);
+        glm::vec4 color_selection(.5f, .9f, .5f, .1f);
+        prim_renderer.DrawQuad(mvp, glm::vec2(state->selection_start, z.Bottom()),
+                               glm::vec2(state->selection_end, z.Top()), color_selection);
     }
     return true;
 }

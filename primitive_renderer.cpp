@@ -1,4 +1,4 @@
-#include "quad_renderer.hpp"
+#include "primitive_renderer.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
@@ -6,7 +6,7 @@
 
 namespace {
 
-constexpr float vertices[] = {0.f, 1.f, 0.f, 0.f, 1.f, 1.f, 1.f, 0.f};
+constexpr float vertices[] = {0.f, 0.f, 1.f, 1.f, 0.f, 1.f, 0.f, 0.f, 1.f, 0.f, 1.f, 1.f};
 
 const char* kVertexSrc =
     "#version 330\n"
@@ -20,10 +20,12 @@ const char* kVertexSrc =
 
 const char* kFragmentSrc =
     "#version 330\n"
-    "out vec4 color;\n"
+    "#extension GL_ARB_explicit_uniform_location : require\n"
+    "layout(location = 1) uniform vec4 color;\n"
+    "out vec4 o;\n"
     "\n"
     "void main() {\n"
-    "    color = vec4(.5, 0.9, 0.5, 0.1);\n"
+    "    o = color;\n"
     "}\n";
 
 GLuint CompileShader(GLenum shader_type, const char* src) {
@@ -44,7 +46,7 @@ GLuint CompileShader(GLenum shader_type, const char* src) {
 
 }  // namespace
 
-void QuadRenderer::Init() {
+void PrimitiveRenderer::Init() {
     // Shader.
     program = glCreateProgram();
     glAttachShader(program, CompileShader(GL_VERTEX_SHADER, kVertexSrc));
@@ -62,23 +64,40 @@ void QuadRenderer::Init() {
     glBindVertexArray(0);
 }
 
-void QuadRenderer::Terminate() {
+void PrimitiveRenderer::Terminate() {
     glDeleteProgram(program);
     glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
 }
 
-void QuadRenderer::Draw(float x, float y, float size_x, float size_y) {
-    glm::mat4 m = glm::ortho(0.f, 1.f, 1.f, 0.f, -1.f, 1.f);
-    m = glm::translate(m, glm::vec3(x, y, 0.0f));
-    m = glm::scale(m, glm::vec3(size_x, size_y, 1.0f));
+void PrimitiveRenderer::DrawLine(const glm::mat4& mvp,
+                                 const glm::vec2& from,
+                                 const glm::vec2& to,
+                                 const glm::vec4& color) {
+    Draw(mvp, from, to, color, GL_LINES, 2);
+}
 
+void PrimitiveRenderer::DrawQuad(const glm::mat4& mvp,
+                                 const glm::vec2& from,
+                                 const glm::vec2& to,
+                                 const glm::vec4& color) {
+    Draw(mvp, from, to, color, GL_TRIANGLES, 6);
+}
+
+void PrimitiveRenderer::Draw(const glm::mat4& mvp,
+                             const glm::vec2& from,
+                             const glm::vec2& to,
+                             const glm::vec4& color,
+                             GLenum mode,
+                             int count) {
+    const glm::mat4 m = glm::scale(glm::translate(mvp, glm::vec3(from, 0.f)),
+                                   glm::vec3(to.x - from.x, to.y - from.y, 1.f));
     glUseProgram(program);
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(m));
-    // glUniform4fv(shader.getColorLocation(), 1, glm::value_ptr(color));
+    glUniform4fv(1, 1, glm::value_ptr(color));
 
     glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, sizeof(vertices) / (2 * sizeof(float)));
+    glDrawArrays(mode, 0, count);
     glBindVertexArray(0);
 
     glUseProgram(0);

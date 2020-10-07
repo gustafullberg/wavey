@@ -10,7 +10,7 @@
 
 struct Track {
     std::string path;
-    std::unique_ptr<AudioBuffer> audio_buffer;
+    std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<GLWaveform> gpu_buffer;
 };
 

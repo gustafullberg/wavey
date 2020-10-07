@@ -1,7 +1,7 @@
 #include "state.hpp"
 
 void State::LoadFile(std::string file_name) {
-    std::unique_ptr<AudioBuffer> ab = std::make_unique<AudioBuffer>();
+    std::shared_ptr<AudioBuffer> ab = std::make_shared<AudioBuffer>();
     ab->LoadFile(file_name);
     if (*ab) {
         float length = ab->Length();
@@ -15,7 +15,7 @@ void State::LoadFile(std::string file_name) {
 
 void State::TogglePlayback() {
     if (selected_track >= 0 && selected_track < static_cast<int>(tracks.size())) {
-        audio->TogglePlayback(*tracks[selected_track].audio_buffer, selection_start, selection_end);
+        audio->TogglePlayback(tracks[selected_track].audio_buffer, selection_start, selection_end);
     }
 }
 

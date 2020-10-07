@@ -9,10 +9,10 @@ class AudioSystem {
    public:
     AudioSystem();
     ~AudioSystem();
-    void TogglePlayback(const AudioBuffer& ab, float start, float end);
-    void Play(const AudioBuffer& ab, float start, float end);
+    void TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, float end);
+    void Play(std::shared_ptr<AudioBuffer> ab, float start, float end);
 
-    std::unique_ptr<AudioBuffer> playingBuffer;
+    std::shared_ptr<AudioBuffer> playingBuffer;
     int index;
     int end_index;
 

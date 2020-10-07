@@ -7,10 +7,8 @@
 Gui::Gui(State* state) : state(state) {
     set_title("Wavey");
 
-    signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress));
-    signal_key_release_event().connect(sigc::mem_fun(*this, &Gui::KeyRelease));
+    signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress), false);
     add_events(Gdk::KEY_PRESS_MASK);
-    add_events(Gdk::KEY_RELEASE_MASK);
 
     set_default_size(640, 480);
     add(box);
@@ -100,10 +98,10 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                                glm::vec2(state->selection_end, z.Top()), color_selection);
     }
 
-    // Marker (start of selection).
-    glm::vec4 color_marker(.5f, .9f, .5f, .5f);
+    // Cursor.
+    glm::vec4 color_cursor(.5f, .9f, .5f, .5f);
     prim_renderer.DrawLine(mvp, glm::vec2(state->selection_start, z.Bottom()),
-                           glm::vec2(state->selection_start, z.Top()), color_marker);
+                           glm::vec2(state->selection_start, z.Top()), color_cursor);
 
     // Play position indicator.
     if (playing) {
@@ -125,23 +123,36 @@ void Gui::Resize(int width, int height) {
 bool Gui::KeyPress(GdkEventKey* key_event) {
     bool ctrl = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::CONTROL_MASK;
 
+    // Full zoom out.
     if (key_event->keyval == GDK_KEY_f && ctrl) {
         state->zoom_window.ZoomOutFull();
     }
 
+    // Zoom to selection.
     if (key_event->keyval == GDK_KEY_e && ctrl && state->selection_end > 0.f) {
         state->zoom_window.ZoomRange(state->selection_start, state->selection_end);
     }
 
-    glarea.queue_render();
-    return true;
-}
+    // Cursor to the beginning.
+    if (key_event->keyval == GDK_KEY_Home) {
+        state->selection_start = 0.f;
+        state->selection_end = -1.f;
+    }
 
-bool Gui::KeyRelease(GdkEventKey* key_event) {
+    // Pan width arrow keys.
+    if (key_event->keyval == GDK_KEY_Left) {
+        state->zoom_window.PanLeft();
+    } else if (key_event->keyval == GDK_KEY_Right) {
+        state->zoom_window.PanRight();
+    }
+
+    // Start/stop playback.
     if (key_event->keyval == GDK_KEY_space) {
         state->TogglePlayback();
         glarea.queue_render();
     }
+
+    glarea.queue_render();
     return true;
 }
 

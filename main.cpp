@@ -64,7 +64,7 @@ class MainWindow : public Gtk::Window {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         const ZoomWindow& z = state->zoom_window;
-        for (int i = 0; i < state->tracks.size(); i++) {
+        for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
             Track& t = state->tracks[i];
             if (i == state->selected_track) {
                 quad_renderer.Draw(0.f, z.GetY(i), 1.f, z.GetY(i + 1) - z.GetY(i));
@@ -73,7 +73,7 @@ class MainWindow : public Gtk::Window {
 
             const AudioBuffer& ab = *t.audio_buffer;
 
-            for (size_t c = 0; c < ab.NumChannels(); c++) {
+            for (int c = 0; c < ab.NumChannels(); c++) {
                 wave_shader.Draw(z.Left(), z.Right(), z.Top(), z.Bottom(), i, c, ab.NumChannels(),
                                  ab.Samplerate());
                 t.gpu_buffer->Draw(c);

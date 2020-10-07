@@ -14,7 +14,7 @@ void State::LoadFile(std::string file_name) {
 }
 
 void State::TogglePlayback() {
-    if (selected_track >= 0 && selected_track < tracks.size()) {
+    if (selected_track >= 0 && selected_track < static_cast<int>(tracks.size())) {
         audio->TogglePlayback(*tracks[selected_track].audio_buffer, selection_start, selection_end);
     }
 }

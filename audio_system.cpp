@@ -54,14 +54,15 @@ int AudioSystem::Callback(const void* input_buffer,
     AudioSystem* t = static_cast<AudioSystem*>(user_data);
     const AudioBuffer& ab = *t->playingBuffer;
     int num_channels = ab.NumChannels();
+    int frames = static_cast<int>(frames_per_buffer);
 
-    int frames_to_copy = std::min(static_cast<int>(frames_per_buffer), t->end_index - t->index);
+    int frames_to_copy = std::min(frames, t->end_index - t->index);
     memcpy(out, &ab.Samples()[num_channels * t->index],
            sizeof(float) * num_channels * frames_to_copy);
     t->index += frames_to_copy;
 
-    if (frames_to_copy < frames_per_buffer) {
-        for (int i = frames_to_copy * num_channels; i < frames_per_buffer * num_channels; i++) {
+    if (frames_to_copy < frames) {
+        for (int i = frames_to_copy * num_channels; i < frames * num_channels; i++) {
             out[i] = 0.f;
         }
         return paComplete;

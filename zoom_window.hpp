@@ -19,6 +19,7 @@ class ZoomWindow {
         x_left = std::max(start, 0.f);
         x_right = std::min(end, x_max);
     }
+    void ToggleSingleTrack(int track);
     void PanLeft();
     void PanRight();
     float Left() const { return x_left; }

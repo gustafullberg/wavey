@@ -133,6 +133,11 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         state->zoom_window.ZoomRange(state->Cursor(), *state->Selection());
     }
 
+    // Zoom toggle one/all tracks.
+    if (key_event->keyval == GDK_KEY_z) {
+        state->zoom_window.ToggleSingleTrack(state->selected_track);
+    }
+
     // Cursor to the beginning.
     if (key_event->keyval == GDK_KEY_Home) {
         state->SetCursor(0.f);

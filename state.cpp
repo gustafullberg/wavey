@@ -8,6 +8,9 @@ void State::LoadFile(std::string file_name) {
         Track track;
         track.path = file_name;
         track.audio_buffer = std::move(ab);
+        track.power_spectrum = std::make_unique<PowerSpectrum>(track.audio_buffer->Samples(),
+                                                               track.audio_buffer->NumChannels(),
+                                                               track.audio_buffer->NumFrames());
         tracks.push_back(std::move(track));
         zoom_window.LoadFile(length);
     }

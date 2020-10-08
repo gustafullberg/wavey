@@ -62,7 +62,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
         const Track& t = state->tracks[i];
-        if (i == state->selected_track) {
+        if (state->SelectedTrack() && i == state->SelectedTrack()) {
             glm::vec4 color_selection(.5f, .9f, .5f, .1f);
             prim_renderer.DrawQuad(mvp, glm::vec2(z.Left(), i + 1), glm::vec2(z.Right(), i),
                                    color_selection);
@@ -135,7 +135,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Zoom toggle one/all tracks.
     if (key_event->keyval == GDK_KEY_z) {
-        state->zoom_window.ToggleSingleTrack(state->selected_track);
+        state->zoom_window.ToggleSingleTrack(state->SelectedTrack());
     }
 
     // Cursor to the beginning.
@@ -167,9 +167,9 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             state->SetCursor(time);
             mouse_down = true;
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
-            if (state->tracks.size()) {
+            if (state->SelectedTrack()) {
                 state->SetCursor(0.f);
-                state->SetSelection(state->tracks[state->selected_track].audio_buffer->Length());
+                state->SetSelection(state->tracks[*state->SelectedTrack()].audio_buffer->Length());
             }
         }
         glarea.queue_render();
@@ -195,9 +195,9 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
         glarea.queue_render();
     }
 
-    int old_selected_track = state->selected_track;
-    state->selected_track = state->zoom_window.GetTrack(motion_event->y / win_height);
-    if (state->selected_track != old_selected_track) {
+    bool changed =
+        state->SetSelectedTrack(state->zoom_window.GetTrack(motion_event->y / win_height));
+    if (changed) {
         glarea.queue_render();
     }
 

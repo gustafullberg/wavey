@@ -21,13 +21,13 @@ void ZoomWindow::Zoom(float x, float factor) {
     x_right = std::min(x_right, x_max);
 }
 
-void ZoomWindow::ToggleSingleTrack(int track) {
+void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {
     if (y_top != 0.f || y_bottom != y_max) {
         y_top = 0.f;
         y_bottom = y_max;
-    } else if (y_bottom >= track + 1) {
-        y_top = track;
-        y_bottom = track + 1;
+    } else if (track) {
+        y_top = *track;
+        y_bottom = *track + 1;
     }
 }
 
@@ -62,5 +62,5 @@ float ZoomWindow::GetY(float logic_y) const {
 int ZoomWindow::GetTrack(float y) const {
     if (y_top == y_bottom)
         return 0;
-    return std::floor(y_top + y * (y_bottom-y_top));
+    return std::floor(y_top + y * (y_bottom - y_top));
 }

@@ -13,7 +13,9 @@ AudioSystem::~AudioSystem() {
     Pa_Terminate();
 }
 
-void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end) {
+void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab,
+                                 float start,
+                                 std::optional<float> end) {
     if (stream && Pa_IsStreamActive(stream)) {
         Pa_AbortStream(stream);
     } else {

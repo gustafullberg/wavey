@@ -14,9 +14,9 @@ void State::LoadFile(std::string file_name) {
 }
 
 void State::TogglePlayback() {
-    if (selected_track >= 0 && selected_track < static_cast<int>(tracks.size())) {
-        audio->TogglePlayback(tracks[selected_track].audio_buffer, Cursor(), Selection());
-        last_played_track = selected_track;
+    if (SelectedTrack()) {
+        audio->TogglePlayback(tracks[*selected_track].audio_buffer, Cursor(), Selection());
+        last_played_track = *selected_track;
     }
 }
 
@@ -38,4 +38,15 @@ void State::DeleteGpuBuffers() {
 
 bool State::Playing(float* time) {
     return audio->Playing(time);
+}
+
+bool State::SetSelectedTrack(int track) {
+    if (track < 0 || track >= static_cast<int>(tracks.size()))
+        return false;
+    else if (*selected_track && *selected_track == track)
+        return false;
+    else {
+        selected_track = track;
+        return true;
+    }
 }

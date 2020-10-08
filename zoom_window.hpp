@@ -2,6 +2,7 @@
 #define ZOOM_WINDOW_HPP
 
 #include <algorithm>
+#include <optional>
 
 class ZoomWindow {
    public:
@@ -19,7 +20,7 @@ class ZoomWindow {
         x_left = std::max(start, 0.f);
         x_right = std::min(end, x_max);
     }
-    void ToggleSingleTrack(int track);
+    void ToggleSingleTrack(std::optional<int> track);
     void PanLeft();
     void PanRight();
     float Left() const { return x_left; }

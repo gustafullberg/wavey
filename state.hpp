@@ -36,9 +36,11 @@ class State {
     }
     std::optional<float> Selection() { return selection; }
     void SetSelection(float time) { selection = time; }
+    std::optional<float> SelectedTrack() { return selected_track; }
+    bool SetSelectedTrack(int track);
+
     std::vector<Track> tracks;
     ZoomWindow zoom_window;
-    int selected_track = 0;
     int last_played_track = 0;
 
    private:
@@ -46,6 +48,7 @@ class State {
     int next_id = 0;
     float cursor = 0.f;
     std::optional<float> selection;
+    std::optional<int> selected_track;
 };
 
 #endif

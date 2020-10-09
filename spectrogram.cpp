@@ -1032,8 +1032,9 @@ constexpr float kHannWindow[kInputSize] = {
     0.0f,
 };
 
-constexpr float kLogMin = -10.f;
-constexpr float kLogMax = 2.f;
+constexpr float kLogMin = -100.f;
+constexpr float kLogMax = -20.f;
+constexpr float kDftScaleFactor = 1.f / kInputSize;
 constexpr float kOffset = kLogMin;
 constexpr float kScale = 1.f / (kLogMax - kLogMin);
 }  // namespace
@@ -1069,9 +1070,13 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
             // Power spectrum.
             auto& power = power_spectra_channel[i];
             for (int k = 0; k < kOutputSize; k++) {
-                const float re = output_buffer[k][0];
-                const float im = output_buffer[k][1];
-                const float p = log10(re * re + im * im);
+                const float re = output_buffer[k][0] * kDftScaleFactor;
+                const float im = output_buffer[k][1] * kDftScaleFactor;
+
+                // Power in dB domain.
+                const float p = 10.f * log10(re * re + im * im);
+
+                // Scale to between 0 and 1.
                 power[k] = std::max(std::min((p - kOffset) * kScale, 1.f), 0.f);
             }
         }

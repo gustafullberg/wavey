@@ -10,7 +10,8 @@ struct vertex {
 }  // namespace
 
 GpuSpectrogram::GpuSpectrogram(const Spectrogram& spectrogram, int samplerate) {
-    float length = 512.f * spectrogram.NumPowerSpectrum() / samplerate;
+    float length = static_cast<float>(spectrogram.Advance()) *
+                   spectrogram.NumPowerSpectrumPerChannel() / samplerate;
     std::vector<vertex> vertices;
     vertices.push_back(vertex(glm::vec2(0.f, -1.f), glm::vec2(0.f, 0.f)));
     vertices.push_back(vertex(glm::vec2(length, 1.f), glm::vec2(1.f, 1.f)));
@@ -37,8 +38,9 @@ GpuSpectrogram::GpuSpectrogram(const Spectrogram& spectrogram, int samplerate) {
     glGenTextures(tex.size(), tex.data());
     for (int c = 0; c < num_channels; c++) {
         glBindTexture(GL_TEXTURE_2D, tex[c]);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 513, spectrogram.NumPowerSpectrum(), 0, GL_RED,
-                     GL_FLOAT, spectrogram.Data(c));
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, spectrogram.OutputSize(),
+                     spectrogram.NumPowerSpectrumPerChannel(), 0, GL_RED, GL_FLOAT,
+                     spectrogram.Data(c));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     }

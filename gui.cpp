@@ -161,9 +161,12 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 }
 
 bool Gui::ButtonPress(GdkEventButton* button_event) {
+    const float scale = get_scale_factor();
+    const float x = button_event->x * scale / win_width;
+
     if (button_event->button == 1) {
         if (button_event->type == GDK_BUTTON_PRESS) {
-            const float time = state->zoom_window.GetTime(button_event->x / win_width);
+            const float time = state->zoom_window.GetTime(x);
             state->SetCursor(time);
             mouse_down = true;
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
@@ -189,14 +192,17 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
 }
 
 bool Gui::PointerMove(GdkEventMotion* motion_event) {
+    const float scale = get_scale_factor();
+    const float x = motion_event->x * scale / win_width;
+    const float y = motion_event->y * scale / win_height;
+
     if (mouse_down) {
-        const float time = state->zoom_window.GetTime(motion_event->x / win_width);
+        const float time = state->zoom_window.GetTime(x);
         state->SetSelection(time);
         glarea.queue_render();
     }
 
-    bool changed =
-        state->SetSelectedTrack(state->zoom_window.GetTrack(motion_event->y / win_height));
+    bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
     if (changed) {
         glarea.queue_render();
     }
@@ -205,8 +211,10 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
 }
 
 bool Gui::Scroll(GdkEventScroll* scroll_event) {
+    const float scale = get_scale_factor();
+    const float x = scroll_event->x * scale / win_width;
+
     GdkScrollDirection dir = scroll_event->direction;
-    float x = scroll_event->x / win_width;
     if (dir == GDK_SCROLL_UP) {
         state->zoom_window.ZoomIn(x);
     } else if (dir == GDK_SCROLL_DOWN) {

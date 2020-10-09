@@ -8,9 +8,9 @@ void State::LoadFile(std::string file_name) {
         Track track;
         track.path = file_name;
         track.audio_buffer = std::move(ab);
-        track.power_spectrum = std::make_unique<PowerSpectrum>(track.audio_buffer->Samples(),
-                                                               track.audio_buffer->NumChannels(),
-                                                               track.audio_buffer->NumFrames());
+        track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
+                                                          track.audio_buffer->NumChannels(),
+                                                          track.audio_buffer->NumFrames());
         tracks.push_back(std::move(track));
         zoom_window.LoadFile(length);
     }
@@ -26,7 +26,7 @@ void State::TogglePlayback() {
 void State::UpdateGpuBuffers() {
     for (Track& t : tracks) {
         if (!t.gpu_buffer) {
-            t.gpu_buffer = std::make_unique<GLWaveform>(*t.audio_buffer);
+            t.gpu_buffer = std::make_unique<GpuWaveform>(*t.audio_buffer);
         }
     }
 }

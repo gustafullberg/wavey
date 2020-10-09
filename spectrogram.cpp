@@ -1,4 +1,4 @@
-#include "power_spectrum.hpp"
+#include "spectrogram.hpp"
 #include <fftw3.h>
 #include <chrono>
 #include <cmath>
@@ -1038,7 +1038,7 @@ constexpr float kOffset = kLogMin;
 constexpr float kScale = 1.f / (kLogMax - kLogMin);
 }  // namespace
 
-PowerSpectrum::PowerSpectrum(const float* samples, int num_channels, int num_frames) {
+Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     float* input_buffer = static_cast<float*>(fftwf_malloc(kInputSize * sizeof(float)));

@@ -1,14 +1,14 @@
-#ifndef GL_WAVEFORM_HPP
-#define GL_WAVEFORM_HPP
+#ifndef GPU_WAVEFORM_HPP
+#define GPU_WAVEFORM_HPP
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include "audio_buffer.hpp"
 
-class GLWaveform {
+class GpuWaveform {
    public:
-    GLWaveform(const AudioBuffer& ab);
-    ~GLWaveform();
+    GpuWaveform(const AudioBuffer& ab);
+    ~GpuWaveform();
     void Draw(int channel);
 
    private:

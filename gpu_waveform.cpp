@@ -1,8 +1,8 @@
-#include "gl_waveform.hpp"
+#include "gpu_waveform.hpp"
 #include <chrono>
 #include <iostream>
 
-GLWaveform::GLWaveform(const AudioBuffer& ab) {
+GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     num_channels = ab.NumChannels();
@@ -24,14 +24,14 @@ GLWaveform::GLWaveform(const AudioBuffer& ab) {
               << std::endl;
 }
 
-GLWaveform::~GLWaveform() {
+GpuWaveform::~GpuWaveform() {
     if (num_channels) {
         glDeleteBuffers(1, &vbo);
         glDeleteVertexArrays(1, &vao);
     }
 }
 
-void GLWaveform::Draw(int channel) {
+void GpuWaveform::Draw(int channel) {
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, num_channels * sizeof(float),

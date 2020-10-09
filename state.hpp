@@ -5,15 +5,15 @@
 #include <vector>
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
-#include "gl_waveform.hpp"
-#include "power_spectrum.hpp"
+#include "gpu_waveform.hpp"
+#include "spectrogram.hpp"
 #include "zoom_window.hpp"
 
 struct Track {
     std::string path;
     std::shared_ptr<AudioBuffer> audio_buffer;
-    std::unique_ptr<PowerSpectrum> power_spectrum;
-    std::unique_ptr<GLWaveform> gpu_buffer;
+    std::unique_ptr<Spectrogram> spectrogram;
+    std::unique_ptr<GpuWaveform> gpu_buffer;
 };
 
 class State {

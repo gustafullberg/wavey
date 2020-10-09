@@ -5,6 +5,7 @@
 #include <vector>
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
+#include "gpu_spectrogram.hpp"
 #include "gpu_waveform.hpp"
 #include "spectrogram.hpp"
 #include "zoom_window.hpp"
@@ -13,7 +14,8 @@ struct Track {
     std::string path;
     std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<Spectrogram> spectrogram;
-    std::unique_ptr<GpuWaveform> gpu_buffer;
+    std::unique_ptr<GpuWaveform> gpu_waveform;
+    std::unique_ptr<GpuSpectrogram> gpu_spectrogram;
 };
 
 class State {

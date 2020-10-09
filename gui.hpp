@@ -3,6 +3,7 @@
 
 #include <gtkmm.h>
 #include "primitive_renderer.hpp"
+#include "spectrogram_shader.hpp"
 #include "state.hpp"
 #include "wave_shader.hpp"
 
@@ -24,10 +25,12 @@ class Gui : public Gtk::Window {
     Gtk::GLArea glarea;
     // Gtk::Button btn;
     WaveShader wave_shader;
+    SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;
     int win_width = 0;
     int win_height = 0;
     bool mouse_down = false;
+    bool view_spectrogram = false;
     State* state = nullptr;
 };
 

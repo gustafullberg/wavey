@@ -25,16 +25,20 @@ void State::TogglePlayback() {
 
 void State::UpdateGpuBuffers() {
     for (Track& t : tracks) {
-        if (!t.gpu_buffer) {
-            t.gpu_buffer = std::make_unique<GpuWaveform>(*t.audio_buffer);
+        if (!t.gpu_waveform) {
+            t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer);
+        }
+        if (!t.gpu_spectrogram) {
+            t.gpu_spectrogram =
+                std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
         }
     }
 }
 
 void State::DeleteGpuBuffers() {
     for (Track& t : tracks) {
-        if (!t.gpu_buffer) {
-            t.gpu_buffer.reset();
+        if (!t.gpu_waveform) {
+            t.gpu_waveform.reset();
         }
     }
 }

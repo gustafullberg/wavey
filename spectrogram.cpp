@@ -1032,8 +1032,8 @@ constexpr float kHannWindow[kInputSize] = {
     0.0f,
 };
 
-constexpr float kLogMin = -13.f;
-constexpr float kLogMax = 3.f;
+constexpr float kLogMin = -10.f;
+constexpr float kLogMax = 2.f;
 constexpr float kOffset = kLogMin;
 constexpr float kScale = 1.f / (kLogMax - kLogMin);
 }  // namespace

@@ -36,6 +36,7 @@ Gui::Gui(State* state) : state(state) {
 void Gui::Realize() {
     glarea.make_current();
     wave_shader.Init();
+    spectrogram_shader.Init();
     prim_renderer.Init();
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -46,6 +47,7 @@ void Gui::Realize() {
 void Gui::Unrealize() {
     state->DeleteGpuBuffers();
     wave_shader.Terminate();
+    spectrogram_shader.Terminate();
     prim_renderer.Terminate();
 }
 
@@ -86,8 +88,13 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                                    color_line);
             prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f),
                                    color_line);
-            wave_shader.Draw(mvp_channel, samplerate);
-            t.gpu_buffer->Draw(c);
+            if (view_spectrogram) {
+                spectrogram_shader.Draw(mvp_channel);
+                t.gpu_spectrogram->Draw(c);
+            } else {
+                wave_shader.Draw(mvp_channel, samplerate);
+                t.gpu_waveform->Draw(c);
+            }
         }
     }
 
@@ -148,6 +155,11 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         state->zoom_window.PanLeft();
     } else if (key_event->keyval == GDK_KEY_Right) {
         state->zoom_window.PanRight();
+    }
+
+    // Toggle spectrogram view.
+    if (key_event->keyval == GDK_KEY_s) {
+        view_spectrogram = !view_spectrogram;
     }
 
     // Start/stop playback.

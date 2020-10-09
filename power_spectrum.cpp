@@ -1,6 +1,7 @@
 #include "power_spectrum.hpp"
 #include <fftw3.h>
 #include <chrono>
+#include <cmath>
 #include <iostream>
 
 namespace {
@@ -1030,7 +1031,12 @@ constexpr float kHannWindow[kInputSize] = {
     9.43076911874563e-06f,
     0.0f,
 };
-}
+
+constexpr float kLogMin = -13.f;
+constexpr float kLogMax = 3.f;
+constexpr float kOffset = kLogMin;
+constexpr float kScale = 1.f / (kLogMax - kLogMin);
+}  // namespace
 
 PowerSpectrum::PowerSpectrum(const float* samples, int num_channels, int num_frames) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -1063,9 +1069,10 @@ PowerSpectrum::PowerSpectrum(const float* samples, int num_channels, int num_fra
             // Power spectrum.
             auto& power = power_spectra_channel[i];
             for (int k = 0; k < kOutputSize; k++) {
-                float re = output_buffer[k][0];
-                float im = output_buffer[k][1];
-                power[k] = re * re + im * im;
+                const float re = output_buffer[k][0];
+                const float im = output_buffer[k][1];
+                const float p = log10(re * re + im * im);
+                power[k] = std::max(std::min((p - kOffset) * kScale, 1.f), 0.f);
             }
         }
     }

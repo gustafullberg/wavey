@@ -25,8 +25,29 @@ const char* kFragmentSrc =
     "layout(location = 1) uniform sampler2D tex;\n"
     "\n"
     "void main() {\n"
-    "    float lum = texture(tex, tex_coord_f).r;\n"
-    "    color = vec4(vec3(.5, 1., 0.5) * lum, 1.0);\n"
+    "    const float dB_min = -100.;\n"
+    "    const float dB_max = -20.;\n"
+    "    float dB = texture(tex, tex_coord_f).r;\n"
+    "    float s = (dB - dB_min) * (1. / (dB_max - dB_min));\n"
+    "    s = max(0., min(1., s));\n"
+#if 0
+    "    color = vec4(vec3(.5, 1., 0.5) * s, 1.0);\n"
+#else
+    "    const vec4 c0 = vec4(0., 0., 0., 1.);\n"
+    "    const vec4 c1 = vec4(0., 0., .5, 1.);\n"
+    "    const vec4 c2 = vec4(1., 0., 0., 1.);\n"
+    "    const vec4 c3 = vec4(1., 1., 0., 1.);\n"
+    "    const vec4 c4 = vec4(1., 1., 1., 1.);\n"
+    "    if(s < 0.25) {\n"
+    "        color = mix(c0, c1, 4. * s);\n"
+    "    } else if(s < 0.5) {\n"
+    "        color = mix(c1, c2, 4. * (s-0.25));\n"
+    "    } else if(s < 0.75) {\n"
+    "        color = mix(c2, c3, 4. * (s-0.5));\n"
+    "    } else {\n"
+    "        color = mix(c3, c4, 4. * (s-0.75));\n"
+    "    }\n"
+#endif
     "}\n";
 
 GLuint CompileShader(GLenum shader_type, const char* src) {

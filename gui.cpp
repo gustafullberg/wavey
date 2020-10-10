@@ -3,6 +3,7 @@
 #include <GL/gl.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iomanip>
 
 Gui::Gui(State* state) : state(state) {
     set_title("Wavey");
@@ -28,8 +29,7 @@ Gui::Gui(State* state) : state(state) {
     glarea.add_events(Gdk::SCROLL_MASK);
     box.pack_start(glarea);
 
-    // btn.set_label("Test");
-    // box.pack_start(btn, false, true);
+    box.pack_start(statusbar, false, true);
     show_all();
 }
 
@@ -148,6 +148,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Cursor to the beginning.
     if (key_event->keyval == GDK_KEY_Home) {
         state->SetCursor(0.f);
+        UpdateStatus();
     }
 
     // Pan width arrow keys.
@@ -188,6 +189,7 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             }
         }
         glarea.queue_render();
+        UpdateStatus();
     }
     return true;
 }
@@ -212,6 +214,7 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
         const float time = state->zoom_window.GetTime(x);
         state->SetSelection(time);
         glarea.queue_render();
+        UpdateStatus();
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
@@ -239,4 +242,22 @@ bool Gui::Scroll(GdkEventScroll* scroll_event) {
 
     glarea.queue_render();
     return true;
+}
+
+void Gui::UpdateStatus() {
+    Glib::ustring s;
+    if (state->Selection()) {
+        float s1 = state->Cursor();
+        float s2 = *state->Selection();
+        if (s2 < s1)
+            std::swap(s1, s2);
+        s = Glib::ustring::compose("Selection %1 - %2",
+                                   Glib::ustring::format(std::fixed, std::setprecision(3), s1),
+                                   Glib::ustring::format(std::fixed, std::setprecision(3), s2));
+    } else {
+        float s1 = state->Cursor();
+        s = Glib::ustring::compose("Cursor %1",
+                                   Glib::ustring::format(std::fixed, std::setprecision(3), s1));
+    }
+    statusbar.push(s, 0);
 }

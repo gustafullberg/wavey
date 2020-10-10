@@ -10,6 +10,8 @@
 class Gui : public Gtk::Window {
    public:
     Gui(State* state);
+
+   private:
     void Realize();
     void Unrealize();
     bool Render(const Glib::RefPtr<Gdk::GLContext> context);
@@ -19,11 +21,10 @@ class Gui : public Gtk::Window {
     bool ButtonRelease(GdkEventButton* button_event);
     bool PointerMove(GdkEventMotion* motion_event);
     bool Scroll(GdkEventScroll* scroll_event);
-
-   private:
+    void UpdateStatus();
     Gtk::VBox box;
     Gtk::GLArea glarea;
-    // Gtk::Button btn;
+    Gtk::Statusbar statusbar;
     WaveShader wave_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;

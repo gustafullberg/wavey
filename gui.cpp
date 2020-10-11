@@ -6,8 +6,6 @@
 #include <iomanip>
 
 Gui::Gui(State* state) : state(state) {
-    set_title("Wavey");
-
     signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress), false);
     add_events(Gdk::KEY_PRESS_MASK);
 
@@ -29,6 +27,8 @@ Gui::Gui(State* state) : state(state) {
     glarea.add_events(Gdk::SCROLL_MASK);
     box.pack_start(glarea);
 
+    statusbar.set_margin_top(0);
+    statusbar.set_margin_bottom(0);
     box.pack_start(statusbar, false, true);
     show_all();
 }
@@ -206,8 +206,10 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
 }
 
 bool Gui::PointerMove(GdkEventMotion* motion_event) {
+    const ZoomWindow& z = state->zoom_window;
     const float scale = get_scale_factor();
-    const float x = motion_event->x * scale / win_width;
+    const float x = std::min(
+        std::max(static_cast<float>(motion_event->x) * scale / win_width, z.Left()), z.Right());
     const float y = motion_event->y * scale / win_height;
 
     if (mouse_down) {
@@ -220,6 +222,7 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
     if (changed) {
         glarea.queue_render();
+        UpdateStatus();
     }
 
     return true;
@@ -245,19 +248,26 @@ bool Gui::Scroll(GdkEventScroll* scroll_event) {
 }
 
 void Gui::UpdateStatus() {
+    if (state->SelectedTrack()) {
+        set_title(state->tracks[*state->SelectedTrack()].path);
+    } else {
+        set_title("wavey");
+    }
+
     Glib::ustring s;
+
     if (state->Selection()) {
         float s1 = state->Cursor();
         float s2 = *state->Selection();
         if (s2 < s1)
             std::swap(s1, s2);
-        s = Glib::ustring::compose("Selection %1 - %2",
-                                   Glib::ustring::format(std::fixed, std::setprecision(3), s1),
-                                   Glib::ustring::format(std::fixed, std::setprecision(3), s2));
+        s += Glib::ustring::compose("Selection %1 - %2",
+                                    Glib::ustring::format(std::fixed, std::setprecision(3), s1),
+                                    Glib::ustring::format(std::fixed, std::setprecision(3), s2));
     } else {
         float s1 = state->Cursor();
-        s = Glib::ustring::compose("Cursor %1",
-                                   Glib::ustring::format(std::fixed, std::setprecision(3), s1));
+        s += Glib::ustring::compose("Cursor %1",
+                                    Glib::ustring::format(std::fixed, std::setprecision(3), s1));
     }
     statusbar.push(s, 0);
 }

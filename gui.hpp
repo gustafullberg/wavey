@@ -20,10 +20,12 @@ class Gui : public Gtk::Window {
     bool ButtonPress(GdkEventButton* button_event);
     bool ButtonRelease(GdkEventButton* button_event);
     bool PointerMove(GdkEventMotion* motion_event);
-    bool Scroll(GdkEventScroll* scroll_event);
+    bool ScrollWheel(GdkEventScroll* scroll_event);
+    void Scrolling();
     void UpdateStatus();
     Gtk::VBox box;
     Gtk::GLArea glarea;
+    Gtk::Scrollbar scrollbar;
     Gtk::Statusbar statusbar;
     WaveShader wave_shader;
     SpectrogramShader spectrogram_shader;

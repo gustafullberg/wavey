@@ -32,15 +32,21 @@ void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {
 }
 
 void ZoomWindow::PanLeft() {
-    float zoom_level = x_right - x_left;
+    const float zoom_level = x_right - x_left;
     x_left = std::max(x_left - 0.1f * zoom_level, 0.f);
     x_right = x_left + zoom_level;
 }
 
 void ZoomWindow::PanRight() {
-    float zoom_level = x_right - x_left;
+    const float zoom_level = x_right - x_left;
     x_right = std::min(x_right + 0.1f * zoom_level, x_max);
     x_left = x_right - zoom_level;
+}
+
+void ZoomWindow::PanTo(float time) {
+    const float zoom_level = x_right - x_left;
+    x_left = time;
+    x_right = time + zoom_level;
 }
 
 float ZoomWindow::GetTime(float x) const {

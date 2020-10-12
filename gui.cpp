@@ -20,17 +20,21 @@ Gui::Gui(State* state) : state(state) {
     glarea.signal_button_press_event().connect(sigc::mem_fun(*this, &Gui::ButtonPress));
     glarea.signal_button_release_event().connect(sigc::mem_fun(*this, &Gui::ButtonRelease));
     glarea.signal_motion_notify_event().connect(sigc::mem_fun(*this, &Gui::PointerMove));
-    glarea.signal_scroll_event().connect(sigc::mem_fun(*this, &Gui::Scroll));
+    glarea.signal_scroll_event().connect(sigc::mem_fun(*this, &Gui::ScrollWheel));
     glarea.add_events(Gdk::BUTTON_PRESS_MASK);
     glarea.add_events(Gdk::BUTTON_RELEASE_MASK);
     glarea.add_events(Gdk::POINTER_MOTION_MASK);
     glarea.add_events(Gdk::SCROLL_MASK);
     box.pack_start(glarea);
 
+    box.pack_start(scrollbar, false, false);
+    scrollbar.signal_value_changed().connect(sigc::mem_fun(*this, &Gui::Scrolling));
+
     statusbar.set_margin_top(0);
     statusbar.set_margin_bottom(0);
     box.pack_start(statusbar, false, true);
     show_all();
+    UpdateStatus();
 }
 
 void Gui::Realize() {
@@ -170,6 +174,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     }
 
     glarea.queue_render();
+    UpdateStatus();
     return true;
 }
 
@@ -206,11 +211,11 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
 }
 
 bool Gui::PointerMove(GdkEventMotion* motion_event) {
-    const ZoomWindow& z = state->zoom_window;
     const float scale = get_scale_factor();
-    const float x = std::min(
-        std::max(static_cast<float>(motion_event->x) * scale / win_width, z.Left()), z.Right());
-    const float y = motion_event->y * scale / win_height;
+    const float x =
+        std::min(std::max(static_cast<float>(motion_event->x) * scale / win_width, 0.f), 1.f);
+    const float y =
+        std::min(std::max(static_cast<float>(motion_event->y) * scale / win_height, 0.f), 1.f);
 
     if (mouse_down) {
         const float time = state->zoom_window.GetTime(x);
@@ -228,7 +233,7 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
     return true;
 }
 
-bool Gui::Scroll(GdkEventScroll* scroll_event) {
+bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
     const float scale = get_scale_factor();
     const float x = scroll_event->x * scale / win_width;
 
@@ -244,7 +249,14 @@ bool Gui::Scroll(GdkEventScroll* scroll_event) {
     }
 
     glarea.queue_render();
+    UpdateStatus();
     return true;
+}
+
+void Gui::Scrolling() {
+    auto adjustment = scrollbar.get_adjustment();
+    state->zoom_window.PanTo(adjustment->get_value());
+    glarea.queue_render();
 }
 
 void Gui::UpdateStatus() {
@@ -253,6 +265,16 @@ void Gui::UpdateStatus() {
     } else {
         set_title("wavey");
     }
+
+    const ZoomWindow& z = state->zoom_window;
+    const float page_size = z.Right() - z.Left();
+    auto adjustment = scrollbar.get_adjustment();
+    adjustment->set_lower(0);
+    adjustment->set_upper(z.MaxX());
+    adjustment->set_page_size(page_size);
+    adjustment->set_step_increment(0.1f * page_size);
+    adjustment->set_page_increment(page_size);
+    adjustment->set_value(z.Left());
 
     Glib::ustring s;
 

@@ -21,8 +21,6 @@ class ZoomWindow {
         x_right = std::min(end, x_max);
     }
     void ToggleSingleTrack(std::optional<int> track);
-    void PanLeft();
-    void PanRight();
     void PanTo(float time);
     float Left() const { return x_left; }
     float Right() const { return x_right; }
@@ -30,8 +28,6 @@ class ZoomWindow {
     float Bottom() const { return y_bottom; }
     float MaxX() const { return x_max; }
     float GetTime(float x) const;
-    float GetX(float time) const;
-    float GetY(float logic_y) const;
     int GetTrack(float y) const;
 
    private:

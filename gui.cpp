@@ -149,17 +149,26 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         state->zoom_window.ToggleSingleTrack(state->SelectedTrack());
     }
 
-    // Cursor to the beginning.
+    // Scroll and move the cursor to the beginning.
     if (key_event->keyval == GDK_KEY_Home) {
         state->SetCursor(0.f);
-        UpdateStatus();
+        scrollbar.set_value(0.f);
+    }
+
+    // Scroll and move the cursor to the end.
+    if (key_event->keyval == GDK_KEY_End) {
+        auto adjustment = scrollbar.get_adjustment();
+        state->SetCursor(adjustment->get_upper());
+        scrollbar.set_value(adjustment->get_upper());
     }
 
     // Pan width arrow keys.
     if (key_event->keyval == GDK_KEY_Left) {
-        state->zoom_window.PanLeft();
+        auto adjustment = scrollbar.get_adjustment();
+        scrollbar.set_value(scrollbar.get_value() - adjustment->get_step_increment());
     } else if (key_event->keyval == GDK_KEY_Right) {
-        state->zoom_window.PanRight();
+        auto adjustment = scrollbar.get_adjustment();
+        scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
     }
 
     // Toggle spectrogram view.
@@ -243,9 +252,11 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
     } else if (dir == GDK_SCROLL_DOWN) {
         state->zoom_window.ZoomOut(x);
     } else if (dir == GDK_SCROLL_LEFT) {
-        state->zoom_window.PanLeft();
+        auto adjustment = scrollbar.get_adjustment();
+        scrollbar.set_value(scrollbar.get_value() - adjustment->get_step_increment());
     } else if (dir == GDK_SCROLL_RIGHT) {
-        state->zoom_window.PanRight();
+        auto adjustment = scrollbar.get_adjustment();
+        scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
     }
 
     glarea.queue_render();

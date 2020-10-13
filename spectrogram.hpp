@@ -5,7 +5,7 @@
 #include <vector>
 
 constexpr int kInputSize = 1024;
-constexpr int kInputAdvance = 1024 / 2;
+constexpr int kInputAdvance = kInputSize / 2;
 constexpr int kOutputSize = kInputSize / 2 + 1;
 
 class Spectrogram {

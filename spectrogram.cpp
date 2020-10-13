@@ -26,18 +26,27 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
 
     power_spectra.resize(num_channels);
 
+    // Add kInputAdvance samples at the beginning,
+    const int start_index = -kInputAdvance;
+    // Add between kInputAdvance and kInputSize samples at the end.
+    const int end_index = kInputAdvance * ((num_frames + kInputSize - 1) / kInputAdvance);
+    // Number of power spectra (DFTs) per channel.
+    const int num_spectra_per_chanel = (end_index - start_index) / kInputAdvance - 1;
+
     for (int c = 0; c < num_channels; c++) {
         auto& power_spectra_channel = power_spectra[c];
-        const int num_spectra_per_chanel =
-            std::max((num_frames - kInputAdvance) / kInputAdvance, 0);
         power_spectra_channel.resize(num_spectra_per_chanel);
 
         for (int i = 0; i < num_spectra_per_chanel; i++) {
             // Fill input buffer and apply Hann window.
-            int src_idx = i * kInputAdvance * num_channels + c;
+            int src_frame = start_index + i * kInputAdvance;
             for (int k = 0; k < kInputSize; k++) {
-                input_buffer[k] = samples[src_idx] * window[k];
-                src_idx += num_channels;
+                if (src_frame >= 0 && src_frame < num_frames) {
+                    input_buffer[k] = samples[src_frame * num_channels + c] * window[k];
+                } else {
+                    input_buffer[k] = 0.f;
+                }
+                src_frame++;
             }
 
             // Transform.

@@ -15,6 +15,7 @@ class GpuSpectrogram {
    private:
     GLuint vao = 0;
     GLuint vbo = 0;
+    GLsizei num_vertices = 0;
     std::vector<GLuint> tex;
 };
 

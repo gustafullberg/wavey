@@ -15,7 +15,9 @@ class Spectrogram {
     int NumPowerSpectrumPerChannel() const { return power_spectra[0].size(); }
     int Advance() const { return kInputAdvance; }
     int OutputSize() const { return kOutputSize; }
-    const float* Data(int channel) const { return power_spectra[channel][0].data(); }
+    const float* Data(int channel, int spectrum) const {
+        return power_spectra[channel][spectrum].data();
+    }
 
    private:
     std::vector<std::vector<std::array<float, kOutputSize>>> power_spectra;

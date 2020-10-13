@@ -129,6 +129,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 void Gui::Resize(int width, int height) {
     win_width = width;
     win_height = height;
+    glarea.queue_render();
 }
 
 bool Gui::KeyPress(GdkEventKey* key_event) {

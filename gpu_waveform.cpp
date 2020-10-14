@@ -1,5 +1,6 @@
 #include "gpu_waveform.hpp"
 #include <chrono>
+#include <cmath>
 #include <iostream>
 
 GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
@@ -7,6 +8,7 @@ GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
 
     num_channels = ab.NumChannels();
     num_vertices = ab.NumFrames();
+    samplerate = ab.Samplerate();
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -29,10 +31,14 @@ GpuWaveform::~GpuWaveform() {
     glDeleteVertexArrays(1, &vao);
 }
 
-void GpuWaveform::Draw(int channel) {
+void GpuWaveform::Draw(int channel, float start_time, float end_time) {
+    const int start_index = std::max(static_cast<int>(std::floor(start_time * samplerate)), 0);
+    const int end_index =
+        std::min(static_cast<int>(std::ceil(end_time * samplerate)), num_vertices);
+
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, num_channels * sizeof(float),
                           (const void*)(channel * sizeof(float)));
-    glDrawArrays(GL_LINE_STRIP, 0, num_vertices);
+    glDrawArrays(GL_LINE_STRIP, start_index, end_index - start_index);
 }

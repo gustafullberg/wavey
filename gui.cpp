@@ -97,7 +97,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 t.gpu_spectrogram->Draw(c);
             } else {
                 wave_shader.Draw(mvp_channel, samplerate);
-                t.gpu_waveform->Draw(c);
+                t.gpu_waveform->Draw(c, z.Left(), z.Right());
             }
         }
     }

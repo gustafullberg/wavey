@@ -9,13 +9,14 @@ class GpuWaveform {
    public:
     GpuWaveform(const AudioBuffer& ab);
     ~GpuWaveform();
-    void Draw(int channel);
+    void Draw(int channel, float start_time, float end_time);
 
    private:
     GLuint vao = 0;
     GLuint vbo = 0;
     int num_channels = 0;
     int num_vertices = 0;
+    int samplerate = 0;
 };
 
 #endif

@@ -26,7 +26,7 @@ void main() {
     float dB = texture(tex, tex_coord_f).r;
     float s = (dB - dB_min) * (1. / (dB_max - dB_min));
     s = max(0., min(1., s));
-    const vec4 c0 = vec4(0., 0., 0., 1.);
+    const vec4 c0 = vec4(0., 0., 0., 0.);
     const vec4 c1 = vec4(0., 0., .5, 1.);
     const vec4 c2 = vec4(1., 0., 0., 1.);
     const vec4 c3 = vec4(1., 1., 0., 1.);

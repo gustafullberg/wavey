@@ -37,8 +37,11 @@ void State::UpdateGpuBuffers() {
 
 void State::DeleteGpuBuffers() {
     for (Track& t : tracks) {
-        if (!t.gpu_waveform) {
+        if (t.gpu_waveform) {
             t.gpu_waveform.reset();
+        }
+        if (t.gpu_spectrogram) {
+            t.gpu_spectrogram.reset();
         }
     }
 }

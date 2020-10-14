@@ -70,9 +70,13 @@ GLuint CompileShader(GLenum shader_type, const char* src) {
 
 void SpectrogramShader::Init() {
     program = glCreateProgram();
-    glAttachShader(program, CompileShader(GL_VERTEX_SHADER, kVertexSrc));
-    glAttachShader(program, CompileShader(GL_FRAGMENT_SHADER, kFragmentSrc));
+    const GLuint vertex_shader = CompileShader(GL_VERTEX_SHADER, kVertexSrc);
+    const GLuint fragment_shader = CompileShader(GL_FRAGMENT_SHADER, kFragmentSrc);
+    glAttachShader(program, vertex_shader);
+    glAttachShader(program, fragment_shader);
     glLinkProgram(program);
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
     glUseProgram(program);
     glUniform1i(1, 0);
     glUseProgram(0);

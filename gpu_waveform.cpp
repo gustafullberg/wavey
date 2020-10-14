@@ -25,10 +25,8 @@ GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
 }
 
 GpuWaveform::~GpuWaveform() {
-    if (num_channels) {
-        glDeleteBuffers(1, &vbo);
-        glDeleteVertexArrays(1, &vao);
-    }
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
 }
 
 void GpuWaveform::Draw(int channel) {

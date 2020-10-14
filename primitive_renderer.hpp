@@ -4,6 +4,7 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <glm/glm.hpp>
+#include "shader.hpp"
 
 class PrimitiveRenderer {
    public:
@@ -25,9 +26,14 @@ class PrimitiveRenderer {
               const glm::vec4& color,
               GLenum mode,
               int count);
-    GLuint program = 0;
     GLuint vao = 0;
     GLuint vbo = 0;
+
+    class PrimitiveShader : public Shader {
+       public:
+        void Init();
+        void Draw(const glm::mat4& mvp, const glm::vec4& color);
+    } shader;
 };
 
 #endif

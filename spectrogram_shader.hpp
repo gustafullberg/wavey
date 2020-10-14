@@ -1,18 +1,13 @@
 #ifndef SPECTROGRAM_SHADER_HPP
 #define SPECTROGRAM_SHADER_HPP
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
 #include <glm/glm.hpp>
+#include "shader.hpp"
 
-class SpectrogramShader {
+class SpectrogramShader : public Shader {
    public:
     void Init();
-    void Terminate();
     void Draw(const glm::mat4& mvp);
-
-   private:
-    GLuint program = 0;
 };
 
 #endif

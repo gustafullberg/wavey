@@ -1,18 +1,13 @@
 #ifndef WAVE_SHADER_HPP
 #define WAVE_SHADER_HPP
 
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
 #include <glm/glm.hpp>
+#include "shader.hpp"
 
-class WaveShader {
+class WaveShader : public Shader {
    public:
     void Init();
-    void Terminate();
     void Draw(const glm::mat4& mvp, float samplerate);
-
-   private:
-    GLuint program = 0;
 };
 
 #endif

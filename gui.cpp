@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <iomanip>
+#include <iostream>  //DEBUG
 
 Gui::Gui(State* state) : state(state) {
     signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress), false);
@@ -96,8 +97,11 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 spectrogram_shader.Draw(mvp_channel);
                 t.gpu_spectrogram->Draw(c);
             } else {
-                wave_shader.Draw(mvp_channel, samplerate);
-                t.gpu_waveform->Draw(c, z.Left(), z.Right());
+                float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
+                const bool use_low_res = samples_per_pixel > 1000.f;
+                const float rate = use_low_res ? samplerate * 2.f / 1000.f : samplerate;
+                wave_shader.Draw(mvp_channel, rate);
+                t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
         }
     }

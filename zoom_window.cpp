@@ -13,6 +13,7 @@ void ZoomWindow::LoadFile(float length) {
 
 void ZoomWindow::Zoom(float x, float factor) {
     float zoom_level = x_right - x_left;
+    factor = std::max(factor, 0.001f / zoom_level);
     float focus = x_left + zoom_level * x;
     x_left = focus - zoom_level * factor * x;
     x_right = focus + zoom_level * factor * (1.f - x);

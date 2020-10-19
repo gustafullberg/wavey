@@ -31,9 +31,12 @@ Gui::Gui(State* state) : state(state) {
     box.pack_start(scrollbar, false, false);
     scrollbar.signal_value_changed().connect(sigc::mem_fun(*this, &Gui::Scrolling));
 
-    statusbar.set_margin_top(0);
-    statusbar.set_margin_bottom(0);
-    box.pack_start(statusbar, false, true);
+    box.pack_start(grid, false, true);
+    grid.set_row_homogeneous(true);
+    grid.set_column_homogeneous(true);
+    grid.attach(status_selection, 0, 0, 1, 1);
+    grid.attach(status_view, 1, 0, 1, 1);
+
     show_all();
     UpdateStatus();
 }
@@ -292,20 +295,24 @@ void Gui::UpdateStatus() {
     adjustment->set_page_increment(page_size);
     adjustment->set_value(z.Left());
 
-    Glib::ustring s;
-
-    if (state->Selection()) {
-        float s1 = state->Cursor();
-        float s2 = *state->Selection();
-        if (s2 < s1)
-            std::swap(s1, s2);
-        s += Glib::ustring::compose("Selection %1 - %2",
-                                    Glib::ustring::format(std::fixed, std::setprecision(3), s1),
-                                    Glib::ustring::format(std::fixed, std::setprecision(3), s2));
-    } else {
-        float s1 = state->Cursor();
-        s += Glib::ustring::compose("Cursor %1",
-                                    Glib::ustring::format(std::fixed, std::setprecision(3), s1));
+    Glib::ustring selection;
+    float s1 = state->Cursor();
+    auto s2 = state->Selection();
+    if (s2 && *s2 < s1)
+        std::swap(*s2, s1);
+    selection += Glib::ustring::compose(
+        "Selection: %1", Glib::ustring::format(std::fixed, std::setprecision(3), s1));
+    if (s2) {
+        selection += Glib::ustring::compose(
+            " - %1 (%2)", Glib::ustring::format(std::fixed, std::setprecision(3), *s2),
+            Glib::ustring::format(std::fixed, std::setprecision(3), *s2 - s1));
     }
-    statusbar.push(s, 0);
+    status_selection.set_text(selection);
+
+    Glib::ustring view = Glib::ustring::compose(
+        "View: %1 - %2 (%3)", Glib::ustring::format(std::fixed, std::setprecision(3), z.Left()),
+        Glib::ustring::format(std::fixed, std::setprecision(3), z.Right()),
+        Glib::ustring::format(std::fixed, std::setprecision(3), z.Right() - z.Left()));
+    status_selection.set_text(selection);
+    status_view.set_text(view);
 }

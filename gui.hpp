@@ -26,7 +26,9 @@ class Gui : public Gtk::Window {
     Gtk::VBox box;
     Gtk::GLArea glarea;
     Gtk::Scrollbar scrollbar;
-    Gtk::Statusbar statusbar;
+    Gtk::Grid grid;
+    Gtk::Label status_selection;
+    Gtk::Label status_view;
     WaveShader wave_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;

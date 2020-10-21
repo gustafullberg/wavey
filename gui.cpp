@@ -13,6 +13,16 @@ Gui::Gui(State* state) : state(state) {
     set_default_size(640, 480);
     add(box);
 
+    box.pack_start(grid_top, false, true);
+    grid_top.set_row_homogeneous(true);
+    grid_top.set_column_homogeneous(true);
+    grid_top.attach(status_view_start, 0, 0, 1, 1);
+    grid_top.attach(status_view_end, 1, 0, 1, 1);
+    status_view_start.set_xalign(0);
+    status_view_start.set_margin_left(5);
+    status_view_end.set_xalign(1);
+    status_view_end.set_margin_right(5);
+
     glarea.set_required_version(3, 3);
     glarea.signal_realize().connect(sigc::mem_fun(*this, &Gui::Realize));
     glarea.signal_unrealize().connect(sigc::mem_fun(*this, &Gui::Unrealize));
@@ -31,14 +41,19 @@ Gui::Gui(State* state) : state(state) {
     box.pack_start(scrollbar, false, false);
     scrollbar.signal_value_changed().connect(sigc::mem_fun(*this, &Gui::Scrolling));
 
-    box.pack_start(grid, false, true);
-    grid.set_row_homogeneous(true);
-    grid.set_column_homogeneous(true);
-    grid.attach(status_selection, 0, 0, 1, 1);
-    grid.attach(status_view, 1, 0, 1, 1);
+    box.pack_start(grid_bottom, false, true);
+    grid_bottom.set_row_homogeneous(true);
+    grid_bottom.set_column_homogeneous(true);
+    grid_bottom.attach(status_time, 0, 0, 1, 1);
+    grid_bottom.attach(status_selection, 1, 0, 1, 1);
+    status_time.set_xalign(0);
+    status_time.set_margin_left(5);
+    status_selection.set_xalign(1);
+    status_selection.set_margin_right(5);
 
     show_all();
     UpdateStatus();
+    UpdateTime();
 }
 
 void Gui::Realize() {
@@ -187,11 +202,16 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Start/stop playback.
     if (key_event->keyval == GDK_KEY_space) {
         state->TogglePlayback();
-        glarea.queue_render();
+        float time;
+        if (state->Playing(&time)) {
+            StartTimeUpdate();
+            glarea.queue_render();
+        }
     }
 
     glarea.queue_render();
     UpdateStatus();
+    UpdateTime();
     return true;
 }
 
@@ -212,6 +232,7 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
         }
         glarea.queue_render();
         UpdateStatus();
+        UpdateTime();
     }
     return true;
 }
@@ -221,6 +242,7 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
         if (button_event->type == GDK_BUTTON_RELEASE) {
             state->FixSelection();
             glarea.queue_render();
+            UpdateTime();
         }
         mouse_down = false;
     }
@@ -239,6 +261,7 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
         state->SetSelection(time);
         glarea.queue_render();
         UpdateStatus();
+        UpdateTime();
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
@@ -295,24 +318,45 @@ void Gui::UpdateStatus() {
     adjustment->set_page_increment(page_size);
     adjustment->set_value(z.Left());
 
-    Glib::ustring selection;
-    float s1 = state->Cursor();
-    auto s2 = state->Selection();
-    if (s2 && *s2 < s1)
-        std::swap(*s2, s1);
-    selection += Glib::ustring::compose(
-        "Selection: %1", Glib::ustring::format(std::fixed, std::setprecision(3), s1));
-    if (s2) {
-        selection += Glib::ustring::compose(
-            " - %1 (%2)", Glib::ustring::format(std::fixed, std::setprecision(3), *s2),
-            Glib::ustring::format(std::fixed, std::setprecision(3), *s2 - s1));
-    }
-    status_selection.set_text(selection);
+    float s_start = state->Cursor();
+    float s_end = state->Selection() ? *state->Selection() : s_start;
+    if (s_end < s_start)
+        std::swap(s_start, s_end);
 
-    Glib::ustring view = Glib::ustring::compose(
-        "View: %1 - %2 (%3)", Glib::ustring::format(std::fixed, std::setprecision(3), z.Left()),
-        Glib::ustring::format(std::fixed, std::setprecision(3), z.Right()),
-        Glib::ustring::format(std::fixed, std::setprecision(3), z.Right() - z.Left()));
+    Glib::ustring selection = Glib::ustring::compose(
+        "Selection: %1 - %2 (%3)", Glib::ustring::format(std::fixed, std::setprecision(3), s_start),
+        Glib::ustring::format(std::fixed, std::setprecision(3), s_end),
+        Glib::ustring::format(std::fixed, std::setprecision(3), s_end - s_start));
+
+    Glib::ustring view_start = Glib::ustring::compose(
+        "%1", Glib::ustring::format(std::fixed, std::setprecision(3), z.Left()));
+
+    Glib::ustring view_end = Glib::ustring::compose(
+        "%1", Glib::ustring::format(std::fixed, std::setprecision(3), z.Right()));
+
     status_selection.set_text(selection);
-    status_view.set_text(view);
+    status_view_start.set_text(view_start);
+    status_view_end.set_text(view_end);
+}
+
+void Gui::StartTimeUpdate() {
+    UpdateTime();
+    Glib::signal_timeout().connect(sigc::mem_fun(*this, &Gui::UpdateTime), 20);
+}
+
+bool Gui::UpdateTime() {
+    float play_time;
+    bool playing = state->Playing(&play_time);
+    float time;
+    if (playing) {
+        time = play_time;
+    } else {
+        time = state->Cursor();
+    }
+
+    Glib::ustring s = Glib::ustring::compose(
+        "Time: %1", Glib::ustring::format(std::fixed, std::setprecision(3), time));
+    status_time.set_text(s);
+
+    return playing;
 }

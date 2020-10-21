@@ -355,8 +355,8 @@ bool Gui::UpdateTime() {
     }
 
     Glib::ustring s = Glib::ustring::compose(
-        "Time: %1", Glib::ustring::format(std::fixed, std::setprecision(3), time));
-    status_time.set_text(s);
+        "Time: <b>%1</b>", Glib::ustring::format(std::fixed, std::setprecision(3), time));
+    status_time.set_markup(s);
 
     return playing;
 }

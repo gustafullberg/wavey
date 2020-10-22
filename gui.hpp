@@ -43,6 +43,7 @@ class Gui : public Gtk::Window {
     int win_height = 0;
     bool mouse_down = false;
     bool view_spectrogram = false;
+    bool view_bark_scale = false;
     State* state = nullptr;
 };
 

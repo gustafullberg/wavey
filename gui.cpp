@@ -114,7 +114,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
             prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f),
                                    color_line);
             if (view_spectrogram) {
-                spectrogram_shader.Draw(mvp_channel);
+                spectrogram_shader.Draw(mvp_channel, samplerate, view_bark_scale);
                 t.gpu_spectrogram->Draw(c);
             } else {
                 float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
@@ -209,6 +209,16 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Toggle spectrogram view.
     if (key_event->keyval == GDK_KEY_s) {
         view_spectrogram = !view_spectrogram;
+    }
+
+    // Toggle bark scale spectrograms.
+    if (key_event->keyval == GDK_KEY_b) {
+        if (view_spectrogram) {
+            view_bark_scale = !view_bark_scale;
+        } else {
+            view_spectrogram = true;
+            view_bark_scale = true;
+        }
     }
 
     // Start/stop playback.

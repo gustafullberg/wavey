@@ -19,11 +19,18 @@ const std::string kFragmentSource = R"(
 in vec3 tex_coord_f;
 out vec4 color;
 layout(location = 1) uniform sampler2DArray tex;
+layout(location = 2) uniform float samplerate;
+layout(location = 3) uniform float bark_scaling;
+layout(location = 4) uniform int use_bark;
 
 void main() {
     const float dB_min = -100.;
     const float dB_max = -20.;
-    float dB = texture(tex, tex_coord_f).r;
+    float x = tex_coord_f.x;
+    if(use_bark != 0) {
+        x = 1960. * (bark_scaling * x + 0.53) / (samplerate * (26.28 - bark_scaling * x));
+    }
+    float dB = texture(tex, vec3(x, tex_coord_f.yz)).r;
     float s = (dB - dB_min) * (1. / (dB_max - dB_min));
     s = max(0., min(1., s));
     const vec4 c0 = vec4(0., 0., 0., 1.);
@@ -51,7 +58,10 @@ void SpectrogramShader::Init() {
     glUseProgram(0);
 }
 
-void SpectrogramShader::Draw(const glm::mat4& mvp) {
+void SpectrogramShader::Draw(const glm::mat4& mvp, float samplerate, bool bark) {
     glUseProgram(program);
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
+    glUniform1f(2, samplerate);
+    glUniform1f(3, 26.81f * samplerate / (1960.f + samplerate) - 0.53f);
+    glUniform1i(4, bark);
 }

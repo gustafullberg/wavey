@@ -52,8 +52,10 @@ Gui::Gui(State* state) : state(state) {
     status_selection.set_margin_right(5);
 
     show_all();
-    UpdateStatus();
     UpdateTime();
+    UpdateZoom();
+    UpdateSelection();
+    UpdateTitle();
 }
 
 void Gui::Realize() {
@@ -160,11 +162,13 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Full zoom out.
     if (key_event->keyval == GDK_KEY_f && ctrl) {
         state->zoom_window.ZoomOutFull();
+        UpdateZoom();
     }
 
     // Zoom to selection.
     if (key_event->keyval == GDK_KEY_e && ctrl && state->Selection()) {
         state->zoom_window.ZoomRange(state->Cursor(), *state->Selection());
+        UpdateZoom();
     }
 
     // Zoom toggle one/all tracks.
@@ -176,6 +180,9 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     if (key_event->keyval == GDK_KEY_Home) {
         state->SetCursor(0.f);
         scrollbar.set_value(0.f);
+        UpdateTime();
+        UpdateZoom();
+        UpdateSelection();
     }
 
     // Scroll and move the cursor to the end.
@@ -183,15 +190,20 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         auto adjustment = scrollbar.get_adjustment();
         state->SetCursor(adjustment->get_upper());
         scrollbar.set_value(adjustment->get_upper());
+        UpdateTime();
+        UpdateZoom();
+        UpdateSelection();
     }
 
     // Pan width arrow keys.
     if (key_event->keyval == GDK_KEY_Left) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() - adjustment->get_step_increment());
+        UpdateZoom();
     } else if (key_event->keyval == GDK_KEY_Right) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
+        UpdateZoom();
     }
 
     // Toggle spectrogram view.
@@ -210,8 +222,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     }
 
     glarea.queue_render();
-    UpdateStatus();
-    UpdateTime();
     return true;
 }
 
@@ -224,15 +234,18 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             const float time = state->zoom_window.GetTime(x);
             state->SetCursor(time);
             mouse_down = true;
+            UpdateTime();
+            UpdateSelection();
+            glarea.queue_render();
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->SelectedTrack()) {
                 state->SetCursor(0.f);
                 state->SetSelection(state->tracks[*state->SelectedTrack()].audio_buffer->Length());
+                UpdateTime();
+                UpdateSelection();
+                glarea.queue_render();
             }
         }
-        glarea.queue_render();
-        UpdateStatus();
-        UpdateTime();
     }
     return true;
 }
@@ -260,14 +273,14 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
         const float time = state->zoom_window.GetTime(x);
         state->SetSelection(time);
         glarea.queue_render();
-        UpdateStatus();
         UpdateTime();
+        UpdateSelection();
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
     if (changed) {
         glarea.queue_render();
-        UpdateStatus();
+        UpdateTitle();
     }
 
     return true;
@@ -291,7 +304,7 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
     }
 
     glarea.queue_render();
-    UpdateStatus();
+    UpdateZoom();
     return true;
 }
 
@@ -299,44 +312,7 @@ void Gui::Scrolling() {
     auto adjustment = scrollbar.get_adjustment();
     state->zoom_window.PanTo(adjustment->get_value());
     glarea.queue_render();
-}
-
-void Gui::UpdateStatus() {
-    if (state->SelectedTrack()) {
-        set_title(state->tracks[*state->SelectedTrack()].path);
-    } else {
-        set_title("wavey");
-    }
-
-    const ZoomWindow& z = state->zoom_window;
-    const float page_size = z.Right() - z.Left();
-    auto adjustment = scrollbar.get_adjustment();
-    adjustment->set_lower(0);
-    adjustment->set_upper(z.MaxX());
-    adjustment->set_page_size(page_size);
-    adjustment->set_step_increment(0.1f * page_size);
-    adjustment->set_page_increment(page_size);
-    adjustment->set_value(z.Left());
-
-    float s_start = state->Cursor();
-    float s_end = state->Selection() ? *state->Selection() : s_start;
-    if (s_end < s_start)
-        std::swap(s_start, s_end);
-
-    Glib::ustring selection = Glib::ustring::compose(
-        "Selection: %1 - %2 (%3)", Glib::ustring::format(std::fixed, std::setprecision(3), s_start),
-        Glib::ustring::format(std::fixed, std::setprecision(3), s_end),
-        Glib::ustring::format(std::fixed, std::setprecision(3), s_end - s_start));
-
-    Glib::ustring view_start = Glib::ustring::compose(
-        "%1", Glib::ustring::format(std::fixed, std::setprecision(3), z.Left()));
-
-    Glib::ustring view_end = Glib::ustring::compose(
-        "%1", Glib::ustring::format(std::fixed, std::setprecision(3), z.Right()));
-
-    status_selection.set_text(selection);
-    status_view_start.set_text(view_start);
-    status_view_end.set_text(view_end);
+    UpdateZoom();
 }
 
 void Gui::StartTimeUpdate() {
@@ -354,9 +330,56 @@ bool Gui::UpdateTime() {
         time = state->Cursor();
     }
 
-    Glib::ustring s = Glib::ustring::compose(
-        "Time: <b>%1</b>", Glib::ustring::format(std::fixed, std::setprecision(3), time));
+    Glib::ustring s =
+        Glib::ustring::compose("<span font_family='monospace'>Time: <b>%1</b></span>",
+                               Glib::ustring::format(std::fixed, std::setprecision(3), time));
     status_time.set_markup(s);
 
     return playing;
+}
+
+void Gui::UpdateZoom() {
+    const ZoomWindow& z = state->zoom_window;
+    const float page_size = z.Right() - z.Left();
+    auto adjustment = scrollbar.get_adjustment();
+    adjustment->set_lower(0);
+    adjustment->set_upper(z.MaxX());
+    adjustment->set_page_size(page_size);
+    adjustment->set_step_increment(0.1f * page_size);
+    adjustment->set_page_increment(page_size);
+    adjustment->set_value(z.Left());
+
+    Glib::ustring view_start =
+        Glib::ustring::compose("<span font_family='monospace'>%1</span>",
+                               Glib::ustring::format(std::fixed, std::setprecision(3), z.Left()));
+
+    Glib::ustring view_end =
+        Glib::ustring::compose("<span font_family='monospace'>%1</span>",
+                               Glib::ustring::format(std::fixed, std::setprecision(3), z.Right()));
+
+    status_view_start.set_markup(view_start);
+    status_view_end.set_markup(view_end);
+}
+
+void Gui::UpdateSelection() {
+    float s_start = state->Cursor();
+    float s_end = state->Selection() ? *state->Selection() : s_start;
+    if (s_end < s_start)
+        std::swap(s_start, s_end);
+
+    Glib::ustring selection = Glib::ustring::compose(
+        "<span font_family='monospace'>Selection: %1 - %2 (%3)</span>",
+        Glib::ustring::format(std::fixed, std::setprecision(3), s_start),
+        Glib::ustring::format(std::fixed, std::setprecision(3), s_end),
+        Glib::ustring::format(std::fixed, std::setprecision(3), s_end - s_start));
+
+    status_selection.set_markup(selection);
+}
+
+void Gui::UpdateTitle() {
+    if (state->SelectedTrack()) {
+        set_title(state->tracks[*state->SelectedTrack()].path);
+    } else {
+        set_title("wavey");
+    }
 }

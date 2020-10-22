@@ -22,9 +22,11 @@ class Gui : public Gtk::Window {
     bool PointerMove(GdkEventMotion* motion_event);
     bool ScrollWheel(GdkEventScroll* scroll_event);
     void Scrolling();
-    void UpdateStatus();
     void StartTimeUpdate();
     bool UpdateTime();
+    void UpdateZoom();
+    void UpdateSelection();
+    void UpdateTitle();
     Gtk::VBox box;
     Gtk::GLArea glarea;
     Gtk::Scrollbar scrollbar;

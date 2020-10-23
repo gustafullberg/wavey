@@ -10,16 +10,18 @@ Gui::Gui(State* state) : state(state) {
     signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress), false);
     add_events(Gdk::KEY_PRESS_MASK);
 
-    set_default_size(640, 480);
+    set_default_size(800, 600);
     add(box);
 
     box.pack_start(grid_top, false, true);
     grid_top.set_row_homogeneous(true);
     grid_top.set_column_homogeneous(true);
     grid_top.attach(status_view_start, 0, 0, 1, 1);
-    grid_top.attach(status_view_end, 1, 0, 1, 1);
+    grid_top.attach(status_view_length, 1, 0, 1, 1);
+    grid_top.attach(status_view_end, 2, 0, 1, 1);
     status_view_start.set_xalign(0);
     status_view_start.set_margin_left(5);
+    status_view_length.set_xalign(0.5f);
     status_view_end.set_xalign(1);
     status_view_end.set_margin_right(5);
 
@@ -340,9 +342,7 @@ bool Gui::UpdateTime() {
         time = state->Cursor();
     }
 
-    Glib::ustring s =
-        Glib::ustring::compose("<span font_family='monospace'>Time: <b>%1</b></span>",
-                               Glib::ustring::format(std::fixed, std::setprecision(3), time));
+    Glib::ustring s = Glib::ustring::compose("<tt>Time: <b>%1</b></tt>", FormatTime(time));
     status_time.set_markup(s);
 
     return playing;
@@ -359,16 +359,16 @@ void Gui::UpdateZoom() {
     adjustment->set_page_increment(page_size);
     adjustment->set_value(z.Left());
 
-    Glib::ustring view_start =
-        Glib::ustring::compose("<span font_family='monospace'>%1</span>",
-                               Glib::ustring::format(std::fixed, std::setprecision(3), z.Left()));
+    Glib::ustring view_start = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Left()));
 
-    Glib::ustring view_end =
-        Glib::ustring::compose("<span font_family='monospace'>%1</span>",
-                               Glib::ustring::format(std::fixed, std::setprecision(3), z.Right()));
+    Glib::ustring view_end = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Right()));
+
+    Glib::ustring view_length =
+        Glib::ustring::compose("<tt>(%1)</tt>", FormatTime(z.Right() - z.Left()));
 
     status_view_start.set_markup(view_start);
     status_view_end.set_markup(view_end);
+    status_view_length.set_markup(view_length);
 }
 
 void Gui::UpdateSelection() {
@@ -377,11 +377,9 @@ void Gui::UpdateSelection() {
     if (s_end < s_start)
         std::swap(s_start, s_end);
 
-    Glib::ustring selection = Glib::ustring::compose(
-        "<span font_family='monospace'>Selection: %1 - %2 (%3)</span>",
-        Glib::ustring::format(std::fixed, std::setprecision(3), s_start),
-        Glib::ustring::format(std::fixed, std::setprecision(3), s_end),
-        Glib::ustring::format(std::fixed, std::setprecision(3), s_end - s_start));
+    Glib::ustring selection =
+        Glib::ustring::compose("<tt>Selection: %1 - %2 (%3)</tt>", FormatTime(s_start),
+                               FormatTime(s_end), FormatTime(s_end - s_start));
 
     status_selection.set_markup(selection);
 }
@@ -392,4 +390,14 @@ void Gui::UpdateTitle() {
     } else {
         set_title("wavey");
     }
+}
+
+Glib::ustring Gui::FormatTime(float t) {
+    float minutes = std::floor(t / 60.f);
+    float seconds = t - 60.f * minutes;
+    return Glib::ustring::format(std::setfill(L'0'), std::setw(2), std::fixed, std::setprecision(0),
+                                 minutes) +
+           ":" +
+           Glib::ustring::format(std::setfill(L'0'), std::setw(6), std::fixed, std::setprecision(3),
+                                 seconds);
 }

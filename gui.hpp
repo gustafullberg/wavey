@@ -27,6 +27,7 @@ class Gui : public Gtk::Window {
     void UpdateZoom();
     void UpdateSelection();
     void UpdateTitle();
+    Glib::ustring FormatTime(float t);
     Gtk::VBox box;
     Gtk::GLArea glarea;
     Gtk::Scrollbar scrollbar;
@@ -36,6 +37,7 @@ class Gui : public Gtk::Window {
     Gtk::Label status_selection;
     Gtk::Label status_view_start;
     Gtk::Label status_view_end;
+    Gtk::Label status_view_length;
     WaveShader wave_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;

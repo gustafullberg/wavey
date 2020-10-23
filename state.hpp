@@ -12,6 +12,7 @@
 
 struct Track {
     std::string path;
+    std::string short_name;
     std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<Spectrogram> spectrogram;
     std::unique_ptr<GpuWaveform> gpu_waveform;

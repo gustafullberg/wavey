@@ -386,7 +386,7 @@ void Gui::UpdateSelection() {
 
 void Gui::UpdateTitle() {
     if (state->SelectedTrack()) {
-        set_title(state->tracks[*state->SelectedTrack()].path);
+        set_title(state->tracks[*state->SelectedTrack()].short_name);
     } else {
         set_title("wavey");
     }

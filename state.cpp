@@ -7,6 +7,10 @@ void State::LoadFile(std::string file_name) {
         float length = ab->Length();
         Track track;
         track.path = file_name;
+
+        const size_t separator_pos = file_name.rfind('/');
+        track.short_name =
+            separator_pos != std::string::npos ? file_name.substr(separator_pos + 1) : file_name;
         track.audio_buffer = std::move(ab);
         track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
                                                           track.audio_buffer->NumChannels(),

@@ -144,7 +144,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         prim_renderer.DrawLine(mvp, glm::vec2(play_time, state->last_played_track + 1),
                                glm::vec2(play_time, state->last_played_track),
                                color_play_indicator);
-        glarea.queue_render();
+        queue_draw();
     }
 
     return true;
@@ -153,7 +153,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 void Gui::Resize(int width, int height) {
     win_width = width;
     win_height = height;
-    glarea.queue_render();
+    queue_draw();
 }
 
 bool Gui::KeyPress(GdkEventKey* key_event) {
@@ -227,11 +227,11 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         float time;
         if (state->Playing(&time)) {
             StartTimeUpdate();
-            glarea.queue_render();
+            queue_draw();
         }
     }
 
-    glarea.queue_render();
+    queue_draw();
     return true;
 }
 
@@ -246,14 +246,14 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             mouse_down = true;
             UpdateTime();
             UpdateSelection();
-            glarea.queue_render();
+            queue_draw();
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->SelectedTrack()) {
                 state->SetCursor(0.f);
                 state->SetSelection(state->tracks[*state->SelectedTrack()].audio_buffer->Length());
                 UpdateTime();
                 UpdateSelection();
-                glarea.queue_render();
+                queue_draw();
             }
         }
     }
@@ -264,8 +264,8 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
     if (button_event->button == 1) {
         if (button_event->type == GDK_BUTTON_RELEASE) {
             state->FixSelection();
-            glarea.queue_render();
             UpdateTime();
+            queue_draw();
         }
         mouse_down = false;
     }
@@ -282,15 +282,15 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
     if (mouse_down) {
         const float time = state->zoom_window.GetTime(x);
         state->SetSelection(time);
-        glarea.queue_render();
         UpdateTime();
         UpdateSelection();
+        queue_draw();
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
     if (changed) {
-        glarea.queue_render();
         UpdateTitle();
+        queue_draw();
     }
 
     return true;
@@ -313,16 +313,16 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
     }
 
-    glarea.queue_render();
     UpdateZoom();
+    queue_draw();
     return true;
 }
 
 void Gui::Scrolling() {
     auto adjustment = scrollbar.get_adjustment();
     state->zoom_window.PanTo(adjustment->get_value());
-    glarea.queue_render();
     UpdateZoom();
+    queue_draw();
 }
 
 void Gui::StartTimeUpdate() {

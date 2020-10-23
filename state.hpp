@@ -1,6 +1,7 @@
 #ifndef STATE_HPP
 #define STATE_HPP
 
+#include <list>
 #include <memory>
 #include <vector>
 #include "audio_buffer.hpp"
@@ -23,9 +24,11 @@ class State {
    public:
     State(AudioSystem* audio) : audio(audio){};
     void LoadFile(std::string file_name);
+    void QueueFileForLoading(const std::string& file_name) { files_to_load.push_back(file_name); }
+    void LoadQueuedFiles();
+    void UnloadFiles();
+    void UnloadSelectedTrack();
     void TogglePlayback();
-    void UpdateGpuBuffers();
-    void DeleteGpuBuffers();
     bool Playing(float* time);
     float Cursor() { return cursor; }
     void SetCursor(float time) {
@@ -41,7 +44,7 @@ class State {
     }
     std::optional<float> Selection() { return selection; }
     void SetSelection(float time) { selection = time; }
-    std::optional<float> SelectedTrack() { return selected_track; }
+    std::optional<int> SelectedTrack() { return selected_track; }
     bool SetSelectedTrack(int track);
 
     std::vector<Track> tracks;
@@ -54,6 +57,7 @@ class State {
     float cursor = 0.f;
     std::optional<float> selection;
     std::optional<int> selected_track;
+    std::list<std::string> files_to_load;
 };
 
 #endif

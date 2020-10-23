@@ -15,8 +15,38 @@ void State::LoadFile(std::string file_name) {
         track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
                                                           track.audio_buffer->NumChannels(),
                                                           track.audio_buffer->NumFrames());
+        track.gpu_waveform = std::make_unique<GpuWaveform>(*track.audio_buffer);
+        track.gpu_spectrogram =
+            std::make_unique<GpuSpectrogram>(*track.spectrogram, track.audio_buffer->Samplerate());
         tracks.push_back(std::move(track));
         zoom_window.LoadFile(length);
+    }
+}
+
+void State::LoadQueuedFiles() {
+    for (const std::string& file_name : files_to_load) {
+        LoadFile(file_name);
+    }
+    files_to_load.clear();
+}
+
+void State::UnloadFiles() {
+    tracks.clear();
+}
+
+void State::UnloadSelectedTrack() {
+    if (selected_track) {
+        tracks.erase(tracks.begin() + *selected_track);
+        float max_len = 0.f;
+        for (const Track& t : tracks) {
+            max_len = std::max(max_len, t.audio_buffer->Length());
+        }
+        zoom_window.UnloadFile(max_len);
+        if (tracks.size()) {
+            selected_track = std::min(*selected_track, static_cast<int>(tracks.size() - 1));
+        } else {
+            selected_track.reset();
+        }
     }
 }
 
@@ -24,29 +54,6 @@ void State::TogglePlayback() {
     if (SelectedTrack()) {
         audio->TogglePlayback(tracks[*selected_track].audio_buffer, Cursor(), Selection());
         last_played_track = *selected_track;
-    }
-}
-
-void State::UpdateGpuBuffers() {
-    for (Track& t : tracks) {
-        if (!t.gpu_waveform) {
-            t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer);
-        }
-        if (!t.gpu_spectrogram) {
-            t.gpu_spectrogram =
-                std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
-        }
-    }
-}
-
-void State::DeleteGpuBuffers() {
-    for (Track& t : tracks) {
-        if (t.gpu_waveform) {
-            t.gpu_waveform.reset();
-        }
-        if (t.gpu_spectrogram) {
-            t.gpu_spectrogram.reset();
-        }
     }
 }
 

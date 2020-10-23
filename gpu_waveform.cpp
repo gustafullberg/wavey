@@ -4,13 +4,16 @@
 #include <iostream>
 
 namespace {
-void MakeLowResBuffer(std::vector<float>& buffer, const AudioBuffer& ab, const int down_sampling_factor) {
+void MakeLowResBuffer(std::vector<float>& buffer,
+                      const AudioBuffer& ab,
+                      const int down_sampling_factor) {
     const int num_channels = ab.NumChannels();
     const int num_vertices = ab.NumFrames();
     const float* samples = ab.Samples();
 
     // Each channel has 2 output samples for every 1000 input samples.
-    buffer.resize(2 * num_channels * ((num_vertices + down_sampling_factor-1 ) / down_sampling_factor));
+    buffer.resize(2 * num_channels *
+                  ((num_vertices + down_sampling_factor - 1) / down_sampling_factor));
 
     int dest_idx = 0;
     for (int i = 0; i < num_vertices; i += down_sampling_factor) {

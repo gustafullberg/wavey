@@ -5,7 +5,7 @@ int main(int argc, char** argv) {
     AudioSystem audio;
     State state(&audio);
     for (int i = 1; i < argc; i++) {
-        state.LoadFile(argv[i]);
+        state.QueueFileForLoading(argv[i]);
     }
     argc = 1;
     auto app = Gtk::Application::create(argc, argv, "com.github.gustafullberg.wavy",

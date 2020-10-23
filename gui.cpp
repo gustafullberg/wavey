@@ -65,6 +65,7 @@ void Gui::Realize() {
     wave_shader.Init();
     spectrogram_shader.Init();
     prim_renderer.Init();
+    state->LoadQueuedFiles();
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
     glEnable(GL_BLEND);
@@ -72,15 +73,13 @@ void Gui::Realize() {
 }
 
 void Gui::Unrealize() {
-    state->DeleteGpuBuffers();
+    state->UnloadFiles();
     wave_shader.Terminate();
     spectrogram_shader.Terminate();
     prim_renderer.Terminate();
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
-    state->UpdateGpuBuffers();
-
     glClear(GL_COLOR_BUFFER_BIT);
 
     float play_time;
@@ -231,6 +230,16 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
             StartTimeUpdate();
             queue_draw();
         }
+    }
+
+    // Close selected track.
+    if (key_event->keyval == GDK_KEY_w && ctrl) {
+        state->UnloadSelectedTrack();
+        UpdateTime();
+        UpdateZoom();
+        UpdateSelection();
+        UpdateTitle();
+        queue_draw();
     }
 
     queue_draw();

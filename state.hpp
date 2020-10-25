@@ -28,6 +28,7 @@ class State {
     void LoadQueuedFiles();
     void UnloadFiles();
     void UnloadSelectedTrack();
+    void ReloadFiles();
     void TogglePlayback();
     bool Playing(float* time);
     float Cursor() { return cursor; }

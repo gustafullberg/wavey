@@ -56,3 +56,12 @@ int ZoomWindow::GetTrack(float y) const {
         return 0;
     return std::floor(y_top + y * (y_bottom - y_top));
 }
+
+void ZoomWindow::Reset() {
+    x_left = 0.f;
+    x_right = 0.f;
+    x_max = 0.f;
+    y_top = 0.f;
+    y_bottom = 0.f;
+    y_max = 0.f;
+}

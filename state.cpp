@@ -32,6 +32,7 @@ void State::LoadQueuedFiles() {
 
 void State::UnloadFiles() {
     tracks.clear();
+    zoom_window.Reset();
 }
 
 void State::UnloadSelectedTrack() {
@@ -48,6 +49,14 @@ void State::UnloadSelectedTrack() {
             selected_track.reset();
         }
     }
+}
+
+void State::ReloadFiles() {
+    for(const Track& t: tracks) {
+        files_to_load.push_back(t.path);
+    }
+    UnloadFiles();
+    LoadQueuedFiles();
 }
 
 void State::TogglePlayback() {

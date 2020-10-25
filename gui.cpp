@@ -242,6 +242,17 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         queue_draw();
     }
 
+    // Reload all files.
+    if (key_event->keyval == GDK_KEY_r && ctrl) {
+        glarea.make_current();
+        state->ReloadFiles();
+        UpdateTime();
+        UpdateZoom();
+        UpdateSelection();
+        UpdateTitle();
+        queue_draw();
+    }
+
     queue_draw();
     return true;
 }

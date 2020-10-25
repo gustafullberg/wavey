@@ -30,6 +30,7 @@ class ZoomWindow {
     float MaxX() const { return x_max; }
     float GetTime(float x) const;
     int GetTrack(float y) const;
+    void Reset();
 
    private:
     void Zoom(float x, float factor);

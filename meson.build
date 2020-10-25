@@ -5,5 +5,20 @@ glm = dependency('glm')
 portaudio = dependency('portaudio-2.0')
 sndfile = dependency('sndfile')
 fftw = dependency('fftw3f')
-src = files('audio_buffer.cpp', 'audio_system.cpp', 'gpu_spectrogram.cpp', 'gpu_waveform.cpp', 'gui.cpp', 'main.cpp', 'primitive_renderer.cpp', 'shader.cpp', 'spectrogram.cpp', 'spectrogram_shader.cpp', 'state.cpp', 'wave_shader.cpp', 'zoom_window.cpp')
-executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw])
+openmp = dependency('openmp')
+src = files(
+  'audio_buffer.cpp',
+  'audio_system.cpp',
+  'gpu_spectrogram.cpp',
+  'gpu_waveform.cpp',
+  'gui.cpp',
+  'main.cpp',
+  'primitive_renderer.cpp',
+  'shader.cpp',
+  'spectrogram.cpp',
+  'spectrogram_shader.cpp',
+  'state.cpp',
+  'wave_shader.cpp',
+  'zoom_window.cpp'
+  )
+executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw, openmp])

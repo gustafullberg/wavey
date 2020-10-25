@@ -1,5 +1,6 @@
 #include "spectrogram.hpp"
 #include <fftw3.h>
+#include <omp.h>
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -18,14 +19,6 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
         window[n] = 0.5f * (1.f - std::cos(2.f * pi * n / (kInputSize - 1)));
     }
 
-    float* input_buffer = static_cast<float*>(fftwf_malloc(kInputSize * sizeof(float)));
-    fftwf_complex* output_buffer =
-        static_cast<fftwf_complex*>(fftwf_malloc(kOutputSize * sizeof(fftwf_complex)));
-
-    fftwf_plan plan = fftwf_plan_dft_r2c_1d(kInputSize, input_buffer, output_buffer, FFTW_ESTIMATE);
-
-    power_spectra.resize(num_channels);
-
     // Add kInputAdvance samples at the beginning,
     const int start_index = -kInputAdvance;
     // Add between kInputAdvance and kInputSize samples at the end.
@@ -33,40 +26,66 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
     // Number of power spectra (DFTs) per channel.
     const int num_spectra_per_chanel = (end_index - start_index) / kInputAdvance - 1;
 
+    power_spectra.resize(num_channels);
     for (int c = 0; c < num_channels; c++) {
-        auto& power_spectra_channel = power_spectra[c];
-        power_spectra_channel.resize(num_spectra_per_chanel);
+        power_spectra[c].resize(num_spectra_per_chanel);
+    }
 
-        for (int i = 0; i < num_spectra_per_chanel; i++) {
-            // Fill input buffer and apply Hann window.
-            int src_frame = start_index + i * kInputAdvance;
-            for (int k = 0; k < kInputSize; k++) {
-                if (src_frame >= 0 && src_frame < num_frames) {
-                    input_buffer[k] = samples[src_frame * num_channels + c] * window[k];
-                } else {
-                    input_buffer[k] = 0.f;
+    const int num_threads = omp_get_max_threads();
+    std::vector<float*> input_buffers(num_threads, nullptr);
+    std::vector<fftwf_complex*> output_buffers(num_threads, nullptr);
+    std::vector<fftwf_plan> plans(num_threads);
+    for (int t = 0; t < num_threads; t++) {
+        input_buffers[t] = static_cast<float*>(fftwf_malloc(kInputSize * sizeof(float)));
+        output_buffers[t] =
+            static_cast<fftwf_complex*>(fftwf_malloc(kOutputSize * sizeof(fftwf_complex)));
+        plans[t] =
+            fftwf_plan_dft_r2c_1d(kInputSize, input_buffers[t], output_buffers[t], FFTW_ESTIMATE);
+    }
+
+#pragma omp parallel
+    {
+        float* input_buffer = input_buffers[omp_get_thread_num()];
+        fftwf_complex* output_buffer = output_buffers[omp_get_thread_num()];
+        fftwf_plan plan = plans[omp_get_thread_num()];
+
+        for (int c = 0; c < num_channels; c++) {
+            auto& power_spectra_channel = power_spectra[c];
+
+#pragma omp for
+            for (int i = 0; i < num_spectra_per_chanel; i++) {
+                // Fill input buffer and apply Hann window.
+                int src_frame = start_index + i * kInputAdvance;
+                for (int k = 0; k < kInputSize; k++) {
+                    if (src_frame >= 0 && src_frame < num_frames) {
+                        input_buffer[k] = samples[src_frame * num_channels + c] * window[k];
+                    } else {
+                        input_buffer[k] = 0.f;
+                    }
+                    src_frame++;
                 }
-                src_frame++;
-            }
 
-            // Transform.
-            fftwf_execute(plan);
+                // Transform.
+                fftwf_execute(plan);
 
-            // Power spectrum.
-            auto& power = power_spectra_channel[i];
-            for (int k = 0; k < kOutputSize; k++) {
-                const float re = output_buffer[k][0] * kDftScaleFactor;
-                const float im = output_buffer[k][1] * kDftScaleFactor;
+                // Power spectrum.
+                auto& power = power_spectra_channel[i];
+                for (int k = 0; k < kOutputSize; k++) {
+                    const float re = output_buffer[k][0] * kDftScaleFactor;
+                    const float im = output_buffer[k][1] * kDftScaleFactor;
 
-                // Power in dB domain.
-                power[k] = 10.f * log10(re * re + im * im);
+                    // Power in dB domain.
+                    power[k] = 10.f * log10(re * re + im * im);
+                }
             }
         }
     }
 
-    fftwf_destroy_plan(plan);
-    fftwf_free(input_buffer);
-    fftwf_free(output_buffer);
+    for (int t = 0; t < num_threads; t++) {
+        fftwf_destroy_plan(plans[t]);
+        fftwf_free(input_buffers[t]);
+        fftwf_free(output_buffers[t]);
+    }
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cerr << "Power spectrum computed in "

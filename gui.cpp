@@ -80,6 +80,7 @@ void Gui::Unrealize() {
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
+    state->UpdateGpuBuffers();
     glClear(GL_COLOR_BUFFER_BIT);
 
     float play_time;
@@ -244,7 +245,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Reload all files.
     if (key_event->keyval == GDK_KEY_r && ctrl) {
-        glarea.make_current();
         state->ReloadFiles();
         UpdateTime();
         UpdateZoom();

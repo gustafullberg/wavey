@@ -29,6 +29,7 @@ class State {
     void UnloadFiles();
     void UnloadSelectedTrack();
     void ReloadFiles();
+    void UpdateGpuBuffers();
     void TogglePlayback();
     bool Playing(float* time);
     float Cursor() { return cursor; }

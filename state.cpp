@@ -15,9 +15,6 @@ void State::LoadFile(std::string file_name) {
         track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
                                                           track.audio_buffer->NumChannels(),
                                                           track.audio_buffer->NumFrames());
-        track.gpu_waveform = std::make_unique<GpuWaveform>(*track.audio_buffer);
-        track.gpu_spectrogram =
-            std::make_unique<GpuSpectrogram>(*track.spectrogram, track.audio_buffer->Samplerate());
         tracks.push_back(std::move(track));
         zoom_window.LoadFile(length);
     }
@@ -52,11 +49,23 @@ void State::UnloadSelectedTrack() {
 }
 
 void State::ReloadFiles() {
-    for(const Track& t: tracks) {
+    for (const Track& t : tracks) {
         files_to_load.push_back(t.path);
     }
     UnloadFiles();
     LoadQueuedFiles();
+}
+
+void State::UpdateGpuBuffers() {
+    for (Track& t : tracks) {
+        if (!t.gpu_waveform) {
+            t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer);
+        }
+        if (!t.gpu_spectrogram) {
+            t.gpu_spectrogram =
+                std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
+        }
+    }
 }
 
 void State::TogglePlayback() {

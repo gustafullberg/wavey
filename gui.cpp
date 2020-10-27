@@ -65,6 +65,7 @@ void Gui::Realize() {
     wave_shader.Init();
     spectrogram_shader.Init();
     prim_renderer.Init();
+    label_renderer.Init();
     state->LoadQueuedFiles();
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -77,6 +78,7 @@ void Gui::Unrealize() {
     wave_shader.Terminate();
     spectrogram_shader.Terminate();
     prim_renderer.Terminate();
+    label_renderer.Terminate();
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
@@ -125,6 +127,17 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 wave_shader.Draw(mvp_channel, rate);
                 t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
+        }
+    }
+
+    // Track labels.
+    for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
+        const Track& t = state->tracks[i];
+        if (t.gpu_label) {
+            float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+            label_renderer.Draw(*t.gpu_label, y, win_width, win_height);
+        } else {
+            queue_draw();
         }
     }
 

@@ -7,8 +7,10 @@
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
 #include "gpu_spectrogram.hpp"
+#include "gpu_track_label.hpp"
 #include "gpu_waveform.hpp"
 #include "spectrogram.hpp"
+#include "track_label.hpp"
 #include "zoom_window.hpp"
 
 struct Track {
@@ -16,8 +18,10 @@ struct Track {
     std::string short_name;
     std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<Spectrogram> spectrogram;
+    std::unique_ptr<TrackLabel> label;
     std::unique_ptr<GpuWaveform> gpu_waveform;
     std::unique_ptr<GpuSpectrogram> gpu_spectrogram;
+    std::unique_ptr<GpuTrackLabel> gpu_label;
 };
 
 class State {

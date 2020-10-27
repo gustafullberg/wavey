@@ -2,6 +2,7 @@
 #define GUI_HPP
 
 #include <gtkmm.h>
+#include "label_renderer.hpp"
 #include "primitive_renderer.hpp"
 #include "spectrogram_shader.hpp"
 #include "state.hpp"
@@ -41,6 +42,7 @@ class Gui : public Gtk::Window {
     WaveShader wave_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;
+    LabelRenderer label_renderer;
     int win_width = 0;
     int win_height = 0;
     bool mouse_down = false;

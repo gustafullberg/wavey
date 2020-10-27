@@ -15,6 +15,7 @@ void State::LoadFile(std::string file_name) {
         track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
                                                           track.audio_buffer->NumChannels(),
                                                           track.audio_buffer->NumFrames());
+        track.label = std::make_unique<TrackLabel>(track.short_name);
         tracks.push_back(std::move(track));
         zoom_window.LoadFile(length);
     }
@@ -64,6 +65,10 @@ void State::UpdateGpuBuffers() {
         if (!t.gpu_spectrogram) {
             t.gpu_spectrogram =
                 std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
+        }
+        if (!t.gpu_label && t.label->HasImageData()) {
+            t.gpu_label = std::make_unique<GpuTrackLabel>(t.label->ImageData(), t.label->Width(),
+                                                          t.label->Height());
         }
     }
 }

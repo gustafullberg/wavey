@@ -22,6 +22,8 @@ void ZoomWindow::UnloadFile(float max_length) {
 
 void ZoomWindow::Zoom(float x, float factor) {
     float zoom_level = x_right - x_left;
+    if (zoom_level <= 0.f)
+        return;
     factor = std::max(factor, 0.001f / zoom_level);
     float focus = x_left + zoom_level * x;
     x_left = focus - zoom_level * factor * x;

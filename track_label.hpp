@@ -1,21 +1,17 @@
 #ifndef TRACK_LABEL_HPP
 #define TRACK_LABEL_HPP
 
-#include <gtkmm.h>
+#include <memory>
+#include <string>
 
 class TrackLabel {
    public:
-    TrackLabel(std::string name);
-    bool HasImageData() const;
-    const unsigned char* ImageData() const;
-    int Width() const;
-    int Height() const;
-
-   private:
-    bool DamageEvent(GdkEventExpose* event);
-    Gtk::OffscreenWindow window;
-    Gtk::Label label;
-    Glib::RefPtr<Gdk::Pixbuf> pixbuf;
+    virtual ~TrackLabel() = default;
+    virtual bool HasImageData() const = 0;
+    virtual const unsigned char* ImageData() const = 0;
+    virtual int Width() const = 0;
+    virtual int Height() const = 0;
+    static std::unique_ptr<TrackLabel> Create(std::string name);
 };
 
 #endif

@@ -11,7 +11,7 @@ class TrackLabel {
     virtual const unsigned char* ImageData() const = 0;
     virtual int Width() const = 0;
     virtual int Height() const = 0;
-    static std::unique_ptr<TrackLabel> Create(std::string name);
+    static std::unique_ptr<TrackLabel> Create(std::string name, int num_channels, int samplerate);
 };
 
 #endif

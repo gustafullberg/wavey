@@ -15,7 +15,8 @@ void State::LoadFile(std::string file_name) {
         track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
                                                           track.audio_buffer->NumChannels(),
                                                           track.audio_buffer->NumFrames());
-        track.label = TrackLabel::Create(track.short_name);
+        track.label = TrackLabel::Create(track.short_name, track.audio_buffer->NumChannels(),
+                                         track.audio_buffer->Samplerate());
         tracks.push_back(std::move(track));
         zoom_window.LoadFile(length);
     }

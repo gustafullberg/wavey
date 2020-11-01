@@ -135,7 +135,8 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         const Track& t = state->tracks[i];
         if (t.gpu_label) {
             float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-            label_renderer.Draw(*t.gpu_label, y, win_width, win_height);
+            bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
+            label_renderer.Draw(*t.gpu_label, y, win_width, win_height, selected);
         } else {
             queue_draw();
         }

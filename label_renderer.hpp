@@ -11,7 +11,11 @@ class LabelRenderer {
    public:
     void Init();
     void Terminate();
-    void Draw(const GpuTrackLabel& label, float y, float win_width, float win_height);
+    void Draw(const GpuTrackLabel& label,
+              float y,
+              float win_width,
+              float win_height,
+              bool selected);
 
    private:
     GLuint vao = 0;
@@ -20,7 +24,7 @@ class LabelRenderer {
     class LabelShader : public Shader {
        public:
         void Init();
-        void Draw(const glm::mat4& mvp);
+        void Draw(const glm::mat4& mvp, const glm::vec3& color);
     } shader;
 };
 

@@ -27,6 +27,11 @@ void State::LoadQueuedFiles() {
         LoadFile(file_name);
     }
     files_to_load.clear();
+
+    // Make sure a track is selected.
+    if (tracks.size() && !selected_track) {
+        selected_track = 0;
+    }
 }
 
 void State::UnloadFiles() {

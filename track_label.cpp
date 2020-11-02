@@ -31,7 +31,7 @@ TrackLabelImpl::TrackLabelImpl(std::string name, int num_channels, int samplerat
     window.override_background_color(Gdk::RGBA("black"));
     label.override_background_color(Gdk::RGBA("black"));
     label.set_margin_start(5);
-    label.set_margin_left(5);
+    label.set_margin_top(5);
     label.set_markup("<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) +
                      " Hz");
     window.add(label);

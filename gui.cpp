@@ -108,11 +108,9 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
             const float channelOffset = (2.f * c + 1.f) / (2.f * num_channels);
             glm::mat4 mvp_channel =
                 glm::translate(mvp, glm::vec3(0.f, trackOffset + channelOffset, 0.f));
-            mvp_channel = glm::scale(mvp_channel, glm::vec3(1.f, -0.45f / num_channels, 1.f));
+            mvp_channel = glm::scale(mvp_channel, glm::vec3(1.f, -0.5f / num_channels, 1.f));
 
             glm::vec4 color_line(.5f, .9f, .5f, .1f);
-            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, -1.f), glm::vec2(length, -1.f),
-                                   color_line);
             prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 1.f), glm::vec2(length, 1.f),
                                    color_line);
             prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f),

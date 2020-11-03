@@ -1,6 +1,11 @@
 #include "state.hpp"
+#include <fstream>
 
 void State::LoadFile(const std::string& file_name) {
+    if (file_name.size() >= 4 && file_name.substr(file_name.size() - 4).compare(".lof") == 0) {
+        return LoadListOfFiles(file_name);
+    }
+
     Track track;
     track.path = file_name;
     const size_t separator_pos = file_name.rfind('/');
@@ -11,6 +16,35 @@ void State::LoadFile(const std::string& file_name) {
     // Make sure a track is selected.
     if (tracks.size() && !selected_track) {
         selected_track = 0;
+    }
+}
+
+void State::LoadListOfFiles(const std::string& file_name) {
+    // Get directory of lof file.
+    std::string dir = "";
+    size_t last_sep = file_name.find_last_of('/');
+    if (last_sep != std::string::npos) {
+        dir = file_name.substr(0, last_sep + 1);
+    }
+
+    // Scan file for file names.
+    std::ifstream infile(file_name);
+    std::string line;
+    while (std::getline(infile, line)) {
+        if (line.size() >= 8 && line.substr(0, 6).compare("file \"") == 0) {
+            size_t start = 6;
+            size_t end = line.find('\"', start);
+            if (end != std::string::npos) {
+                std::string path = line.substr(start, end - start);
+                // Prepend dir to path unless path starts with '/'.
+                if (path.size() >= 1 && path[0] != '/') {
+                    path = dir + path;
+                }
+
+                // Load.
+                LoadFile(path);
+            }
+        }
     }
 }
 

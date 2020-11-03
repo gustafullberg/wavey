@@ -64,6 +64,7 @@ class State {
     int last_played_track = 0;
 
    private:
+    void LoadListOfFiles(const std::string& file_name);
     AudioSystem* audio;
     int next_id = 0;
     float cursor = 0.f;

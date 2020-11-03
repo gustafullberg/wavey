@@ -92,14 +92,16 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
         const Track& t = state->GetTrack(i);
+        if (!t.audio_buffer) {
+            continue;
+        }
+
         if (state->SelectedTrack() && i == state->SelectedTrack()) {
             glm::vec4 color_selection(.5f, .9f, .5f, .1f);
             prim_renderer.DrawQuad(mvp, glm::vec2(z.Left(), i + 1), glm::vec2(z.Right(), i),
                                    color_selection);
         }
 
-        if (!t.audio_buffer)
-            continue;
         const int num_channels = t.audio_buffer->NumChannels();
         const int samplerate = t.audio_buffer->Samplerate();
         const float length = t.audio_buffer->Length();
@@ -129,11 +131,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
         }
-    }
 
-    // Track labels.
-    for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
-        const Track& t = state->GetTrack(i);
         if (t.gpu_label) {
             float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
@@ -231,12 +229,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Toggle bark scale spectrograms.
     if (key_event->keyval == GDK_KEY_b) {
-        if (view_spectrogram) {
-            view_bark_scale = !view_bark_scale;
-        } else {
-            view_spectrogram = true;
-            view_bark_scale = true;
-        }
+        view_bark_scale = !view_bark_scale;
     }
 
     // Start/stop playback.

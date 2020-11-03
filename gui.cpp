@@ -81,7 +81,7 @@ void Gui::Unrealize() {
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
-    state->CreateResources();
+    bool all_resources_loaded = state->CreateResources();
     glClear(GL_COLOR_BUFFER_BIT);
 
     float play_time;
@@ -138,8 +138,6 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
             float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
             label_renderer.Draw(*t.gpu_label, y, win_width, win_height, selected);
-        } else {
-            queue_draw();
         }
     }
 
@@ -161,9 +159,12 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         prim_renderer.DrawLine(mvp, glm::vec2(play_time, state->last_played_track + 1),
                                glm::vec2(play_time, state->last_played_track),
                                color_play_indicator);
-        queue_draw();
     }
 
+    // Redraw continuously until all resources are loaded and if playing audio.
+    if (!all_resources_loaded || playing) {
+        queue_draw();
+    }
     return true;
 }
 

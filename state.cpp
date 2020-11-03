@@ -38,7 +38,7 @@ void State::ReloadFiles() {
     }
 }
 
-void State::CreateResources() {
+bool State::CreateResources() {
     for (auto i = tracks.begin(); i != tracks.end();) {
         Track& t = *i;
         if (t.remove || t.reload) {
@@ -74,6 +74,7 @@ void State::CreateResources() {
         i++;
     }
 
+    bool all_resources_loaded = true;
     for (Track& t : tracks) {
         // Create audio buffer.
         if (!t.audio_buffer) {
@@ -131,7 +132,12 @@ void State::CreateResources() {
             t.gpu_label = std::make_unique<GpuTrackLabel>(t.label->ImageData(), t.label->Width(),
                                                           t.label->Height());
         }
+
+        all_resources_loaded =
+            all_resources_loaded && t.gpu_waveform && t.gpu_spectrogram && t.gpu_label;
     }
+
+    return all_resources_loaded;
 }
 
 void State::TogglePlayback() {

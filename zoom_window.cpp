@@ -11,15 +11,6 @@ void ZoomWindow::LoadFile(float length) {
     y_bottom = y_max;
 }
 
-void ZoomWindow::UnloadFile(float max_length) {
-    x_max = max_length;
-    y_max -= 1.f;
-    x_left = 0.f;
-    x_right = x_max;
-    y_top = 0.f;
-    y_bottom = y_max;
-}
-
 void ZoomWindow::Zoom(float x, float factor) {
     float zoom_level = x_right - x_left;
     if (zoom_level <= 0.f)

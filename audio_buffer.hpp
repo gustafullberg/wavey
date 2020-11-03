@@ -6,7 +6,7 @@
 
 class AudioBuffer {
    public:
-    bool LoadFile(std::string file_name);
+    AudioBuffer(std::string file_name);
     int Samplerate() const { return samplerate; }
     int NumChannels() const { return num_channels; }
     int NumFrames() const { return num_frames; }

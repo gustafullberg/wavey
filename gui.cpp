@@ -66,7 +66,6 @@ void Gui::Realize() {
     spectrogram_shader.Init();
     prim_renderer.Init();
     label_renderer.Init();
-    state->LoadQueuedFiles();
 
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
     glEnable(GL_BLEND);
@@ -82,7 +81,7 @@ void Gui::Unrealize() {
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
-    state->UpdateGpuBuffers();
+    state->CreateResources();
     glClear(GL_COLOR_BUFFER_BIT);
 
     float play_time;
@@ -92,13 +91,15 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     glm::mat4 mvp = glm::ortho(z.Left(), z.Right(), z.Bottom(), z.Top(), -1.f, 1.f);
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
-        const Track& t = state->tracks[i];
+        const Track& t = state->GetTrack(i);
         if (state->SelectedTrack() && i == state->SelectedTrack()) {
             glm::vec4 color_selection(.5f, .9f, .5f, .1f);
             prim_renderer.DrawQuad(mvp, glm::vec2(z.Left(), i + 1), glm::vec2(z.Right(), i),
                                    color_selection);
         }
 
+        if (!t.audio_buffer)
+            continue;
         const int num_channels = t.audio_buffer->NumChannels();
         const int samplerate = t.audio_buffer->Samplerate();
         const float length = t.audio_buffer->Length();
@@ -116,8 +117,10 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
             prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f),
                                    color_line);
             if (view_spectrogram) {
-                spectrogram_shader.Draw(mvp_channel, samplerate, view_bark_scale);
-                t.gpu_spectrogram->Draw(c);
+                if (t.gpu_spectrogram) {
+                    spectrogram_shader.Draw(mvp_channel, samplerate, view_bark_scale);
+                    t.gpu_spectrogram->Draw(c);
+                }
             } else {
                 float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
                 const bool use_low_res = samples_per_pixel > 1000.f;
@@ -130,7 +133,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
     // Track labels.
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
-        const Track& t = state->tracks[i];
+        const Track& t = state->GetTrack(i);
         if (t.gpu_label) {
             float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
@@ -282,9 +285,9 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             UpdateSelection();
             queue_draw();
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
-            if (state->SelectedTrack()) {
+            if (state->SelectedTrack() && state->GetSelectedTrack().audio_buffer) {
                 state->SetCursor(0.f);
-                state->SetSelection(state->tracks[*state->SelectedTrack()].audio_buffer->Length());
+                state->SetSelection(state->GetSelectedTrack().audio_buffer->Length());
                 UpdateTime();
                 UpdateSelection();
                 queue_draw();
@@ -418,7 +421,7 @@ void Gui::UpdateSelection() {
 
 void Gui::UpdateTitle() {
     if (state->SelectedTrack()) {
-        set_title(state->tracks[*state->SelectedTrack()].short_name);
+        set_title(state->GetSelectedTrack().short_name);
     } else {
         set_title("wavey");
     }

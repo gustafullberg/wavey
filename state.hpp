@@ -1,9 +1,10 @@
 #ifndef STATE_HPP
 #define STATE_HPP
 
+#include <chrono>
+#include <future>
 #include <list>
 #include <memory>
-#include <vector>
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
 #include "gpu_spectrogram.hpp"
@@ -22,18 +23,20 @@ struct Track {
     std::unique_ptr<GpuWaveform> gpu_waveform;
     std::unique_ptr<GpuSpectrogram> gpu_spectrogram;
     std::unique_ptr<GpuTrackLabel> gpu_label;
+    std::future<std::shared_ptr<AudioBuffer>> future_audio_buffer;
+    std::future<std::unique_ptr<Spectrogram>> future_spectrogram;
+    bool reload = false;
+    bool remove = false;
 };
 
 class State {
    public:
     State(AudioSystem* audio) : audio(audio){};
-    void LoadFile(std::string file_name);
-    void QueueFileForLoading(const std::string& file_name) { files_to_load.push_back(file_name); }
-    void LoadQueuedFiles();
+    void LoadFile(const std::string& file_name);
     void UnloadFiles();
     void UnloadSelectedTrack();
     void ReloadFiles();
-    void UpdateGpuBuffers();
+    void CreateResources();
     void TogglePlayback();
     bool Playing(float* time);
     float Cursor() { return cursor; }
@@ -52,8 +55,11 @@ class State {
     void SetSelection(float time) { selection = time; }
     std::optional<int> SelectedTrack() { return selected_track; }
     bool SetSelectedTrack(int track);
+    Track& GetTrack(int number);
+    Track& GetSelectedTrack();
+    void ResetView();
 
-    std::vector<Track> tracks;
+    std::list<Track> tracks;
     ZoomWindow zoom_window;
     int last_played_track = 0;
 
@@ -63,7 +69,6 @@ class State {
     float cursor = 0.f;
     std::optional<float> selection;
     std::optional<int> selected_track;
-    std::list<std::string> files_to_load;
 };
 
 #endif

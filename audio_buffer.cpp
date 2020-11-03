@@ -3,18 +3,13 @@
 #include <iostream>
 #include <sndfile.hh>
 
-bool AudioBuffer::LoadFile(std::string file_name) {
+AudioBuffer::AudioBuffer(std::string file_name) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-    // Reset.
-    samplerate = 0;
-    num_channels = 0;
-    num_frames = 0;
-    samples.clear();
 
     // Open file.
     SndfileHandle file(file_name);
     if (!file)
-        return false;
+        return;
 
     samplerate = file.samplerate();
     num_channels = file.channels();
@@ -36,5 +31,4 @@ bool AudioBuffer::LoadFile(std::string file_name) {
     std::cerr << file_name << " decoded in "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms"
               << std::endl;
-    return true;
 }

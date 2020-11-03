@@ -7,7 +7,6 @@
 class ZoomWindow {
    public:
     void LoadFile(float length);
-    void UnloadFile(float max_length);
     void ZoomIn(float x) { Zoom(x, 0.75f); }
     void ZoomOut(float x) { Zoom(x, 1.f / 0.75f); }
     void ZoomOutFull() {

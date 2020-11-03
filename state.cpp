@@ -1,32 +1,12 @@
 #include "state.hpp"
 
-void State::LoadFile(std::string file_name) {
-    std::shared_ptr<AudioBuffer> ab = std::make_shared<AudioBuffer>();
-    ab->LoadFile(file_name);
-    if (*ab) {
-        float length = ab->Length();
-        Track track;
-        track.path = file_name;
-
-        const size_t separator_pos = file_name.rfind('/');
-        track.short_name =
-            separator_pos != std::string::npos ? file_name.substr(separator_pos + 1) : file_name;
-        track.audio_buffer = std::move(ab);
-        track.spectrogram = std::make_unique<Spectrogram>(track.audio_buffer->Samples(),
-                                                          track.audio_buffer->NumChannels(),
-                                                          track.audio_buffer->NumFrames());
-        track.label = TrackLabel::Create(track.short_name, track.audio_buffer->NumChannels(),
-                                         track.audio_buffer->Samplerate());
-        tracks.push_back(std::move(track));
-        zoom_window.LoadFile(length);
-    }
-}
-
-void State::LoadQueuedFiles() {
-    for (const std::string& file_name : files_to_load) {
-        LoadFile(file_name);
-    }
-    files_to_load.clear();
+void State::LoadFile(const std::string& file_name) {
+    Track track;
+    track.path = file_name;
+    const size_t separator_pos = file_name.rfind('/');
+    track.short_name =
+        separator_pos != std::string::npos ? file_name.substr(separator_pos + 1) : file_name;
+    tracks.push_back(std::move(track));
 
     // Make sure a track is selected.
     if (tracks.size() && !selected_track) {
@@ -35,44 +15,119 @@ void State::LoadQueuedFiles() {
 }
 
 void State::UnloadFiles() {
+    // Make sure async work is completed.
+    for (Track& t : tracks) {
+        if (t.future_audio_buffer.valid())
+            t.future_audio_buffer.wait();
+        if (t.future_spectrogram.valid())
+            t.future_spectrogram.wait();
+    }
+
     tracks.clear();
-    zoom_window.Reset();
+    ResetView();
+    selected_track.reset();
 }
 
 void State::UnloadSelectedTrack() {
-    if (selected_track) {
-        tracks.erase(tracks.begin() + *selected_track);
-        float max_len = 0.f;
-        for (const Track& t : tracks) {
-            max_len = std::max(max_len, t.audio_buffer->Length());
-        }
-        zoom_window.UnloadFile(max_len);
-        if (tracks.size()) {
-            selected_track = std::min(*selected_track, static_cast<int>(tracks.size() - 1));
-        } else {
-            selected_track.reset();
-        }
-    }
+    GetSelectedTrack().remove = true;
 }
 
 void State::ReloadFiles() {
-    for (const Track& t : tracks) {
-        files_to_load.push_back(t.path);
+    for (Track& t : tracks) {
+        t.reload = true;
     }
-    UnloadFiles();
-    LoadQueuedFiles();
 }
 
-void State::UpdateGpuBuffers() {
+void State::CreateResources() {
+    for (auto i = tracks.begin(); i != tracks.end();) {
+        Track& t = *i;
+        if (t.remove || t.reload) {
+            // Make sure async work is completed.
+            if (t.future_audio_buffer.valid())
+                t.future_audio_buffer.wait();
+            if (t.future_spectrogram.valid())
+                t.future_spectrogram.wait();
+
+            // Remove track.
+            if (t.remove) {
+                tracks.erase(i++);
+                ResetView();
+                if (selected_track && tracks.size()) {
+                    selected_track = std::min(*selected_track, static_cast<int>(tracks.size()) - 1);
+                } else {
+                    selected_track.reset();
+                }
+                continue;
+            }
+
+            // Reload track.
+            if (t.reload) {
+                t.audio_buffer.reset();
+                t.spectrogram.reset();
+                t.label.reset();
+                t.gpu_waveform.reset();
+                t.gpu_spectrogram.reset();
+                t.gpu_label.reset();
+                t.reload = false;
+            }
+        }
+        i++;
+    }
+
     for (Track& t : tracks) {
-        if (!t.gpu_waveform) {
+        // Create audio buffer.
+        if (!t.audio_buffer) {
+            if (!t.future_audio_buffer.valid()) {
+                // Asynchronous creation of audio buffer.
+                t.future_audio_buffer =
+                    std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
+            } else {
+                // Check if audio buffer is ready.
+                if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
+                    std::future_status::ready) {
+                    t.audio_buffer = t.future_audio_buffer.get();
+                    ResetView();
+                }
+            }
+        }
+
+        // Create track label.
+        if (!t.label && t.audio_buffer) {
+            t.label = TrackLabel::Create(t.short_name, t.audio_buffer->NumChannels(),
+                                         t.audio_buffer->Samplerate());
+        }
+
+        // Create spectrogram.
+        if (!t.spectrogram && t.audio_buffer) {
+            if (!t.future_spectrogram.valid()) {
+                // Asynchronous creation of spectrogram.
+                t.future_spectrogram = std::async([&t] {
+                    return std::make_unique<Spectrogram>(t.audio_buffer->Samples(),
+                                                         t.audio_buffer->NumChannels(),
+                                                         t.audio_buffer->NumFrames());
+                });
+            } else {
+                // Check if spectrogram is ready.
+                if (t.future_spectrogram.wait_for(std::chrono::seconds(0)) ==
+                    std::future_status::ready) {
+                    t.spectrogram = t.future_spectrogram.get();
+                }
+            }
+        }
+
+        // Create GPU representation of waveform.
+        if (!t.gpu_waveform && t.audio_buffer) {
             t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer);
         }
-        if (!t.gpu_spectrogram) {
+
+        // Create GPU representation of spectrogram.
+        if (!t.gpu_spectrogram && t.spectrogram) {
             t.gpu_spectrogram =
                 std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
         }
-        if (!t.gpu_label && t.label->HasImageData()) {
+
+        // Create GPU representation of track label.
+        if (!t.gpu_label && t.label && t.label->HasImageData()) {
             t.gpu_label = std::make_unique<GpuTrackLabel>(t.label->ImageData(), t.label->Width(),
                                                           t.label->Height());
         }
@@ -81,8 +136,11 @@ void State::UpdateGpuBuffers() {
 
 void State::TogglePlayback() {
     if (SelectedTrack()) {
-        audio->TogglePlayback(tracks[*selected_track].audio_buffer, Cursor(), Selection());
-        last_played_track = *selected_track;
+        Track& t = GetTrack(*selected_track);
+        if (t.audio_buffer) {
+            audio->TogglePlayback(t.audio_buffer, Cursor(), Selection());
+            last_played_track = *selected_track;
+        }
     }
 }
 
@@ -98,5 +156,23 @@ bool State::SetSelectedTrack(int track) {
     else {
         selected_track = track;
         return true;
+    }
+}
+
+Track& State::GetTrack(int number) {
+    return *std::next(tracks.begin(), number);
+}
+
+Track& State::GetSelectedTrack() {
+    return GetTrack(*selected_track);
+}
+
+void State::ResetView() {
+    zoom_window.Reset();
+    if (tracks.size()) {
+        for (Track& t : tracks) {
+            float length = t.audio_buffer ? t.audio_buffer->Length() : 0.f;
+            zoom_window.LoadFile(length);
+        }
     }
 }

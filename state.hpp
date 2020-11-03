@@ -36,7 +36,7 @@ class State {
     void UnloadFiles();
     void UnloadSelectedTrack();
     void ReloadFiles();
-    bool CreateResources();
+    bool CreateResources(bool* view_reset);
     void TogglePlayback();
     bool Playing(float* time);
     float Cursor() { return cursor; }

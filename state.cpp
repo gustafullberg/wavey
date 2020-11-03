@@ -72,7 +72,8 @@ void State::ReloadFiles() {
     }
 }
 
-bool State::CreateResources() {
+bool State::CreateResources(bool* view_reset) {
+    *view_reset = false;
     for (auto i = tracks.begin(); i != tracks.end();) {
         Track& t = *i;
         if (t.remove || t.reload) {
@@ -86,6 +87,7 @@ bool State::CreateResources() {
             if (t.remove) {
                 tracks.erase(i++);
                 ResetView();
+                *view_reset = true;
                 if (selected_track && tracks.size()) {
                     selected_track = std::min(*selected_track, static_cast<int>(tracks.size()) - 1);
                 } else {
@@ -122,6 +124,7 @@ bool State::CreateResources() {
                     std::future_status::ready) {
                     t.audio_buffer = t.future_audio_buffer.get();
                     ResetView();
+                    *view_reset = true;
                 }
             }
         }

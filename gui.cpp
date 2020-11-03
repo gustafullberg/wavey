@@ -81,7 +81,11 @@ void Gui::Unrealize() {
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
-    bool all_resources_loaded = state->CreateResources();
+    bool view_reset;
+    bool all_resources_loaded = state->CreateResources(&view_reset);
+    if (view_reset) {
+        UpdateZoom();
+    }
     const float scale = get_scale_factor();
     glClear(GL_COLOR_BUFFER_BIT);
 

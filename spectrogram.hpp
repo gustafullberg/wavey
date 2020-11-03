@@ -2,6 +2,7 @@
 #define SPECTROGRAM_HPP
 
 #include <array>
+#include <mutex>
 #include <vector>
 
 constexpr int kInputSize = 1024;
@@ -23,6 +24,7 @@ class Spectrogram {
 
    private:
     std::vector<std::vector<std::array<float, kOutputSize>>> power_spectra;
+    static std::mutex mtx;
 };
 
 #endif

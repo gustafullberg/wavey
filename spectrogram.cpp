@@ -9,8 +9,12 @@ namespace {
 constexpr float kDftScaleFactor = 1.f / kInputSize;
 }  // namespace
 
+std::mutex Spectrogram::mtx;
+
 Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
+    std::unique_lock<std::mutex> lck(mtx, std::defer_lock);
 
     // Hann window.
     float window[kInputSize];
@@ -35,6 +39,7 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
     std::vector<float*> input_buffers(num_threads, nullptr);
     std::vector<fftwf_complex*> output_buffers(num_threads, nullptr);
     std::vector<fftwf_plan> plans(num_threads);
+    lck.lock();
     for (int t = 0; t < num_threads; t++) {
         input_buffers[t] = static_cast<float*>(fftwf_malloc(kInputSize * sizeof(float)));
         output_buffers[t] =
@@ -42,6 +47,7 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
         plans[t] =
             fftwf_plan_dft_r2c_1d(kInputSize, input_buffers[t], output_buffers[t], FFTW_ESTIMATE);
     }
+    lck.unlock();
 
 #pragma omp parallel
     {
@@ -81,11 +87,13 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
         }
     }
 
+    lck.lock();
     for (int t = 0; t < num_threads; t++) {
         fftwf_destroy_plan(plans[t]);
         fftwf_free(input_buffers[t]);
         fftwf_free(output_buffers[t]);
     }
+    lck.unlock();
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cerr << "Power spectrum computed in "

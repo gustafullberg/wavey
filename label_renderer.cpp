@@ -67,11 +67,13 @@ void LabelRenderer::Draw(const GpuTrackLabel& label,
                          float y,
                          float win_width,
                          float win_height,
+                         float scale_factor,
                          bool selected) {
     glm::vec3 color = selected ? glm::vec3(.9f, 0.9f, 0.5f) : glm::vec3(.5f, 0.9f, 0.5f);
     glm::mat4 mvp = glm::ortho(0.f, win_width, win_height, 0.f, -1.f, 1.f);
     mvp = glm::translate(mvp, glm::vec3(0.f, y, 0.f));
-    mvp = glm::scale(mvp, glm::vec3(label.Width(), label.Height(), 1.f));
+    mvp = glm::scale(mvp,
+                     glm::vec3(label.Width() * scale_factor, label.Height() * scale_factor, 1.f));
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, label.Texture());
     shader.Draw(mvp, color);

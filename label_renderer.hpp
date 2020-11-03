@@ -15,6 +15,7 @@ class LabelRenderer {
               float y,
               float win_width,
               float win_height,
+              float scale_factor,
               bool selected);
 
    private:

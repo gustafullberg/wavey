@@ -82,6 +82,7 @@ void Gui::Unrealize() {
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     bool all_resources_loaded = state->CreateResources();
+    const float scale = get_scale_factor();
     glClear(GL_COLOR_BUFFER_BIT);
 
     float play_time;
@@ -135,7 +136,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         if (t.gpu_label) {
             float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
-            label_renderer.Draw(*t.gpu_label, y, win_width, win_height, selected);
+            label_renderer.Draw(*t.gpu_label, y, win_width, win_height, scale, selected);
         }
     }
 

@@ -12,7 +12,9 @@ class Spectrogram {
    public:
     Spectrogram(const float* samples, int num_channels, int num_frames);
     int NumChannels() const { return power_spectra.size(); }
-    int NumPowerSpectrumPerChannel() const { return power_spectra[0].size(); }
+    int NumPowerSpectrumPerChannel() const {
+        return power_spectra.size() ? power_spectra[0].size() : 0;
+    }
     int Advance() const { return kInputAdvance; }
     int OutputSize() const { return kOutputSize; }
     const float* Data(int channel, int spectrum) const {

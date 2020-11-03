@@ -3,7 +3,10 @@
 
 class TrackLabelImpl : public TrackLabel {
    public:
-    TrackLabelImpl(std::string name, int num_channels, int samplerate);
+    TrackLabelImpl(const std::string& path,
+                   const std::string& name,
+                   int num_channels,
+                   int samplerate);
     virtual ~TrackLabelImpl() = default;
     virtual bool HasImageData() const;
     virtual const unsigned char* ImageData() const;
@@ -17,7 +20,10 @@ class TrackLabelImpl : public TrackLabel {
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 };
 
-TrackLabelImpl::TrackLabelImpl(std::string name, int num_channels, int samplerate) {
+TrackLabelImpl::TrackLabelImpl(const std::string& path,
+                               const std::string& name,
+                               int num_channels,
+                               int samplerate) {
     std::string channels;
     if (num_channels == 1) {
         channels = "mono";
@@ -32,8 +38,12 @@ TrackLabelImpl::TrackLabelImpl(std::string name, int num_channels, int samplerat
     label.override_background_color(Gdk::RGBA("black"));
     label.set_margin_start(5);
     label.set_margin_top(5);
-    label.set_markup("<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) +
-                     " Hz");
+    if (num_channels) {
+        label.set_markup("<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) +
+                         " Hz");
+    } else {
+        label.set_markup("<b>Error:</b> Failed to load " + path);
+    }
     window.add(label);
     window.signal_damage_event().connect(sigc::mem_fun(*this, &TrackLabelImpl::DamageEvent));
     window.show_all();
@@ -60,6 +70,9 @@ int TrackLabelImpl::Height() const {
     return pixbuf->get_height();
 }
 
-std::unique_ptr<TrackLabel> TrackLabel::Create(std::string name, int num_channels, int samplerate) {
-    return std::make_unique<TrackLabelImpl>(name, num_channels, samplerate);
+std::unique_ptr<TrackLabel> TrackLabel::Create(const std::string& path,
+                                               const std::string& name,
+                                               int num_channels,
+                                               int samplerate) {
+    return std::make_unique<TrackLabelImpl>(path, name, num_channels, samplerate);
 }

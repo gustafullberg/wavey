@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
         state.LoadFile(argv[i]);
     }
     argc = 1;
-    auto app = Gtk::Application::create(argc, argv, "com.github.gustafullberg.wavy",
+    auto app = Gtk::Application::create(argc, argv, "com.github.gustafullberg.wavey",
                                         Gio::APPLICATION_NON_UNIQUE);
     Gui gui(&state);
     app->run(gui);

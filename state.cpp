@@ -93,7 +93,7 @@ void State::CreateResources() {
 
         // Create track label.
         if (!t.label && t.audio_buffer) {
-            t.label = TrackLabel::Create(t.short_name, t.audio_buffer->NumChannels(),
+            t.label = TrackLabel::Create(t.path, t.short_name, t.audio_buffer->NumChannels(),
                                          t.audio_buffer->Samplerate());
         }
 

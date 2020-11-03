@@ -51,7 +51,7 @@ GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
 
     std::vector<float> buffer_lod;
     MakeLowResBuffer(buffer_lod, ab, 1000);
-    num_vertices_lod = buffer_lod.size() / num_channels;
+    num_vertices_lod = num_channels ? buffer_lod.size() / num_channels : 0;
 
     glGenBuffers(1, &vbo_lod);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_lod);

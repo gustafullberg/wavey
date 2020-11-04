@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Wavey
+GenericName=Audio Analysis Tool
+Comment=Play and analyse audio files
+
+#Icon=wavey
+
+Type=Application
+Categories=Audio;
+
+Exec=wavey %F
+StartupNotify=false
+Terminal=false
+MimeType=audio/flac;audio/x-flac;audio/basic;audio/x-aiff;audio/x-wav;application/ogg;audio/x-vorbis+ogg;

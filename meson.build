@@ -24,4 +24,4 @@ src = files(
   'wave_shader.cpp',
   'zoom_window.cpp'
   )
-executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw, openmp])
+executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw, openmp], install : true)

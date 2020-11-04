@@ -253,7 +253,9 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Toggle bark scale spectrograms.
     if (key_event->keyval == GDK_KEY_b) {
-        view_bark_scale = !view_bark_scale;
+        if (view_spectrogram) {
+            view_bark_scale = !view_bark_scale;
+        }
     }
 
     // Start/stop playback.

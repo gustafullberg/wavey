@@ -11,6 +11,15 @@ Gui::Gui(State* state) : state(state) {
     add_events(Gdk::KEY_PRESS_MASK);
 
     set_default_size(800, 600);
+
+    set_titlebar(headerbar);
+    headerbar.set_has_subtitle(false);
+    headerbar.set_show_close_button();
+    open.set_label("_Open");
+    open.set_use_underline();
+    open.signal_clicked().connect(sigc::mem_fun(*this, &Gui::ChooseFiles));
+    headerbar.add(open);
+
     add(box);
 
     box.pack_start(grid_top, false, true);
@@ -180,6 +189,16 @@ void Gui::Resize(int width, int height) {
 bool Gui::KeyPress(GdkEventKey* key_event) {
     bool ctrl = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::CONTROL_MASK;
 
+    // Quit.
+    if (key_event->keyval == GDK_KEY_q && ctrl) {
+        close();
+    }
+
+    // Open files.
+    if (key_event->keyval == GDK_KEY_o && ctrl) {
+        ChooseFiles();
+    }
+
     // Full zoom out.
     if (key_event->keyval == GDK_KEY_f && ctrl) {
         state->zoom_window.ZoomOutFull();
@@ -245,6 +264,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
             StartTimeUpdate();
             queue_draw();
         }
+        return true;
     }
 
     // Close selected track.
@@ -268,7 +288,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     }
 
     queue_draw();
-    return true;
+    return false;
 }
 
 bool Gui::ButtonPress(GdkEventButton* button_event) {
@@ -359,6 +379,19 @@ void Gui::Scrolling() {
     state->zoom_window.PanTo(adjustment->get_value());
     UpdateZoom();
     queue_draw();
+}
+
+void Gui::ChooseFiles() {
+    Gtk::FileChooserDialog dialog("Open", Gtk::FILE_CHOOSER_ACTION_OPEN);
+    dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    dialog.add_button("_Open", Gtk::RESPONSE_OK);
+    dialog.set_select_multiple();
+    int result = dialog.run();
+    if (result == Gtk::RESPONSE_OK) {
+        std::vector<std::string> files = dialog.get_filenames();
+        for (std::string file : files)
+            state->LoadFile(file);
+    }
 }
 
 void Gui::StartTimeUpdate() {

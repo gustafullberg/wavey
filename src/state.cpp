@@ -192,14 +192,19 @@ bool State::Playing(float* time) {
 }
 
 bool State::SetSelectedTrack(int track) {
-    if (track < 0 || track >= static_cast<int>(tracks.size()))
+    track = std::max(0, std::min(static_cast<int>(tracks.size()) - 1, track));
+    if (!tracks.size()) {
+        selected_track.reset();
         return false;
-    else if (*selected_track && *selected_track == track)
+    } else if (selected_track && *selected_track == track)
         return false;
     else {
         selected_track = track;
-        return true;
+        if (!zoom_window.ShowingAllTracks()) {
+            zoom_window.ShowSingleTrack(track);
+        }
     }
+    return true;
 }
 
 Track& State::GetTrack(int number) {

@@ -235,7 +235,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         UpdateSelection();
     }
 
-    // Pan width arrow keys.
+    // Pan and select track with arrow keys.
     if (key_event->keyval == GDK_KEY_Left) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() - adjustment->get_step_increment());
@@ -244,6 +244,14 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
         UpdateZoom();
+    } else if (key_event->keyval == GDK_KEY_Up) {
+        if (state->SelectedTrack()) {
+            state->SetSelectedTrack(*state->SelectedTrack() - 1);
+        }
+    } else if (key_event->keyval == GDK_KEY_Down) {
+        if (state->SelectedTrack()) {
+            state->SetSelectedTrack(*state->SelectedTrack() + 1);
+        }
     }
 
     // Toggle spectrogram view.

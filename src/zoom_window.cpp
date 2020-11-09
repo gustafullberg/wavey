@@ -25,13 +25,24 @@ void ZoomWindow::Zoom(float x, float factor) {
 }
 
 void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {
-    if (y_top != 0.f || y_bottom != y_max) {
+    if (!ShowingAllTracks()) {
         y_top = 0.f;
         y_bottom = y_max;
     } else if (track) {
         y_top = *track;
         y_bottom = *track + 1;
     }
+}
+
+void ZoomWindow::ShowSingleTrack(std::optional<int> track) {
+    if (track) {
+        y_top = *track;
+        y_bottom = *track + 1;
+    }
+}
+
+bool ZoomWindow::ShowingAllTracks() {
+    return y_top == 0.f && y_bottom == y_max;
 }
 
 void ZoomWindow::PanTo(float time) {

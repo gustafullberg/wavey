@@ -21,6 +21,8 @@ class ZoomWindow {
         x_right = std::min(end, x_max);
     }
     void ToggleSingleTrack(std::optional<int> track);
+    void ShowSingleTrack(std::optional<int> track);
+    bool ShowingAllTracks();
     void PanTo(float time);
     float Left() const { return x_left; }
     float Right() const { return x_right; }

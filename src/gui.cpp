@@ -279,12 +279,16 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Close selected track.
     if (key_event->keyval == GDK_KEY_w && ctrl) {
-        state->UnloadSelectedTrack();
-        UpdateTime();
-        UpdateZoom();
-        UpdateSelection();
-        UpdateTitle();
-        queue_draw();
+        if (!state->tracks.size()) {
+            close();
+        } else {
+            state->UnloadSelectedTrack();
+            UpdateTime();
+            UpdateZoom();
+            UpdateSelection();
+            UpdateTitle();
+            queue_draw();
+        }
     }
 
     // Reload all files.

@@ -1,5 +1,16 @@
 #include "state.hpp"
+#include <sys/stat.h>
 #include <fstream>
+
+namespace {
+uint64_t GetModTime(std::string path) {
+    struct stat statbuf;
+    if (stat(path.c_str(), &statbuf) == 0) {
+        return 1000000000 * statbuf.st_mtim.tv_sec + statbuf.st_mtim.tv_nsec;
+    }
+    return 0;
+}
+}  // namespace
 
 void State::LoadFile(const std::string& file_name) {
     if (file_name.size() >= 4 && file_name.substr(file_name.size() - 4).compare(".lof") == 0) {
@@ -11,6 +22,7 @@ void State::LoadFile(const std::string& file_name) {
     const size_t separator_pos = file_name.rfind('/');
     track.short_name =
         separator_pos != std::string::npos ? file_name.substr(separator_pos + 1) : file_name;
+    track.mod_time = GetModTime(track.path);
     tracks.push_back(std::move(track));
 
     // Make sure a track is selected.
@@ -68,7 +80,11 @@ void State::UnloadSelectedTrack() {
 
 void State::ReloadFiles() {
     for (Track& t : tracks) {
-        t.reload = true;
+        uint64_t mod_time = GetModTime(t.path);
+        if (mod_time != t.mod_time) {
+            t.mod_time = mod_time;
+            t.reload = true;
+        }
     }
 }
 

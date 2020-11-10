@@ -17,6 +17,7 @@
 struct Track {
     std::string path;
     std::string short_name;
+    uint64_t mod_time;
     std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<Spectrogram> spectrogram;
     std::unique_ptr<TrackLabel> label;

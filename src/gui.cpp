@@ -56,16 +56,15 @@ Gui::Gui(State* state) : state(state) {
     grid_bottom.set_row_homogeneous(true);
     grid_bottom.set_column_homogeneous(true);
     grid_bottom.attach(status_time, 0, 0, 1, 1);
-    grid_bottom.attach(status_selection, 1, 0, 1, 1);
+    grid_bottom.attach(status_frequency, 1, 0, 1, 1);
     status_time.set_xalign(0);
     status_time.set_margin_left(5);
-    status_selection.set_xalign(1);
-    status_selection.set_margin_right(5);
+    status_frequency.set_xalign(1);
+    status_frequency.set_margin_right(5);
 
     show_all();
     UpdateTime();
     UpdateZoom();
-    UpdateSelection();
     UpdateTitle();
 }
 
@@ -214,6 +213,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Zoom toggle one/all tracks.
     if (key_event->keyval == GDK_KEY_z) {
         state->zoom_window.ToggleSingleTrack(state->SelectedTrack());
+        UpdateFrequency();
     }
 
     // Scroll and move the cursor to the beginning.
@@ -222,7 +222,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         scrollbar.set_value(0.f);
         UpdateTime();
         UpdateZoom();
-        UpdateSelection();
     }
 
     // Scroll and move the cursor to the end.
@@ -232,7 +231,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         scrollbar.set_value(adjustment->get_upper());
         UpdateTime();
         UpdateZoom();
-        UpdateSelection();
     }
 
     // Pan and select track with arrow keys.
@@ -257,12 +255,14 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Toggle spectrogram view.
     if (key_event->keyval == GDK_KEY_s) {
         view_spectrogram = !view_spectrogram;
+        UpdateFrequency();
     }
 
     // Toggle bark scale spectrograms.
     if (key_event->keyval == GDK_KEY_b) {
         if (view_spectrogram) {
             view_bark_scale = !view_bark_scale;
+            UpdateFrequency();
         }
     }
 
@@ -285,7 +285,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
             state->UnloadSelectedTrack();
             UpdateTime();
             UpdateZoom();
-            UpdateSelection();
             UpdateTitle();
             queue_draw();
         }
@@ -296,7 +295,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         state->ReloadFiles();
         UpdateTime();
         UpdateZoom();
-        UpdateSelection();
         UpdateTitle();
         queue_draw();
     }
@@ -315,14 +313,12 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             state->SetCursor(time);
             mouse_down = true;
             UpdateTime();
-            UpdateSelection();
             queue_draw();
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->SelectedTrack() && state->GetSelectedTrack().audio_buffer) {
                 state->SetCursor(0.f);
                 state->SetSelection(state->GetSelectedTrack().audio_buffer->Length());
                 UpdateTime();
-                UpdateSelection();
                 queue_draw();
             }
         }
@@ -344,24 +340,24 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
 
 bool Gui::PointerMove(GdkEventMotion* motion_event) {
     const float scale = get_scale_factor();
-    const float x =
-        std::min(std::max(static_cast<float>(motion_event->x) * scale / win_width, 0.f), 1.f);
-    const float y =
+    mouse_x = std::min(std::max(static_cast<float>(motion_event->x) * scale / win_width, 0.f), 1.f);
+    mouse_y =
         std::min(std::max(static_cast<float>(motion_event->y) * scale / win_height, 0.f), 1.f);
 
     if (mouse_down) {
-        const float time = state->zoom_window.GetTime(x);
+        const float time = state->zoom_window.GetTime(mouse_x);
         state->SetSelection(time);
         UpdateTime();
-        UpdateSelection();
         queue_draw();
     }
 
-    bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(y));
+    bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(mouse_y));
     if (changed) {
         UpdateTitle();
         queue_draw();
     }
+
+    UpdateFrequency();
 
     return true;
 }
@@ -423,8 +419,23 @@ bool Gui::UpdateTime() {
         time = state->Cursor();
     }
 
-    Glib::ustring s = Glib::ustring::compose("<tt>Time: <b>%1</b></tt>", FormatTime(time));
-    status_time.set_markup(s);
+    Glib::ustring s;
+    if (playing || !state->Selection()) {
+        s = Glib::ustring::compose("<tt>Time: <b>%1</b></tt>", FormatTime(time));
+    } else {
+        float s_start = time;
+        float s_end = *state->Selection();
+        if (s_end < s_start)
+            std::swap(s_start, s_end);
+
+        s = Glib::ustring::compose("<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start),
+                                   FormatTime(s_end), FormatTime(s_end - s_start));
+    }
+
+    if (s != str_time) {
+        str_time = s;
+        status_time.set_markup(str_time);
+    }
 
     return playing;
 }
@@ -440,36 +451,61 @@ void Gui::UpdateZoom() {
     adjustment->set_page_increment(page_size);
     adjustment->set_value(z.Left());
 
-    Glib::ustring view_start = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Left()));
+    {
+        Glib::ustring s = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Left()));
+        if (s != str_view_start) {
+            str_view_start = s;
+            status_view_start.set_markup(str_view_start);
+        }
+    }
 
-    Glib::ustring view_end = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Right()));
+    {
+        Glib::ustring s = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Right()));
+        if (s != str_view_end) {
+            str_view_end = s;
+            status_view_end.set_markup(str_view_end);
+        }
+    }
 
-    Glib::ustring view_length =
-        Glib::ustring::compose("<tt>(%1)</tt>", FormatTime(z.Right() - z.Left()));
-
-    status_view_start.set_markup(view_start);
-    status_view_end.set_markup(view_end);
-    status_view_length.set_markup(view_length);
+    {
+        Glib::ustring s = Glib::ustring::compose("<tt>(%1)</tt>", FormatTime(z.Right() - z.Left()));
+        if (s != str_view_length) {
+            str_view_length = s;
+            status_view_length.set_markup(str_view_length);
+        }
+    }
 }
 
-void Gui::UpdateSelection() {
-    float s_start = state->Cursor();
-    float s_end = state->Selection() ? *state->Selection() : s_start;
-    if (s_end < s_start)
-        std::swap(s_start, s_end);
-
-    Glib::ustring selection =
-        Glib::ustring::compose("<tt>Selection: %1 - %2 (%3)</tt>", FormatTime(s_start),
-                               FormatTime(s_end), FormatTime(s_end - s_start));
-
-    status_selection.set_markup(selection);
+void Gui::UpdateFrequency() {
+    Glib::ustring s;
+    if (view_spectrogram && state->tracks.size()) {
+        ZoomWindow& z = state->zoom_window;
+        int track_number = z.GetTrack(mouse_y);
+        float y = 1 - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
+        float f = 0.f;
+        Track& t = state->GetTrack(track_number);
+        if (t.audio_buffer) {
+            float nyquist_freq = 0.5f * t.audio_buffer->Samplerate();
+            if (view_bark_scale) {
+                const float bark_scaling = 26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f;
+                f = 1960. * (bark_scaling * y + 0.53) / (26.28 - bark_scaling * y);
+            } else {
+                f = y * nyquist_freq;
+            }
+        }
+        s = Glib::ustring::compose("<tt>Frequency: %1 Hz</tt>", std::round(f));
+    }
+    if (s != str_frequency) {
+        str_frequency = s;
+        status_frequency.set_markup(str_frequency);
+    }
 }
 
 void Gui::UpdateTitle() {
-    if (state->SelectedTrack()) {
-        set_title(state->GetSelectedTrack().short_name);
-    } else {
-        set_title("wavey");
+    Glib::ustring s = state->SelectedTrack() ? state->GetSelectedTrack().short_name : "wavey";
+    if (s != str_title) {
+        str_title = s;
+        set_title(str_title);
     }
 }
 

@@ -27,7 +27,7 @@ class Gui : public Gtk::Window {
     void StartTimeUpdate();
     bool UpdateTime();
     void UpdateZoom();
-    void UpdateSelection();
+    void UpdateFrequency();
     void UpdateTitle();
     Glib::ustring FormatTime(float t);
     Gtk::HeaderBar headerbar;
@@ -38,7 +38,7 @@ class Gui : public Gtk::Window {
     Gtk::Grid grid_top;
     Gtk::Grid grid_bottom;
     Gtk::Label status_time;
-    Gtk::Label status_selection;
+    Gtk::Label status_frequency;
     Gtk::Label status_view_start;
     Gtk::Label status_view_end;
     Gtk::Label status_view_length;
@@ -48,10 +48,18 @@ class Gui : public Gtk::Window {
     LabelRenderer label_renderer;
     int win_width = 0;
     int win_height = 0;
+    float mouse_x = 0;
+    float mouse_y = 0;
     bool mouse_down = false;
     bool view_spectrogram = false;
     bool view_bark_scale = false;
     State* state = nullptr;
+    Glib::ustring str_title;
+    Glib::ustring str_time;
+    Glib::ustring str_frequency;
+    Glib::ustring str_view_start;
+    Glib::ustring str_view_end;
+    Glib::ustring str_view_length;
 };
 
 #endif

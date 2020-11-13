@@ -63,9 +63,7 @@ Gui::Gui(State* state) : state(state) {
     status_frequency.set_margin_right(5);
 
     show_all();
-    UpdateTime();
-    UpdateZoom();
-    UpdateTitle();
+    UpdateWidgets();
 }
 
 void Gui::Realize() {
@@ -92,7 +90,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     bool view_reset;
     bool all_resources_loaded = state->CreateResources(&view_reset);
     if (view_reset) {
-        UpdateZoom();
+        UpdateWidgets();
     }
     const float scale = get_scale_factor();
     glClear(GL_COLOR_BUFFER_BIT);
@@ -201,27 +199,22 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Full zoom out.
     if (key_event->keyval == GDK_KEY_f && ctrl) {
         state->zoom_window.ZoomOutFull();
-        UpdateZoom();
     }
 
     // Zoom to selection.
     if (key_event->keyval == GDK_KEY_e && ctrl && state->Selection()) {
         state->zoom_window.ZoomRange(state->Cursor(), *state->Selection());
-        UpdateZoom();
     }
 
     // Zoom toggle one/all tracks.
     if (key_event->keyval == GDK_KEY_z) {
         state->zoom_window.ToggleSingleTrack(state->SelectedTrack());
-        UpdateFrequency();
     }
 
     // Scroll and move the cursor to the beginning.
     if (key_event->keyval == GDK_KEY_Home) {
         state->SetCursor(0.f);
         scrollbar.set_value(0.f);
-        UpdateTime();
-        UpdateZoom();
     }
 
     // Scroll and move the cursor to the end.
@@ -229,19 +222,15 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         auto adjustment = scrollbar.get_adjustment();
         state->SetCursor(adjustment->get_upper());
         scrollbar.set_value(adjustment->get_upper());
-        UpdateTime();
-        UpdateZoom();
     }
 
     // Pan and select track with arrow keys.
     if (key_event->keyval == GDK_KEY_Left) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() - adjustment->get_step_increment());
-        UpdateZoom();
     } else if (key_event->keyval == GDK_KEY_Right) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
-        UpdateZoom();
     } else if (key_event->keyval == GDK_KEY_Up) {
         if (state->SelectedTrack()) {
             state->SetSelectedTrack(*state->SelectedTrack() - 1);
@@ -255,14 +244,12 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Toggle spectrogram view.
     if (key_event->keyval == GDK_KEY_s) {
         view_spectrogram = !view_spectrogram;
-        UpdateFrequency();
     }
 
     // Toggle bark scale spectrograms.
     if (key_event->keyval == GDK_KEY_b) {
         if (view_spectrogram) {
             view_bark_scale = !view_bark_scale;
-            UpdateFrequency();
         }
     }
 
@@ -283,9 +270,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
             close();
         } else {
             state->UnloadSelectedTrack();
-            UpdateTime();
-            UpdateZoom();
-            UpdateTitle();
             queue_draw();
         }
     }
@@ -293,12 +277,10 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Reload all files.
     if (key_event->keyval == GDK_KEY_r && ctrl) {
         state->ReloadFiles();
-        UpdateTime();
-        UpdateZoom();
-        UpdateTitle();
         queue_draw();
     }
 
+    UpdateWidgets();
     queue_draw();
     return false;
 }
@@ -312,16 +294,15 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             const float time = state->zoom_window.GetTime(x);
             state->SetCursor(time);
             mouse_down = true;
-            UpdateTime();
             queue_draw();
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->SelectedTrack() && state->GetSelectedTrack().audio_buffer) {
                 state->SetCursor(0.f);
                 state->SetSelection(state->GetSelectedTrack().audio_buffer->Length());
-                UpdateTime();
                 queue_draw();
             }
         }
+        UpdateWidgets();
     }
     return true;
 }
@@ -330,7 +311,7 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
     if (button_event->button == 1) {
         if (button_event->type == GDK_BUTTON_RELEASE) {
             state->FixSelection();
-            UpdateTime();
+            UpdateWidgets();
             queue_draw();
         }
         mouse_down = false;
@@ -347,17 +328,15 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
     if (mouse_down) {
         const float time = state->zoom_window.GetTime(mouse_x);
         state->SetSelection(time);
-        UpdateTime();
         queue_draw();
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(mouse_y));
     if (changed) {
-        UpdateTitle();
         queue_draw();
     }
 
-    UpdateFrequency();
+    UpdateWidgets();
 
     return true;
 }
@@ -379,7 +358,7 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
     }
 
-    UpdateZoom();
+    UpdateWidgets();
     queue_draw();
     return true;
 }
@@ -387,7 +366,7 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
 void Gui::Scrolling() {
     auto adjustment = scrollbar.get_adjustment();
     state->zoom_window.PanTo(adjustment->get_value());
-    UpdateZoom();
+    UpdateWidgets();
     queue_draw();
 }
 
@@ -407,6 +386,13 @@ void Gui::ChooseFiles() {
 void Gui::StartTimeUpdate() {
     UpdateTime();
     Glib::signal_timeout().connect(sigc::mem_fun(*this, &Gui::UpdateTime), 20);
+}
+
+void Gui::UpdateWidgets() {
+    UpdateTime();
+    UpdateZoom();
+    UpdateFrequency();
+    UpdateTitle();
 }
 
 bool Gui::UpdateTime() {

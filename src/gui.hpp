@@ -25,6 +25,7 @@ class Gui : public Gtk::Window {
     void Scrolling();
     void ChooseFiles();
     void StartTimeUpdate();
+    void UpdateWidgets();
     bool UpdateTime();
     void UpdateZoom();
     void UpdateFrequency();

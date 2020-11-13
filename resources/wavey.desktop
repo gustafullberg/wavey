@@ -3,7 +3,7 @@ Name=Wavey
 GenericName=Audio Analysis Tool
 Comment=Play and analyse audio files
 
-#Icon=wavey
+Icon=wavey
 
 Type=Application
 Categories=Audio;

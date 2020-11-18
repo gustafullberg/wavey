@@ -61,6 +61,9 @@ class Gui : public Gtk::Window {
     Glib::ustring str_view_start;
     Glib::ustring str_view_end;
     Glib::ustring str_view_length;
+
+    // Last opened file.
+    std::string open_dir;
 };
 
 #endif

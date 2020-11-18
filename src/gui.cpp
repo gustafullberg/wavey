@@ -375,11 +375,19 @@ void Gui::ChooseFiles() {
     dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
     dialog.add_button("_Open", Gtk::RESPONSE_OK);
     dialog.set_select_multiple();
+    if (open_dir.size()) {
+        dialog.set_current_folder(open_dir);
+    }
     int result = dialog.run();
     if (result == Gtk::RESPONSE_OK) {
         std::vector<std::string> files = dialog.get_filenames();
-        for (std::string file : files)
+        for (std::string file : files) {
             state->LoadFile(file);
+            size_t last_sep = file.find_last_of('/');
+            if (last_sep != std::string::npos) {
+                open_dir = file.substr(0, last_sep);
+            }
+        }
     }
 }
 

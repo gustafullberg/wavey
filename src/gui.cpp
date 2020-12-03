@@ -6,6 +6,33 @@
 #include <iomanip>
 #include <iostream>  //DEBUG
 
+namespace {
+
+Glib::ustring FormatTime(float t, bool show_minutes = true) {
+    float minutes = std::floor(t / 60.f);
+    float seconds = t - 60.f * minutes;
+    if (show_minutes || minutes > 0.f) {
+        return Glib::ustring::sprintf("%02.f:%06.03f", minutes, seconds);
+    } else {
+        return Glib::ustring::sprintf("%.03f s", seconds);
+    }
+}
+
+Glib::ustring FormatSelectionDuration(float duration, int samplerate) {
+    Glib::ustring duration_status = FormatTime(duration, /*show_minutes=*/false) + " - " +
+                                    Glib::ustring::format(static_cast<int>(duration * samplerate)) +
+                                    " samples";
+    if (duration > 1e-5 && duration < 1e5) {
+        float frequency = 1.0 / duration;
+        duration_status = duration_status + " - " +
+                          Glib::ustring::format(std::setfill(L'0'), std::setw(6), std::fixed,
+                                                std::setprecision(3), frequency) +
+                          "Hz";
+    }
+    return duration_status;
+}
+}  // namespace
+
 Gui::Gui(State* state) : state(state) {
     signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress), false);
     add_events(Gdk::KEY_PRESS_MASK);
@@ -427,8 +454,10 @@ bool Gui::UpdateTime() {
         if (s_end < s_start)
             std::swap(s_start, s_end);
 
-        s = Glib::ustring::compose("<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start),
-                                   FormatTime(s_end), FormatTime(s_end - s_start, false));
+        const float s_duration = s_end - s_start;
+        s = Glib::ustring::compose(
+            "<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start), FormatTime(s_end),
+            FormatSelectionDuration(s_duration, state->GetCurrentSamplerate()));
     }
 
     if (s != str_time) {
@@ -513,15 +542,5 @@ void Gui::UpdateTitle() {
     if (s != str_title) {
         str_title = s;
         set_title(str_title);
-    }
-}
-
-Glib::ustring Gui::FormatTime(float t, bool show_minutes) {
-    float minutes = std::floor(t / 60.f);
-    float seconds = t - 60.f * minutes;
-    if (show_minutes || minutes > 0.f) {
-        return Glib::ustring::sprintf("%02.f:%06.03f", minutes, seconds);
-    } else {
-        return Glib::ustring::sprintf("%.03f s", seconds);
     }
 }

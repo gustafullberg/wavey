@@ -28,6 +28,10 @@ struct Track {
     std::future<std::unique_ptr<Spectrogram>> future_spectrogram;
     bool reload = false;
     bool remove = false;
+
+    int GetSamplerate() {
+        return audio_buffer->Samplerate();
+    }
 };
 
 class State {
@@ -59,6 +63,7 @@ class State {
     Track& GetTrack(int number);
     Track& GetSelectedTrack();
     void ResetView();
+    int GetCurrentSamplerate();
 
     std::list<Track> tracks;
     ZoomWindow zoom_window;

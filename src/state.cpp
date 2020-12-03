@@ -240,3 +240,7 @@ void State::ResetView() {
         }
     }
 }
+
+int State::GetCurrentSamplerate() {
+    return GetSelectedTrack().GetSamplerate();
+}

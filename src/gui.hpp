@@ -30,7 +30,7 @@ class Gui : public Gtk::Window {
     void UpdateZoom();
     void UpdateFrequency();
     void UpdateTitle();
-    Glib::ustring FormatTime(float t, bool show_minutes = true);
+    
     Gtk::HeaderBar headerbar;
     Gtk::Button open;
     Gtk::VBox box;

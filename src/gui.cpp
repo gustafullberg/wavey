@@ -423,7 +423,7 @@ bool Gui::UpdateTime() {
             std::swap(s_start, s_end);
 
         s = Glib::ustring::compose("<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start),
-                                   FormatTime(s_end), FormatTime(s_end - s_start));
+                                   FormatTime(s_end), FormatTime(s_end - s_start, false));
     }
 
     if (s != str_time) {
@@ -462,7 +462,8 @@ void Gui::UpdateZoom() {
     }
 
     {
-        Glib::ustring s = Glib::ustring::compose("<tt>(%1)</tt>", FormatTime(z.Right() - z.Left()));
+        Glib::ustring s =
+            Glib::ustring::compose("<tt>(%1)</tt>", FormatTime(z.Right() - z.Left(), false));
         if (s != str_view_length) {
             str_view_length = s;
             status_view_length.set_markup(str_view_length);
@@ -510,12 +511,12 @@ void Gui::UpdateTitle() {
     }
 }
 
-Glib::ustring Gui::FormatTime(float t) {
+Glib::ustring Gui::FormatTime(float t, bool show_minutes) {
     float minutes = std::floor(t / 60.f);
     float seconds = t - 60.f * minutes;
-    return Glib::ustring::format(std::setfill(L'0'), std::setw(2), std::fixed, std::setprecision(0),
-                                 minutes) +
-           ":" +
-           Glib::ustring::format(std::setfill(L'0'), std::setw(6), std::fixed, std::setprecision(3),
-                                 seconds);
+    if (show_minutes || minutes > 0.f) {
+        return Glib::ustring::sprintf("%02.f:%06.03f", minutes, seconds);
+    } else {
+        return Glib::ustring::sprintf("%.03f s", seconds);
+    }
 }

@@ -472,7 +472,9 @@ void Gui::UpdateZoom() {
 
 void Gui::UpdateFrequency() {
     Glib::ustring s;
-    if (view_spectrogram && state->tracks.size()) {
+    if (!state->tracks.size()) {
+        s = "";
+    } else if (view_spectrogram) {
         ZoomWindow& z = state->zoom_window;
         int track_number = z.GetTrack(mouse_y);
         float y = 1 - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
@@ -488,6 +490,11 @@ void Gui::UpdateFrequency() {
             }
         }
         s = Glib::ustring::compose("<tt>Frequency: %1 Hz</tt>", std::round(f));
+    } else {
+        ZoomWindow& z = state->zoom_window;
+        float y = std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
+        float a = 20.f * std::log10(2.f * std::abs(y - 0.5f));
+        s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS</tt>", a);
     }
     if (s != str_frequency) {
         str_frequency = s;

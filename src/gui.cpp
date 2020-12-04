@@ -326,9 +326,14 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
         std::min(std::max(static_cast<float>(motion_event->y) * scale / win_height, 0.f), 1.f);
 
     if (mouse_down) {
-        const float time = state->zoom_window.GetTime(mouse_x);
-        state->SetSelection(time);
-        queue_draw();
+        ZoomWindow& z = state->zoom_window;
+        const float time = z.GetTime(mouse_x);
+        const float dt = std::fabs(time - state->Cursor());
+        // Mouse needs to move at least one pixel to count as a interval selection.
+        if (dt >= (z.Right() - z.Left()) / win_width) {
+            state->SetSelection(time);
+            queue_draw();
+        }
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(mouse_y));

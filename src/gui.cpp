@@ -477,31 +477,35 @@ void Gui::UpdateZoom() {
 }
 
 void Gui::UpdateFrequency() {
-    Glib::ustring s;
-    if (!state->tracks.size()) {
-        s = "";
-    } else if (view_spectrogram) {
+    Glib::ustring s = "";
+    if (state->tracks.size()) {
         ZoomWindow& z = state->zoom_window;
         int track_number = z.GetTrack(mouse_y);
-        float y = 1 - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
-        float f = 0.f;
         Track& t = state->GetTrack(track_number);
         if (t.audio_buffer) {
-            float nyquist_freq = 0.5f * t.audio_buffer->Samplerate();
-            if (view_bark_scale) {
-                const float bark_scaling = 26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f;
-                f = 1960. * (bark_scaling * y + 0.53) / (26.28 - bark_scaling * y);
+            // Track space: On what y-coordinate is the pointer?
+            float y = 1.f - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
+            // Channel space: On what y-coordinate is the pointer?
+            float num_channels = t.audio_buffer->NumChannels();
+            y = std::fmod(num_channels * y, 1.f);
+            if (view_spectrogram) {
+                float f = 0.f;
+                float nyquist_freq = 0.5f * t.audio_buffer->Samplerate();
+                if (view_bark_scale) {
+                    const float bark_scaling =
+                        26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f;
+                    f = 1960. * (bark_scaling * y + 0.53) / (26.28 - bark_scaling * y);
+                } else {
+                    f = y * nyquist_freq;
+                }
+                s = Glib::ustring::compose("<tt>Frequency: %1 Hz</tt>", std::round(f));
             } else {
-                f = y * nyquist_freq;
+                float a = 20.f * std::log10(2.f * std::abs(y - 0.5f));
+                s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS</tt>", a);
             }
         }
-        s = Glib::ustring::compose("<tt>Frequency: %1 Hz</tt>", std::round(f));
-    } else {
-        ZoomWindow& z = state->zoom_window;
-        float y = std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
-        float a = 20.f * std::log10(2.f * std::abs(y - 0.5f));
-        s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS</tt>", a);
     }
+
     if (s != str_frequency) {
         str_frequency = s;
         status_frequency.set_markup(str_frequency);

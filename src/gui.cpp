@@ -138,7 +138,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
                 const bool use_low_res = samples_per_pixel > 1000.f;
                 const float rate = use_low_res ? samplerate * 2.f / 1000.f : samplerate;
-                wave_shader.Draw(mvp_channel, rate);
+                wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
                 t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
         }
@@ -209,6 +209,24 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Zoom toggle one/all tracks.
     if (key_event->keyval == GDK_KEY_z) {
         state->zoom_window.ToggleSingleTrack(state->SelectedTrack());
+    }
+
+    // Zoom in.
+    if (key_event->keyval == GDK_KEY_plus || key_event->keyval == GDK_KEY_KP_Add) {
+        if (ctrl) {
+            state->zoom_window.ZoomInVertical();
+        } else {
+            state->zoom_window.ZoomIn(.5f);
+        }
+    }
+
+    // Zoom out.
+    if (key_event->keyval == GDK_KEY_minus || key_event->keyval == GDK_KEY_KP_Subtract) {
+        if (ctrl) {
+            state->zoom_window.ZoomOutVertical();
+        } else {
+            state->zoom_window.ZoomOut(.5f);
+        }
     }
 
     // Scroll and move the cursor to the beginning.
@@ -349,12 +367,22 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
 bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
     const float scale = get_scale_factor();
     const float x = scroll_event->x * scale / win_width;
+    bool ctrl =
+        (scroll_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::CONTROL_MASK;
 
     GdkScrollDirection dir = scroll_event->direction;
     if (dir == GDK_SCROLL_UP) {
-        state->zoom_window.ZoomIn(x);
+        if (ctrl) {
+            state->zoom_window.ZoomInVertical();
+        } else {
+            state->zoom_window.ZoomIn(x);
+        }
     } else if (dir == GDK_SCROLL_DOWN) {
-        state->zoom_window.ZoomOut(x);
+        if (ctrl) {
+            state->zoom_window.ZoomOutVertical();
+        } else {
+            state->zoom_window.ZoomOut(x);
+        }
     } else if (dir == GDK_SCROLL_LEFT) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() - adjustment->get_step_increment());

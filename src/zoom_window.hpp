@@ -9,6 +9,8 @@ class ZoomWindow {
     void LoadFile(float length);
     void ZoomIn(float x) { Zoom(x, 0.75f); }
     void ZoomOut(float x) { Zoom(x, 1.f / 0.75f); }
+    void ZoomInVertical();
+    void ZoomOutVertical();
     void ZoomOutFull() {
         x_left = 0.f;
         x_right = x_max;
@@ -22,7 +24,7 @@ class ZoomWindow {
     }
     void ToggleSingleTrack(std::optional<int> track);
     void ShowSingleTrack(std::optional<int> track);
-    bool ShowingAllTracks();
+    bool ShowingAllTracks() const;
     void PanTo(float time);
     float Left() const { return x_left; }
     float Right() const { return x_right; }
@@ -31,6 +33,7 @@ class ZoomWindow {
     float MaxX() const { return x_max; }
     float GetTime(float x) const;
     int GetTrack(float y) const;
+    float VerticalZoom() const { return vertical_zoom; }
     void Reset();
 
    private:
@@ -41,5 +44,6 @@ class ZoomWindow {
     float y_top = 0.f;
     float y_bottom = 0.f;
     float y_max = 0.f;
+    float vertical_zoom = 1.f;
 };
 #endif

@@ -24,6 +24,14 @@ void ZoomWindow::Zoom(float x, float factor) {
     x_right = std::min(x_right, x_max);
 }
 
+void ZoomWindow::ZoomInVertical() {
+    vertical_zoom = std::min(vertical_zoom * 1.2f, 100.f);
+}
+
+void ZoomWindow::ZoomOutVertical() {
+    vertical_zoom = std::max(vertical_zoom / 1.2f, 1.f);
+}
+
 void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {
     if (!ShowingAllTracks()) {
         y_top = 0.f;
@@ -41,7 +49,7 @@ void ZoomWindow::ShowSingleTrack(std::optional<int> track) {
     }
 }
 
-bool ZoomWindow::ShowingAllTracks() {
+bool ZoomWindow::ShowingAllTracks() const {
     return y_top == 0.f && y_bottom == y_max;
 }
 

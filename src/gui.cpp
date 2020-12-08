@@ -229,6 +229,11 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         }
     }
 
+    // Reset vertical zoom.
+    if(key_event->keyval == GDK_KEY_0 && ctrl) {
+      state->zoom_window.ZoomOutFullVertical();
+    }
+
     // Scroll and move the cursor to the beginning.
     if (key_event->keyval == GDK_KEY_Home) {
         state->SetCursor(0.f);

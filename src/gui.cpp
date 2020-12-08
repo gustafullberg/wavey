@@ -494,7 +494,7 @@ void Gui::UpdateFrequency() {
                 if (view_bark_scale) {
                     const float bark_scaling =
                         26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f;
-                    f = 1960. * (bark_scaling * y + 0.53) / (26.28 - bark_scaling * y);
+                    f = 1960.f * (bark_scaling * y + 0.53f) / (26.28f - bark_scaling * y);
                 } else {
                     f = y * nyquist_freq;
                 }

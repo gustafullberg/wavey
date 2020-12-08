@@ -257,8 +257,8 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     }
 
     // Reset vertical zoom.
-    if(key_event->keyval == GDK_KEY_0 && ctrl) {
-      state->zoom_window.ZoomOutFullVertical();
+    if (key_event->keyval == GDK_KEY_0 && ctrl) {
+        state->zoom_window.ZoomOutFullVertical();
     }
 
     // Scroll and move the cursor to the beginning.
@@ -562,7 +562,7 @@ void Gui::UpdateFrequency() {
                 }
                 s = Glib::ustring::compose("<tt>Frequency: %1 Hz</tt>", std::round(f));
             } else {
-                float a = 20.f * std::log10(2.f * std::abs(y - 0.5f));
+                float a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
                 s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS</tt>", a);
             }
         }

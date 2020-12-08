@@ -23,6 +23,7 @@ class ZoomWindow {
     void ZoomInVertical();
     void ZoomOutVertical();
     void ZoomOutFullVertical() { vertical_zoom = 1.f; }
+    float VerticalZoom() { return vertical_zoom; }
     void ToggleSingleTrack(std::optional<int> track);
     void ShowSingleTrack(std::optional<int> track);
     bool ShowingAllTracks() const;

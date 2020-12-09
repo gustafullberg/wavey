@@ -19,15 +19,12 @@ Glib::ustring FormatTime(float t, bool show_minutes = true) {
 }
 
 Glib::ustring FormatSelectionDuration(float duration, int samplerate) {
-    Glib::ustring duration_status = FormatTime(duration, /*show_minutes=*/false) + " - " +
-                                    Glib::ustring::format(static_cast<int>(duration * samplerate)) +
-                                    " samples";
-    if (duration > 1e-5 && duration < 1e5) {
-        float frequency = 1.0 / duration;
-        duration_status = duration_status + " - " +
-                          Glib::ustring::format(std::setfill(L'0'), std::setw(6), std::fixed,
-                                                std::setprecision(3), frequency) +
-                          "Hz";
+    Glib::ustring duration_status =
+        FormatTime(duration, /*show_minutes=*/false) +
+        Glib::ustring::sprintf(" - %d samples", static_cast<int>(duration * samplerate));
+    if (duration > 1e-5f && duration < 1e5f) {
+        float frequency = 1.f / duration;
+        duration_status += Glib::ustring::sprintf(" - %.03f Hz", frequency);
     }
     return duration_status;
 }
@@ -81,12 +78,14 @@ Gui::Gui(State* state) : state(state) {
 
     box.pack_start(grid_bottom, false, true);
     grid_bottom.set_row_homogeneous(true);
-    grid_bottom.set_column_homogeneous(true);
     grid_bottom.attach(status_time, 0, 0, 1, 1);
     grid_bottom.attach(status_frequency, 1, 0, 1, 1);
     status_time.set_xalign(0);
     status_time.set_margin_left(5);
+    status_time.set_margin_right(5);
+    status_frequency.set_hexpand(true);
     status_frequency.set_xalign(1);
+    status_frequency.set_margin_left(5);
     status_frequency.set_margin_right(5);
 
     show_all();

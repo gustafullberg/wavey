@@ -67,6 +67,7 @@ GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
 
 GpuWaveform::~GpuWaveform() {
     glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &vbo_lod);
     glDeleteVertexArrays(1, &vao);
 }
 

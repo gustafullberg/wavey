@@ -511,7 +511,7 @@ void Gui::UpdateZoom() {
     adjustment->set_lower(0);
     adjustment->set_upper(z.MaxX());
     adjustment->set_page_size(page_size);
-    adjustment->set_step_increment(0.1f * page_size);
+    adjustment->set_step_increment(std::max(0.1f * page_size, 0.001f));
     adjustment->set_page_increment(page_size);
     adjustment->set_value(z.Left());
 

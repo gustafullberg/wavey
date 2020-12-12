@@ -164,7 +164,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
                 const bool use_low_res = samples_per_pixel > 1000.f;
                 const float rate = use_low_res ? samplerate * 2.f / 1000.f : samplerate;
-                wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                wave_shader.Draw(mvp_channel, z.Left(), rate, z.VerticalZoom());
                 t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
         }

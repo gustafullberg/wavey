@@ -29,9 +29,7 @@ struct Track {
     bool reload = false;
     bool remove = false;
 
-    int GetSamplerate() {
-        return audio_buffer->Samplerate();
-    }
+    int GetSamplerate() { return audio_buffer->Samplerate(); }
 };
 
 class State {

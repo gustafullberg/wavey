@@ -72,25 +72,13 @@ GpuWaveform::~GpuWaveform() {
 }
 
 void GpuWaveform::Draw(int channel, float start_time, float end_time, bool low_res) {
-    if (low_res) {
-        const int start_index =
-            std::max(static_cast<int>(std::floor(start_time * samplerate / 1000.f * 2.f)), 0);
-        const int end_index = std::min(
-            static_cast<int>(std::ceil(end_time * samplerate / 1000.f * 2.f)), num_vertices_lod);
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_lod);
-        glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, num_channels * sizeof(float),
-                              (const void*)(channel * sizeof(float)));
-        glDrawArrays(GL_LINE_STRIP, start_index, end_index - start_index);
-    } else {
-        const int start_index = std::max(static_cast<int>(std::floor(start_time * samplerate)), 0);
-        const int end_index =
-            std::min(static_cast<int>(std::ceil(end_time * samplerate)), num_vertices);
+    const float rate = low_res ? samplerate / 1000.f * 2.f : samplerate;
+    const int start_index = std::max(static_cast<int>(std::floor(start_time * rate)), 0);
+    const int end_index = std::min(static_cast<int>(std::ceil(end_time * rate)), num_vertices);
 
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, num_channels * sizeof(float),
-                              (const void*)(channel * sizeof(float)));
-        glDrawArrays(GL_LINE_STRIP, start_index, end_index - start_index);
-    }
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, low_res ? vbo_lod : vbo);
+    glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, num_channels * sizeof(float),
+                          (const void*)((start_index * num_channels + channel) * sizeof(float)));
+    glDrawArrays(GL_LINE_STRIP, 0, end_index - start_index + 1);
 }

@@ -30,7 +30,7 @@ class Gui : public Gtk::Window {
     void UpdateZoom();
     void UpdateFrequency();
     void UpdateTitle();
-    
+
     Gtk::HeaderBar headerbar;
     Gtk::Button open;
     Gtk::VBox box;

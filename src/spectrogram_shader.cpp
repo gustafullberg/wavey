@@ -9,9 +9,10 @@ layout(location = 0) in vec2 pos;
 layout(location = 1) in vec3 tex_coord_v;
 out vec3 tex_coord_f;
 layout(location = 0) uniform mat4 mvp;
+layout(location = 5) uniform float start_time;
 
 void main() {
-    gl_Position = mvp * vec4(pos, 0.0, 1.0);
+    gl_Position = mvp * vec4(pos - vec2(start_time, 0.0), 0.0, 1.0);
     tex_coord_f = tex_coord_v;
 })";
 
@@ -58,11 +59,12 @@ void SpectrogramShader::Init() {
     glUseProgram(0);
 }
 
-void SpectrogramShader::Draw(const glm::mat4& mvp, float samplerate, bool bark) {
+void SpectrogramShader::Draw(const glm::mat4& mvp, float start_time, float samplerate, bool bark) {
     float nyquist_freq = .5f * samplerate;
     glUseProgram(program);
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
     glUniform1f(2, nyquist_freq);
     glUniform1f(3, 26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f);
     glUniform1i(4, bark);
+    glUniform1f(5, start_time);
 }

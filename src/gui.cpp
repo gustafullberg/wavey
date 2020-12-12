@@ -125,7 +125,8 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     bool playing = state->Playing(&play_time);
 
     const ZoomWindow& z = state->zoom_window;
-    glm::mat4 mvp = glm::ortho(z.Left(), z.Right(), z.Bottom(), z.Top(), -1.f, 1.f);
+    const float view_length = z.Right() - z.Left();
+    glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
         const Track& t = state->GetTrack(i);
@@ -135,7 +136,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
         if (state->SelectedTrack() && i == state->SelectedTrack()) {
             glm::vec4 color_selection(.5f, .9f, .5f, .1f);
-            prim_renderer.DrawQuad(mvp, glm::vec2(z.Left(), i + 1), glm::vec2(z.Right(), i),
+            prim_renderer.DrawQuad(mvp, glm::vec2(0.f, i + 1), glm::vec2(view_length, i),
                                    color_selection);
         }
 
@@ -151,20 +152,20 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
             mvp_channel = glm::scale(mvp_channel, glm::vec3(1.f, -0.5f / num_channels, 1.f));
 
             glm::vec4 color_line(.5f, .9f, .5f, .1f);
-            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 1.f), glm::vec2(length, 1.f),
+            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 1.f), glm::vec2(view_length, 1.f),
                                    color_line);
-            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f), glm::vec2(length, 0.f),
-                                   color_line);
+            prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f),
+                                   glm::vec2(length - z.Left(), 0.f), color_line);
             if (view_spectrogram) {
                 if (t.gpu_spectrogram) {
-                    spectrogram_shader.Draw(mvp_channel, samplerate, view_bark_scale);
+                    spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale);
                     t.gpu_spectrogram->Draw(c);
                 }
             } else {
                 float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
                 const bool use_low_res = samples_per_pixel > 1000.f;
                 const float rate = use_low_res ? samplerate * 2.f / 1000.f : samplerate;
-                wave_shader.Draw(mvp_channel, z.Left(), rate, z.VerticalZoom());
+                wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
                 t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
         }
@@ -176,24 +177,27 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         }
     }
 
+    const float cursor_x = state->Cursor() - z.Left();
+
     // Selection.
     if (state->Selection()) {
+        const float selection_x = *state->Selection() - z.Left();
         glm::vec4 color_selection(.5f, .9f, .5f, .1f);
-        prim_renderer.DrawQuad(mvp, glm::vec2(state->Cursor(), z.Bottom()),
-                               glm::vec2(*state->Selection(), z.Top()), color_selection);
+        prim_renderer.DrawQuad(mvp, glm::vec2(cursor_x, z.Bottom()),
+                               glm::vec2(selection_x, z.Top()), color_selection);
     }
 
     // Cursor.
     glm::vec4 color_cursor(.5f, .9f, .5f, .5f);
-    prim_renderer.DrawLine(mvp, glm::vec2(state->Cursor(), z.Bottom()),
-                           glm::vec2(state->Cursor(), z.Top()), color_cursor);
+    prim_renderer.DrawLine(mvp, glm::vec2(cursor_x, z.Bottom()), glm::vec2(cursor_x, z.Top()),
+                           color_cursor);
 
     // Play position indicator.
     if (playing) {
+        const float play_x = play_time - z.Left();
         glm::vec4 color_play_indicator(.9f, .5f, .5f, 1.f);
-        prim_renderer.DrawLine(mvp, glm::vec2(play_time, state->last_played_track + 1),
-                               glm::vec2(play_time, state->last_played_track),
-                               color_play_indicator);
+        prim_renderer.DrawLine(mvp, glm::vec2(play_x, state->last_played_track + 1),
+                               glm::vec2(play_x, state->last_played_track), color_play_indicator);
     }
 
     // Redraw continuously until all resources are loaded and if playing audio.

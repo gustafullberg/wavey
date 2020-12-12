@@ -28,15 +28,10 @@ void WaveShader::Init() {
     Shader::Init(kVertexSource, kFragmentSource);
 }
 
-void WaveShader::Draw(const glm::mat4& mvp,
-                      float start_time,
-                      float samplerate,
-                      float vertical_zoom) {
+void WaveShader::Draw(const glm::mat4& mvp, float samplerate, float vertical_zoom) {
     const float sample_time = 1.f / samplerate;
-    const float offset = std::fmod(start_time, sample_time);
-    const glm::mat4 mvp_translated = glm::translate(mvp, glm::vec3(start_time - offset, 0.f, 0.f));
     glUseProgram(program);
-    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp_translated));
+    glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
     glUniform1f(1, sample_time);
     glUniform1f(2, vertical_zoom);
 }

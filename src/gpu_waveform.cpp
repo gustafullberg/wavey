@@ -74,7 +74,9 @@ GpuWaveform::~GpuWaveform() {
 void GpuWaveform::Draw(int channel, float start_time, float end_time, bool low_res) {
     const float rate = low_res ? samplerate / 1000.f * 2.f : samplerate;
     const int start_index = std::max(static_cast<int>(std::floor(start_time * rate)), 0);
-    const int end_index = std::min(static_cast<int>(std::ceil(end_time * rate)), num_vertices);
+    const int end_index =
+        std::min(start_index + static_cast<int>(std::ceil((end_time - start_time) * rate)),
+                 num_vertices - 1);
 
     glBindVertexArray(vao);
     glBindBuffer(GL_ARRAY_BUFFER, low_res ? vbo_lod : vbo);

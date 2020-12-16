@@ -54,6 +54,7 @@ class Gui : public Gtk::Window {
     bool mouse_down = false;
     bool view_spectrogram = false;
     bool view_bark_scale = false;
+    bool follow_playback = true;
     State* state = nullptr;
     Glib::ustring str_title;
     Glib::ustring str_time;

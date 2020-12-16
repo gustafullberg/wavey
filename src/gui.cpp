@@ -198,6 +198,11 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         glm::vec4 color_play_indicator(.9f, .5f, .5f, 1.f);
         prim_renderer.DrawLine(mvp, glm::vec2(play_x, state->last_played_track + 1),
                                glm::vec2(play_x, state->last_played_track), color_play_indicator);
+        if (follow_playback) {
+            if (play_time > z.Right() || play_time < z.Left()) {
+                state->zoom_window.PanTo(play_time);
+            }
+        }
     }
 
     // Redraw continuously until all resources are loaded and if playing audio.
@@ -229,6 +234,11 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Full zoom out.
     if (key_event->keyval == GDK_KEY_f && ctrl) {
         state->zoom_window.ZoomOutFull();
+    }
+
+    // Follow playback
+    if (key_event->keyval == GDK_KEY_f && !ctrl) {
+        follow_playback = !follow_playback;
     }
 
     // Zoom to selection.
@@ -483,7 +493,8 @@ bool Gui::UpdateTime() {
 
     Glib::ustring s;
     if (playing || !state->Selection()) {
-        s = Glib::ustring::compose("<tt>Time: <b>%1</b></tt>", FormatTime(time));
+        s = Glib::ustring::compose("<tt>Time: <b>%1</b></tt> %2", FormatTime(time),
+                                   follow_playback && playing ? "[follow]" : "");
     } else {
         float s_start = time;
         float s_end = *state->Selection();

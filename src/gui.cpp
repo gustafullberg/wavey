@@ -438,23 +438,30 @@ void Gui::Scrolling() {
     queue_draw();
 }
 
+void Gui::UpdateCurrentWorkingDirectory(std::string_view filename) {
+    size_t last_sep = filename.find_last_of('/');
+    if (last_sep != std::string::npos) {
+        current_working_directory = filename.substr(0, last_sep);
+    }
+}
+
 void Gui::ChooseFiles() {
     Gtk::FileChooserDialog dialog("Open", Gtk::FILE_CHOOSER_ACTION_OPEN);
     dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
     dialog.add_button("_Open", Gtk::RESPONSE_OK);
     dialog.set_select_multiple();
-    if (open_dir.size()) {
-        dialog.set_current_folder(open_dir);
+    if (current_working_directory.size()) {
+        dialog.set_current_folder(current_working_directory);
     }
     int result = dialog.run();
     if (result == Gtk::RESPONSE_OK) {
         std::vector<std::string> files = dialog.get_filenames();
         for (std::string file : files) {
             state->LoadFile(file);
-            size_t last_sep = file.find_last_of('/');
-            if (last_sep != std::string::npos) {
-                open_dir = file.substr(0, last_sep);
-            }
+            UpdateCurrentWorkingDirectory(file);
+        }
+    }
+}
         }
     }
 }

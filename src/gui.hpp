@@ -30,6 +30,7 @@ class Gui : public Gtk::Window {
     void UpdateZoom();
     void UpdateFrequency();
     void UpdateTitle();
+    void UpdateCurrentWorkingDirectory(std::string_view filename);
 
     Gtk::HeaderBar headerbar;
     Gtk::Button open;
@@ -64,7 +65,7 @@ class Gui : public Gtk::Window {
     Glib::ustring str_view_length;
 
     // Last opened file.
-    std::string open_dir;
+    std::string current_working_directory;
 };
 
 #endif

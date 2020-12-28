@@ -10,7 +10,7 @@ class AudioBuffer {
     int Samplerate() const { return samplerate; }
     int NumChannels() const { return num_channels; }
     int NumFrames() const { return num_frames; }
-    float Length() const { return static_cast<float>(num_frames) / samplerate; }
+    float Duration() const { return static_cast<float>(num_frames) / samplerate; }
     const float* Samples() const { return samples.data(); }
     operator bool() const { return samplerate != 0; }
 

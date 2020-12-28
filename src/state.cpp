@@ -235,7 +235,7 @@ void State::ResetView() {
     zoom_window.Reset();
     if (tracks.size()) {
         for (Track& t : tracks) {
-            float length = t.audio_buffer ? t.audio_buffer->Length() : 0.f;
+            float length = t.audio_buffer ? t.audio_buffer->Duration() : 0.f;
             zoom_window.LoadFile(length);
         }
     }

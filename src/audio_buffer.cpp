@@ -13,6 +13,7 @@ AudioBuffer::AudioBuffer(std::string file_name) {
 
     samplerate = file.samplerate();
     num_channels = file.channels();
+    format = file.format();
     constexpr size_t kFramesPerRead = 10240;
     size_t frames_read;
     do {
@@ -31,4 +32,12 @@ AudioBuffer::AudioBuffer(std::string file_name) {
     std::cerr << file_name << " decoded in "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms"
               << std::endl;
+}
+
+void AudioBuffer::SaveTo(float start, float end, const std::string& filename) {
+    // assert(start < end);
+    SndfileHandle file(filename, SFM_WRITE, format, num_channels, samplerate);
+    size_t number_of_frames = (end - start) * samplerate;
+    float* begin = samples.data() + static_cast<size_t>(start * num_channels * samplerate);
+    file.writef(begin, number_of_frames);
 }

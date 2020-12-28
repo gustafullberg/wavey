@@ -142,7 +142,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
         const int num_channels = t.audio_buffer->NumChannels();
         const int samplerate = t.audio_buffer->Samplerate();
-        const float length = t.audio_buffer->Length();
+        const float length = t.audio_buffer->Duration();
 
         for (int c = 0; c < num_channels; c++) {
             const float trackOffset = i;
@@ -351,7 +351,7 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->SelectedTrack() && state->GetSelectedTrack().audio_buffer) {
                 state->SetCursor(0.f);
-                state->SetSelection(state->GetSelectedTrack().audio_buffer->Length());
+                state->SetSelection(state->GetSelectedTrack().audio_buffer->Duration());
                 queue_draw();
             }
         }

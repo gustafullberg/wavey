@@ -304,8 +304,13 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         }
     }
 
+    // Save selection.
+    if (key_event->keyval == GDK_KEY_s && ctrl) {
+        SaveSelectionTo();
+    }
+
     // Toggle spectrogram view.
-    if (key_event->keyval == GDK_KEY_s) {
+    if (key_event->keyval == GDK_KEY_s && !ctrl) {
         view_spectrogram = !view_spectrogram;
     }
 
@@ -472,6 +477,23 @@ void Gui::ChooseFiles() {
         }
     }
 }
+
+void Gui::SaveSelectionTo() {
+    Gtk::FileChooserDialog dialog("Save Selection", Gtk::FILE_CHOOSER_ACTION_SAVE);
+    dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    dialog.add_button("_Open", Gtk::RESPONSE_OK);
+    if (!current_working_directory.empty()) {
+        dialog.set_current_folder(current_working_directory);
+    }
+    int result = dialog.run();
+    if (result == Gtk::RESPONSE_OK && state->Selection()) {
+        const float start = std::min(state->Cursor(), *state->Selection());
+        const float end = std::max(state->Cursor(), *state->Selection());
+        std::shared_ptr<AudioBuffer> audio_buffer = state->GetSelectedTrack().audio_buffer;
+        if (start < end && start < audio_buffer->Duration() && end < audio_buffer->Duration()) {
+            std::string filename = dialog.get_filename();
+            audio_buffer->SaveTo(start, end, filename);
+            UpdateCurrentWorkingDirectory(filename);
         }
     }
 }
@@ -602,3 +624,5 @@ void Gui::UpdateTitle() {
         set_title(str_title);
     }
 }
+
+PrimitiveRenderer prim_renderer;

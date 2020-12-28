@@ -24,6 +24,7 @@ class Gui : public Gtk::Window {
     bool ScrollWheel(GdkEventScroll* scroll_event);
     void Scrolling();
     void ChooseFiles();
+    void SaveSelectionTo();
     void StartTimeUpdate();
     void UpdateWidgets();
     bool UpdateTime();

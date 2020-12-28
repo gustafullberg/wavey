@@ -13,11 +13,13 @@ class AudioBuffer {
     float Duration() const { return static_cast<float>(num_frames) / samplerate; }
     const float* Samples() const { return samples.data(); }
     operator bool() const { return samplerate != 0; }
+    void SaveTo(float start, float end, const std::string& filename);
 
    private:
     int samplerate = 0;
     int num_channels = 0;
     int num_frames = 0;
+    int format = 0;
     std::vector<float> samples;
 };
 

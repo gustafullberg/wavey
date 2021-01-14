@@ -1,6 +1,7 @@
 # wavey
 Linux tool to analyze and play audio files.
 
+### Usage
 #### General
 - ``Ctrl+O`` - Open files
 - ``Ctrl+S`` - Save selection to new file
@@ -36,3 +37,9 @@ Linux tool to analyze and play audio files.
 - ``Ctrl+0`` - Reset vertical zoom
 - ``Left`` - Pan left
 - ``Right`` - Pan right
+
+### Build
+#### Build dependencies Debian
+``` apt-get install libgtkmm-3.0-dev libgl-dev libglm-dev portaudio19-dev libsndfile1-dev libfftw3-dev ```
+#### Build dependencies Arch Linux
+``` pacman -S gtkmm3 glm portaudio libsndfile fftw ```

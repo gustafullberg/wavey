@@ -152,7 +152,7 @@ bool State::CreateResources(bool* view_reset) {
         }
 
         // Create spectrogram.
-        if (!t.spectrogram && t.audio_buffer) {
+        if (!t.spectrogram && t.audio_buffer && !t.gpu_spectrogram) {
             if (!t.future_spectrogram.valid()) {
                 // Asynchronous creation of spectrogram.
                 t.future_spectrogram = std::async([&t] {
@@ -178,6 +178,7 @@ bool State::CreateResources(bool* view_reset) {
         if (!t.gpu_spectrogram && t.spectrogram) {
             t.gpu_spectrogram =
                 std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
+            t.spectrogram.reset();
         }
 
         // Create GPU representation of track label.

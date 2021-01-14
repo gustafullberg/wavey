@@ -40,6 +40,7 @@ class State {
     void UnloadSelectedTrack();
     void ReloadFiles();
     bool CreateResources(bool* view_reset);
+    void SetLooping(bool do_loop);
     void TogglePlayback();
     bool Playing(float* time);
     float Cursor() { return cursor; }

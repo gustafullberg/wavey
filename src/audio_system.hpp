@@ -13,8 +13,11 @@ class AudioSystem {
     void TogglePlayback(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end);
     void Play(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end);
     bool Playing(float* time);
+    void SetLooping(bool do_loop);
+    bool Looping() const { return loop; }
 
     std::shared_ptr<AudioBuffer> playingBuffer;
+
     int index;
     int end_index;
 
@@ -28,6 +31,8 @@ class AudioSystem {
     PaStream* stream = nullptr;
     int num_channels = 0;
     int samplerate = 0;
+    bool loop;
+    int start_index;
 };
 
 #endif

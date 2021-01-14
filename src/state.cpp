@@ -193,6 +193,10 @@ bool State::CreateResources(bool* view_reset) {
     return all_resources_loaded;
 }
 
+void State::SetLooping(bool do_loop) {
+    audio->SetLooping(do_loop);
+}
+
 void State::TogglePlayback() {
     if (SelectedTrack()) {
         Track& t = GetTrack(*selected_track);

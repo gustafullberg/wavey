@@ -8,6 +8,7 @@ Linux tool to analyze and play audio files.
 - ``Ctrl+R`` - Reload all modified files
 - ``Ctrl+Q`` - Quit
 - ``Space`` - Start / stop playback from cursor
+- ``Shift+Space` - Start / stop looping playback from cursor
 
 #### Selection
 - ``Mouse click`` - Set cursor

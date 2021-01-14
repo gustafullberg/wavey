@@ -2,7 +2,7 @@
 #include <cmath>
 #include <cstring>
 
-AudioSystem::AudioSystem() {
+AudioSystem::AudioSystem() : loop(false) {
     Pa_Initialize();
 }
 
@@ -11,6 +11,10 @@ AudioSystem::~AudioSystem() {
         Pa_CloseStream(stream);
     }
     Pa_Terminate();
+}
+
+void AudioSystem::SetLooping(bool do_loop) {
+    loop = do_loop;
 }
 
 void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab,
@@ -41,11 +45,12 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, std::option
     if (end && start > *end) {
         std::swap(start, *end);
     }
-    index = std::floor(start * ab->Samplerate());
-    index = std::max(index, 0);
-    index = std::min(index, ab->NumFrames());
+    start_index = std::floor(start * ab->Samplerate());
+    start_index = std::max(start_index, 0);
+    start_index = std::min(start_index, ab->NumFrames());
     end_index = end ? std::floor(*end * ab->Samplerate()) : ab->NumFrames();
     end_index = std::min(end_index, ab->NumFrames());
+    index = start_index;
     Pa_StartStream(stream);
 }
 
@@ -72,12 +77,33 @@ int AudioSystem::Callback(const void* input_buffer,
     memcpy(out, &samples[t->num_channels * t->index],
            sizeof(float) * t->num_channels * frames_to_copy);
     t->index += frames_to_copy;
-
+    // TODO(lio): Clean up this mess.
     if (frames_to_copy < frames) {
-        for (int i = frames_to_copy * t->num_channels; i < frames * t->num_channels; i++) {
-            out[i] = 0.f;
+        int remaining_frames = frames - frames_to_copy;
+        if (t->loop) {
+            t->index = t->start_index;
+            while (remaining_frames > 0) {
+                int this_loop_number_of_frame = std::min(remaining_frames, t->end_index - t->index);
+                memcpy(out, &samples[t->num_channels * t->index],
+                       sizeof(float) * t->num_channels * this_loop_number_of_frame);
+                remaining_frames -= this_loop_number_of_frame;
+                t->index += this_loop_number_of_frame;
+                while (t->index >= t->end_index) {
+                    t->index -= t->end_index - t->start_index;
+                }
+            }
+            return paContinue;
+        } else {
+            for (int i = frames_to_copy * t->num_channels; i < frames * t->num_channels; i++) {
+                out[i] = 0.f;
+            }
+            return paComplete;
         }
-        return paComplete;
+    }
+
+    if (t->loop && t->index == t->end_index - 1) {
+        t->index = t->start_index;
+        return paContinue;
     }
 
     return paContinue;

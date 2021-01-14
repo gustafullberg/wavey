@@ -220,6 +220,7 @@ void Gui::Resize(int width, int height) {
 
 bool Gui::KeyPress(GdkEventKey* key_event) {
     bool ctrl = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::CONTROL_MASK;
+    bool shift = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::SHIFT_MASK;
 
     // Quit.
     if (key_event->keyval == GDK_KEY_q && ctrl) {
@@ -323,6 +324,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Start/stop playback.
     if (key_event->keyval == GDK_KEY_space) {
+        state->SetLooping(shift);
         state->TogglePlayback();
         float time;
         if (state->Playing(&time)) {

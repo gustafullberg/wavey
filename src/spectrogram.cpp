@@ -81,7 +81,11 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
                     const float im = output_buffer[k][1] * kDftScaleFactor;
 
                     // Power in dB domain.
-                    power[k] = 10.f * log10(re * re + im * im);
+                    constexpr float min_dB = -100.f;
+                    constexpr float max_dB = -20.f;
+                    constexpr float scaling = 65535.f / (max_dB - min_dB);
+                    float dB = std::max(min_dB, std::min(max_dB, 10.f * std::log10(re * re + im * im)));
+                    power[k] = (dB - min_dB) * scaling;
                 }
             }
         }

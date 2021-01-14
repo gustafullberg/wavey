@@ -31,9 +31,7 @@ void main() {
     if(use_bark != 0) {
         x = 1960. * (bark_scaling * x + 0.53) / (nyquist_freq * (26.28 - bark_scaling * x));
     }
-    float dB = texture(tex, vec3(x, tex_coord_f.yz)).r;
-    float s = (dB - dB_min) * (1. / (dB_max - dB_min));
-    s = max(0., min(1., s));
+    float s = texture(tex, vec3(x, tex_coord_f.yz)).r;
     const vec4 c0 = vec4(0., 0., 0., 1.);
     const vec4 c1 = vec4(0., 0., .5, 1.);
     const vec4 c2 = vec4(1., 0., 0., 1.);

@@ -46,7 +46,9 @@ GpuSpectrogram::GpuSpectrogram(const Spectrogram& spectrogram, int samplerate) {
         glBindTexture(GL_TEXTURE_2D_ARRAY, tex[c]);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_R32F, width, num_spectra_per_tile, num_tiles);
+        glPixelStorei(GL_PACK_ALIGNMENT, 2);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+        glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_R16, width, num_spectra_per_tile, num_tiles);
     }
 
     std::vector<vertex> vertices;
@@ -56,8 +58,8 @@ GpuSpectrogram::GpuSpectrogram(const Spectrogram& spectrogram, int samplerate) {
         const int height = std::min((num_spectrum - first_spectrum_of_tile), num_spectra_per_tile);
         for (int c = 0; c < num_channels; c++) {
             glBindTexture(GL_TEXTURE_2D_ARRAY, tex[c]);
-            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tile, width, height, 1, GL_RED, GL_FLOAT,
-                            spectrogram.Data(c, first_spectrum_of_tile));
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, tile, width, height, 1, GL_RED,
+                            GL_UNSIGNED_SHORT, spectrogram.Data(c, first_spectrum_of_tile));
         }
 
         // Skip half a texel at the beginning and end of the tiles to achieve seamless borders.

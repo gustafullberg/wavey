@@ -18,12 +18,12 @@ class Spectrogram {
     }
     int Advance() const { return kInputAdvance; }
     int OutputSize() const { return kOutputSize; }
-    const float* Data(int channel, int spectrum) const {
+    const uint16_t* Data(int channel, int spectrum) const {
         return power_spectra[channel][spectrum].data();
     }
 
    private:
-    std::vector<std::vector<std::array<float, kOutputSize>>> power_spectra;
+    std::vector<std::vector<std::array<uint16_t, kOutputSize>>> power_spectra;
     static std::mutex mtx;
 };
 

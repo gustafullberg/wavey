@@ -31,7 +31,7 @@ class AudioSystem {
     PaStream* stream = nullptr;
     int num_channels = 0;
     int samplerate = 0;
-    bool loop;
+    bool loop = false;
     int start_index;
 };
 

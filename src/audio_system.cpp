@@ -2,7 +2,7 @@
 #include <cmath>
 #include <cstring>
 
-AudioSystem::AudioSystem() : loop(false) {
+AudioSystem::AudioSystem() {
     Pa_Initialize();
 }
 
@@ -77,33 +77,18 @@ int AudioSystem::Callback(const void* input_buffer,
     memcpy(out, &samples[t->num_channels * t->index],
            sizeof(float) * t->num_channels * frames_to_copy);
     t->index += frames_to_copy;
-    // TODO(lio): Clean up this mess.
     if (frames_to_copy < frames) {
-        int remaining_frames = frames - frames_to_copy;
         if (t->loop) {
             t->index = t->start_index;
-            while (remaining_frames > 0) {
-                int this_loop_number_of_frame = std::min(remaining_frames, t->end_index - t->index);
-                memcpy(out, &samples[t->num_channels * t->index],
-                       sizeof(float) * t->num_channels * this_loop_number_of_frame);
-                remaining_frames -= this_loop_number_of_frame;
-                t->index += this_loop_number_of_frame;
-                while (t->index >= t->end_index) {
-                    t->index -= t->end_index - t->start_index;
-                }
-            }
-            return paContinue;
+            // Call the callback recursively.
+            return Callback(input_buffer, &out[t->num_channels * frames_to_copy],
+                            frames_per_buffer - frames_to_copy, time_info, status_flags, user_data);
         } else {
             for (int i = frames_to_copy * t->num_channels; i < frames * t->num_channels; i++) {
                 out[i] = 0.f;
             }
             return paComplete;
         }
-    }
-
-    if (t->loop && t->index == t->end_index - 1) {
-        t->index = t->start_index;
-        return paContinue;
     }
 
     return paContinue;

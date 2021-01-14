@@ -67,6 +67,8 @@ class State {
     int GetCurrentSamplerate();
     void ToggleViewSingleTrack();
     void ToggleViewSingleChannel(float mouse_y);
+    void ScrollUp();
+    void ScrollDown();
 
     std::list<Track> tracks;
     ZoomWindow zoom_window;

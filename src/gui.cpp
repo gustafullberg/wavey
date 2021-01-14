@@ -301,13 +301,9 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
     } else if (key_event->keyval == GDK_KEY_Up) {
-        if (state->SelectedTrack()) {
-            state->SetSelectedTrack(*state->SelectedTrack() - 1);
-        }
+        state->ScrollUp();
     } else if (key_event->keyval == GDK_KEY_Down) {
-        if (state->SelectedTrack()) {
-            state->SetSelectedTrack(*state->SelectedTrack() + 1);
-        }
+        state->ScrollDown();
     }
 
     // Save selection.

@@ -117,9 +117,11 @@ bool State::CreateResources(bool* view_reset) {
                 t.audio_buffer.reset();
                 t.spectrogram.reset();
                 t.label.reset();
+                t.channel_labels.resize(0);
                 t.gpu_waveform.reset();
                 t.gpu_spectrogram.reset();
-                t.gpu_label.reset();
+                t.gpu_track_label.reset();
+                t.gpu_channel_labels.resize(0);
                 t.reload = false;
             }
         }
@@ -139,6 +141,8 @@ bool State::CreateResources(bool* view_reset) {
                 if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
                     std::future_status::ready) {
                     t.audio_buffer = t.future_audio_buffer.get();
+                    t.channel_labels.resize(t.audio_buffer->NumChannels());
+                    t.gpu_channel_labels.resize(t.audio_buffer->NumChannels());
                     ResetView();
                     *view_reset = true;
                 }
@@ -147,8 +151,17 @@ bool State::CreateResources(bool* view_reset) {
 
         // Create track label.
         if (!t.label && t.audio_buffer) {
-            t.label = TrackLabel::Create(t.path, t.short_name, t.audio_buffer->NumChannels(),
-                                         t.audio_buffer->Samplerate());
+            t.label = TrackLabel::CreateTrackLabel(
+                t.path, t.short_name, t.audio_buffer->NumChannels(), t.audio_buffer->Samplerate());
+        }
+
+        // Create channel lables.
+        for (size_t i = 0; i < t.channel_labels.size(); ++i) {
+            if (!t.channel_labels[i]) {
+                t.channel_labels[i] = TrackLabel::CreateChannelLabel(t.path, t.short_name, i + 1,
+                                                                     t.audio_buffer->NumChannels(),
+                                                                     t.audio_buffer->Samplerate());
+            }
         }
 
         // Create spectrogram.
@@ -182,13 +195,27 @@ bool State::CreateResources(bool* view_reset) {
         }
 
         // Create GPU representation of track label.
-        if (!t.gpu_label && t.label && t.label->HasImageData()) {
-            t.gpu_label = std::make_unique<GpuTrackLabel>(t.label->ImageData(), t.label->Width(),
-                                                          t.label->Height());
+        if (!t.gpu_track_label && t.label && t.label->HasImageData()) {
+            t.gpu_track_label = std::make_unique<GpuTrackLabel>(
+                t.label->ImageData(), t.label->Width(), t.label->Height());
         }
 
-        all_resources_loaded =
-            all_resources_loaded && t.gpu_waveform && t.gpu_spectrogram && t.gpu_label;
+        // Create GPU representations of channel labels.
+        bool gpu_channel_labels_loaded = true;
+        for (size_t i = 0; i < t.gpu_channel_labels.size(); ++i) {
+            if (!t.gpu_channel_labels[i]) {
+                if (t.channel_labels[i] && t.channel_labels[i]->HasImageData()) {
+                    t.gpu_channel_labels[i] = std::make_unique<GpuTrackLabel>(
+                        t.channel_labels[i]->ImageData(), t.channel_labels[i]->Width(),
+                        t.channel_labels[i]->Height());
+                } else {
+                    gpu_channel_labels_loaded = false;
+                }
+            }
+        }
+
+        all_resources_loaded = all_resources_loaded && t.gpu_waveform && t.gpu_spectrogram &&
+                               t.gpu_track_label && gpu_channel_labels_loaded;
     }
 
     return all_resources_loaded;

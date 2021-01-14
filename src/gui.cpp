@@ -168,12 +168,20 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                 wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
                 t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
             }
+
+            if (state->GetViewMode() == CHANNEL && t.gpu_channel_labels[c]) {
+                float y =
+                    std::round(win_height * (i + static_cast<float>(c) / num_channels - z.Top()) /
+                               (z.Bottom() - z.Top()));
+                label_renderer.Draw(*t.gpu_channel_labels[c], y, win_width, win_height, scale,
+                                    true);
+            }
         }
 
-        if (t.gpu_label) {
+        if (state->GetViewMode() != CHANNEL && t.gpu_track_label) {
             float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
-            label_renderer.Draw(*t.gpu_label, y, win_width, win_height, scale, selected);
+            label_renderer.Draw(*t.gpu_track_label, y, win_width, win_height, scale, selected);
         }
     }
 

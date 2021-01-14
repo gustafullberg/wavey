@@ -21,6 +21,7 @@ Linux tool to analyze and play audio files.
 - ``s`` - Spectrogram / waveform view
 - ``b`` - Bark scale / linear spectrograms
 - ``z`` - Single file / all files view
+- ``Shift+z`` - Single channel / all channels view
 - ``f`` - Follow mode (view follows cursor during playback)
 
 #### Zoom

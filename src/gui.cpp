@@ -249,7 +249,12 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Zoom toggle one/all tracks.
     if (key_event->keyval == GDK_KEY_z) {
-        state->zoom_window.ToggleSingleTrack(state->SelectedTrack());
+        state->ToggleViewSingleTrack();
+    }
+
+    // Zoom toggle one/all channels.
+    if (key_event->keyval == GDK_KEY_Z) {
+        state->ToggleViewSingleChannel(mouse_y);
     }
 
     // Zoom in.

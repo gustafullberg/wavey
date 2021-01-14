@@ -32,6 +32,8 @@ struct Track {
     int GetSamplerate() { return audio_buffer->Samplerate(); }
 };
 
+enum ViewMode { ALL, TRACK, CHANNEL };
+
 class State {
    public:
     State(AudioSystem* audio) : audio(audio){};
@@ -63,9 +65,12 @@ class State {
     Track& GetSelectedTrack();
     void ResetView();
     int GetCurrentSamplerate();
+    void ToggleViewSingleTrack();
+    void ToggleViewSingleChannel(float mouse_y);
 
     std::list<Track> tracks;
     ZoomWindow zoom_window;
+    ViewMode view_mode = ALL;
     int last_played_track = 0;
 
    private:
@@ -75,6 +80,7 @@ class State {
     float cursor = 0.f;
     std::optional<float> selection;
     std::optional<int> selected_track;
+    std::optional<int> selected_channel;
 };
 
 #endif

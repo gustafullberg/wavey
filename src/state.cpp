@@ -221,7 +221,7 @@ bool State::SetSelectedTrack(int track) {
         return false;
     else {
         selected_track = track;
-        if (!zoom_window.ShowingAllTracks()) {
+        if (view_mode == TRACK) {
             zoom_window.ShowSingleTrack(track);
         }
     }
@@ -237,6 +237,7 @@ Track& State::GetSelectedTrack() {
 }
 
 void State::ResetView() {
+    view_mode = ALL;
     zoom_window.Reset();
     if (tracks.size()) {
         for (Track& t : tracks) {
@@ -248,4 +249,34 @@ void State::ResetView() {
 
 int State::GetCurrentSamplerate() {
     return GetSelectedTrack().GetSamplerate();
+}
+
+void State::ToggleViewSingleTrack() {
+    if (view_mode == ALL && selected_track) {
+        view_mode = TRACK;
+        zoom_window.ShowSingleTrack(selected_track);
+    } else {
+        view_mode = ALL;
+        zoom_window.ShowAllTracks();
+    }
+}
+
+void State::ToggleViewSingleChannel(float mouse_y) {
+    if (!selected_track || !GetSelectedTrack().audio_buffer) {
+        return;
+    } else if (view_mode == CHANNEL) {
+        selected_channel.reset();
+        view_mode = TRACK;
+        zoom_window.ShowSingleTrack(selected_track);
+    } else {
+        int num_channels = GetSelectedTrack().audio_buffer->NumChannels();
+        int hover_track = zoom_window.GetTrack(mouse_y);
+        if (hover_track == *selected_track) {
+            selected_channel = zoom_window.GetChannel(mouse_y, num_channels);
+        } else {
+            selected_channel = 0;
+        }
+        view_mode = CHANNEL;
+        zoom_window.ShowSingleChannel(*selected_track, *selected_channel, num_channels);
+    }
 }

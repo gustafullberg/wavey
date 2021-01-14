@@ -25,7 +25,9 @@ class ZoomWindow {
     void ZoomOutFullVertical() { vertical_zoom = 1.f; }
     float VerticalZoom() { return vertical_zoom; }
     void ToggleSingleTrack(std::optional<int> track);
+    void ShowAllTracks();
     void ShowSingleTrack(std::optional<int> track);
+    void ShowSingleChannel(int track, int channel, int num_channels);
     bool ShowingAllTracks() const;
     void PanTo(float time);
     float Left() const { return x_left; }
@@ -35,6 +37,7 @@ class ZoomWindow {
     float MaxX() const { return x_max; }
     float GetTime(float x) const;
     int GetTrack(float y) const;
+    int GetChannel(float y, int num_channels) const;
     float VerticalZoom() const { return vertical_zoom; }
     void Reset();
 

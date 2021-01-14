@@ -42,11 +42,21 @@ void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {
     }
 }
 
+void ZoomWindow::ShowAllTracks() {
+    y_top = 0.f;
+    y_bottom = y_max;
+}
+
 void ZoomWindow::ShowSingleTrack(std::optional<int> track) {
     if (track) {
         y_top = *track;
         y_bottom = *track + 1;
     }
+}
+
+void ZoomWindow::ShowSingleChannel(int track, int channel, int num_channels) {
+    y_top = track + static_cast<float>(channel) / num_channels;
+    y_bottom = track + static_cast<float>(channel + 1) / num_channels;
 }
 
 bool ZoomWindow::ShowingAllTracks() const {
@@ -67,6 +77,10 @@ int ZoomWindow::GetTrack(float y) const {
     if (y_top == y_bottom)
         return 0;
     return std::floor(y_top + y * (y_bottom - y_top));
+}
+
+int ZoomWindow::GetChannel(float y, int num_channels) const {
+    return std::floor(std::fmod(y_top + y * (y_bottom - y_top), 1.f) * num_channels);
 }
 
 void ZoomWindow::Reset() {

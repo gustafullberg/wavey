@@ -365,7 +365,7 @@ void State::MoveTrackUp() {
 }
 
 void State::MoveTrackDown() {
-    if (selected_track && *selected_track < tracks.size() - 1) {
+    if (selected_track && *selected_track < static_cast<int>(tracks.size()) - 1) {
         if (last_played_track == *selected_track) {
             last_played_track++;
         } else if (last_played_track == *selected_track + 1) {

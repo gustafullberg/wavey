@@ -350,3 +350,29 @@ void State::ScrollDown() {
         }
     }
 }
+
+void State::MoveTrackUp() {
+    if (selected_track && *selected_track > 0) {
+        if (last_played_track == *selected_track) {
+            last_played_track--;
+        } else if (last_played_track == *selected_track - 1) {
+            last_played_track++;
+        }
+        selected_track = *selected_track - 1;
+        std::swap(*std::next(tracks.begin(), *selected_track),
+                  *std::next(tracks.begin(), *selected_track + 1));
+    }
+}
+
+void State::MoveTrackDown() {
+    if (selected_track && *selected_track < tracks.size() - 1) {
+        if (last_played_track == *selected_track) {
+            last_played_track++;
+        } else if (last_played_track == *selected_track + 1) {
+            last_played_track--;
+        }
+        std::swap(*std::next(tracks.begin(), *selected_track),
+                  *std::next(tracks.begin(), *selected_track + 1));
+        selected_track = *selected_track + 1;
+    }
+}

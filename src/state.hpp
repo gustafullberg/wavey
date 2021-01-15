@@ -72,6 +72,8 @@ class State {
     ViewMode GetViewMode() { return view_mode; }
     void ScrollUp();
     void ScrollDown();
+    void MoveTrackUp();
+    void MoveTrackDown();
 
     std::list<Track> tracks;
     ZoomWindow zoom_window;

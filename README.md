@@ -17,6 +17,7 @@ Linux tool to analyze and play audio files.
 - ``Home`` - Move cursor to the beginning
 - ``End`` - Move cursor to the end
 - ``Up``, ``Down`` or ``mouse hover`` - Select file for playback
+- ``Shift+Up``or ``Shift+Down`` - Move selected track in the list
 
 #### View
 - ``s`` - Spectrogram / waveform view

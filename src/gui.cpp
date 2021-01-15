@@ -550,9 +550,10 @@ bool Gui::UpdateTime() {
             std::swap(s_start, s_end);
 
         const float s_duration = s_end - s_start;
-        s = Glib::ustring::compose(
-            "<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start), FormatTime(s_end),
-            FormatSelectionDuration(s_duration, state->GetCurrentSamplerate()));
+        const int samplerate = state->SelectedTrack() ? state->GetCurrentSamplerate() : 0;
+        s = Glib::ustring::compose("<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start),
+                                   FormatTime(s_end),
+                                   FormatSelectionDuration(s_duration, samplerate));
     }
 
     if (s != str_time) {

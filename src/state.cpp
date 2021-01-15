@@ -102,7 +102,10 @@ bool State::CreateResources(bool* view_reset) {
             // Remove track.
             if (t.remove) {
                 tracks.erase(i++);
+                float view_start = zoom_window.Left();
+                float view_end = zoom_window.Right();
                 ResetView();
+                zoom_window.ZoomRange(view_start, view_end);
                 *view_reset = true;
                 if (selected_track && tracks.size()) {
                     selected_track = std::min(*selected_track, static_cast<int>(tracks.size()) - 1);

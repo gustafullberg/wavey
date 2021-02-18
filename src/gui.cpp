@@ -227,8 +227,8 @@ void Gui::Resize(int width, int height) {
 }
 
 bool Gui::KeyPress(GdkEventKey* key_event) {
-    bool ctrl = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::CONTROL_MASK;
-    bool shift = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) == Gdk::SHIFT_MASK;
+    bool ctrl = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) & Gdk::CONTROL_MASK;
+    bool shift = (key_event->state & Gtk::AccelGroup::get_default_mod_mask()) & Gdk::SHIFT_MASK;
 
     // Quit.
     if (key_event->keyval == GDK_KEY_q && ctrl) {
@@ -353,12 +353,12 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Close selected track.
     if (key_event->keyval == GDK_KEY_w && ctrl) {
-        if (!state->tracks.size()) {
-            close();
-        } else {
-            state->UnloadSelectedTrack();
-            queue_draw();
-        }
+        state->UnloadSelectedTrack();
+    }
+
+    // Close all tracks.
+    if (key_event->keyval == GDK_KEY_W && ctrl) {
+        state->UnloadFiles();
     }
 
     // Reload all files.

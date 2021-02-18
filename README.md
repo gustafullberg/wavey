@@ -6,6 +6,7 @@ Linux tool to analyze and play audio files.
 - ``Ctrl+O`` - Open files
 - ``Ctrl+S`` - Save selection to new file
 - ``Ctrl+W`` - Close the selected file
+- ``Ctrl+Shift+W`` - Close all files
 - ``Ctrl+R`` - Reload all modified files
 - ``Ctrl+Q`` - Quit
 - ``Space`` - Start / stop playback from cursor

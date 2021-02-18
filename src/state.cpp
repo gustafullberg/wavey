@@ -75,7 +75,9 @@ void State::UnloadFiles() {
 }
 
 void State::UnloadSelectedTrack() {
-    GetSelectedTrack().remove = true;
+    if (selected_track) {
+        GetSelectedTrack().remove = true;
+    }
 }
 
 void State::ReloadFiles() {

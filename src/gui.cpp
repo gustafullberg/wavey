@@ -90,6 +90,30 @@ Gui::Gui(State* state) : state(state) {
 
     show_all();
     UpdateWidgets();
+
+    std::vector<Gtk::TargetEntry> list_drop_targets = {
+        Gtk::TargetEntry("text/uri-list"),
+    };
+    drag_dest_set(list_drop_targets, Gtk::DEST_DEFAULT_MOTION | Gtk::DEST_DEFAULT_DROP,
+                  Gdk::ACTION_COPY | Gdk::ACTION_MOVE);
+    signal_drag_data_received().connect(sigc::mem_fun(*this, &Gui::OnDroppedFiles));
+}
+
+void Gui::OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context,
+                         int x,
+                         int y,
+                         const Gtk::SelectionData& selection_data,
+                         guint info,
+                         guint time) {
+    if ((selection_data.get_length() >= 0) && (selection_data.get_format() == /*string*/ 8)) {
+        for (const auto& file_uri : selection_data.get_uris()) {
+            Glib::ustring path = Glib::filename_from_uri(file_uri);
+            std::cout << "Got filename: " << path << std::endl;
+            state->LoadFile(path);
+        }
+    }
+
+    context->drag_finish(true, false, time);
 }
 
 void Gui::Realize() {

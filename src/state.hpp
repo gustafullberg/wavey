@@ -31,7 +31,7 @@ struct Track {
     bool reload = false;
     bool remove = false;
 
-    int GetSamplerate() { return audio_buffer->Samplerate(); }
+    int GetSamplerate() { return audio_buffer ? audio_buffer->Samplerate() : 0; }
 };
 
 enum ViewMode { ALL, TRACK, CHANNEL };

@@ -104,10 +104,7 @@ bool State::CreateResources(bool* view_reset) {
             // Remove track.
             if (t.remove) {
                 tracks.erase(i++);
-                float view_start = zoom_window.Left();
-                float view_end = zoom_window.Right();
                 ResetView();
-                zoom_window.ZoomRange(view_start, view_end);
                 *view_reset = true;
                 if (selected_track && tracks.size()) {
                     selected_track = std::min(*selected_track, static_cast<int>(tracks.size()) - 1);
@@ -269,6 +266,11 @@ Track& State::GetSelectedTrack() {
 }
 
 void State::ResetView() {
+    // Remember zoom time interval before reset.
+    const float view_start = zoom_window.Left();
+    const float view_end = zoom_window.Right();
+    const bool restore_view = view_start != 0.f || view_end != zoom_window.MaxX();
+
     view_mode = ALL;
     selected_channel.reset();
     zoom_window.Reset();
@@ -277,6 +279,10 @@ void State::ResetView() {
             float length = t.audio_buffer ? t.audio_buffer->Duration() : 0.f;
             zoom_window.LoadFile(length);
         }
+    }
+
+    if (restore_view) {
+        zoom_window.ZoomRange(view_start, view_end);
     }
 }
 

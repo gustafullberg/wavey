@@ -24,12 +24,14 @@ void ZoomWindow::Zoom(float x, float factor) {
     x_right = std::min(x_right, x_max);
 }
 
+constexpr float one_db_in_linear = 1.122f;
+
 void ZoomWindow::ZoomInVertical() {
-    vertical_zoom = std::min(vertical_zoom * 1.2f, 100.f);
+    vertical_zoom = std::min(vertical_zoom * one_db_in_linear, 100.f);
 }
 
 void ZoomWindow::ZoomOutVertical() {
-    vertical_zoom = std::max(vertical_zoom / 1.2f, 1.f);
+    vertical_zoom = std::max(vertical_zoom / one_db_in_linear, 1.0e-2f);
 }
 
 void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {

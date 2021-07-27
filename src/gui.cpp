@@ -631,6 +631,7 @@ void Gui::UpdateFrequency() {
         ZoomWindow& z = state->zoom_window;
         int track_number = z.GetTrack(mouse_y);
         Track& t = state->GetTrack(track_number);
+        float display_gain_db = 20.0f * std::log10(z.VerticalZoom());
         if (t.audio_buffer) {
             // Track space: On what y-coordinate is the pointer?
             float y = 1.f - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
@@ -647,10 +648,12 @@ void Gui::UpdateFrequency() {
                 } else {
                     f = y * nyquist_freq;
                 }
-                s = Glib::ustring::compose("<tt>Frequency: %1 Hz</tt>", std::round(f));
+                s = Glib::ustring::sprintf("<tt>Frequency: %.0f Hz (gain: %.1f dB)</tt>",
+                                           std::round(f), display_gain_db);
             } else {
                 float a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
-                s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS</tt>", a);
+                s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS (gain: %.1f dB)</tt>",
+                                           a, display_gain_db);
             }
         }
     }

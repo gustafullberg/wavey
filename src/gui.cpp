@@ -182,7 +182,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                                    glm::vec2(length - z.Left(), 0.f), color_line);
             if (view_spectrogram) {
                 if (t.gpu_spectrogram) {
-                    spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale);
+                  spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale, z.VerticalZoom());
                     t.gpu_spectrogram->Draw(c);
                 }
             } else {

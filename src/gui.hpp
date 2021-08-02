@@ -57,6 +57,7 @@ class Gui : public Gtk::Window {
     LabelRenderer label_renderer;
     int win_width = 0;
     int win_height = 0;
+    float timeline_height = 0.f;
     float mouse_x = 0;
     float mouse_y = 0;
     bool mouse_down = false;

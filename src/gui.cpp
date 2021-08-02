@@ -28,6 +28,59 @@ Glib::ustring FormatSelectionDuration(float duration, int samplerate) {
     }
     return duration_status;
 }
+
+std::string TimeToString(float t, float dt, bool show_minutes) {
+    int decimals;
+    if (dt < 0.1f) {
+        decimals = 2;
+    } else if (dt < 1.f) {
+        decimals = 1;
+    } else {
+        decimals = 0;
+    }
+
+    // Convert to minutes and seconds.
+    t += 1e-4f;  // Avoid rounding errors.
+    const int minutes = std::floor(t / 60.f);
+    t -= 60.f * minutes;
+    const float seconds = t;
+
+    std::ostringstream str;
+    if (show_minutes) {
+        str << minutes << ":";
+        str << std::setw(decimals ? 2 + 1 + decimals : 2) << std::setfill('0');
+    }
+    str.precision(decimals);
+    str << std::fixed << seconds;
+
+    return str.str();
+}
+
+void TimelineResolution(float view_length, float& dt, float& dt_marker) {
+    if (view_length < 0.2f) {
+        dt = 0.01f;
+        dt_marker = 0.1f * dt;
+    } else if (view_length < 2.f) {
+        dt = 0.1f;
+        dt_marker = 0.1f * dt;
+    } else if (view_length < 20.f) {
+        dt = 1.f;
+        dt_marker = 0.1f * dt;
+    } else if (view_length < 200.f) {
+        dt = 10.f;
+        dt_marker = 0.1f * dt;
+    } else if (view_length < 20.f * 60.f) {
+        dt = 60.f;
+        dt_marker = 0.5f * dt;
+    } else {
+        dt = 600.f;
+        dt_marker = 0.1f * dt;
+    }
+}
+
+float TimelineStart(float view_start, float dt) {
+    return std::ceil(view_start / dt) * dt;
+}
 }  // namespace
 
 Gui::Gui(State* state) : state(state) {
@@ -143,6 +196,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         UpdateWidgets();
     }
     const float scale = get_scale_factor();
+    glViewport(0, 0, win_width, win_height);
     glClear(GL_COLOR_BUFFER_BIT);
 
     float play_time;
@@ -150,6 +204,38 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
     const ZoomWindow& z = state->zoom_window;
     const float view_length = z.Right() - z.Left();
+
+    // Timeline
+    float dt, dt_marker;
+    TimelineResolution(view_length, dt, dt_marker);
+
+    bool show_minutes = z.Right() >= 60.f;
+    for (float t = TimelineStart(z.Left(), dt); t < z.Right(); t += dt) {
+        if (t == 0.f) {
+            continue;
+        }
+        std::string key = TimeToString(t, dt, show_minutes);
+        if (state->HasTimeLabel(key)) {
+            float x = (t - z.Left()) / view_length * win_width;
+            const GpuTrackLabel& label = state->GetTimeLabel(key);
+            timeline_height = std::max(timeline_height, label.Height() * 2.f);
+            label_renderer.Draw(label, x, 0.f, win_width, win_height, scale, false, true);
+        } else {
+            queue_draw();
+        }
+    }
+    glViewport(0, win_height - timeline_height, win_width, 0.5f * timeline_height);
+    glm::vec4 color_timeline(.5f, .9f, .5f, .5f);
+    glm::mat4 mvp_timeline = glm::ortho(z.Left(), z.Right(), 0.f, 1.f, -1.f, 1.f);
+    for (float t = TimelineStart(z.Left(), dt); t < z.Right(); t += dt) {
+        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t, 0.5f), glm::vec2(t, 1.f), color_timeline);
+    }
+    for (float t = TimelineStart(z.Left(), dt_marker); t < z.Right(); t += dt_marker) {
+        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t, 0.f), glm::vec2(t, 0.5f), color_timeline);
+    }
+
+    const float view_height = win_height - timeline_height;
+    glViewport(0, 0, win_width, view_height);
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
@@ -196,17 +282,18 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
             if (state->GetViewMode() == CHANNEL && t.gpu_channel_labels[c]) {
                 float y =
-                    std::round(win_height * (i + static_cast<float>(c) / num_channels - z.Top()) /
+                    std::round(view_height * (i + static_cast<float>(c) / num_channels - z.Top()) /
                                (z.Bottom() - z.Top()));
-                label_renderer.Draw(*t.gpu_channel_labels[c], y, win_width, win_height, scale,
-                                    true);
+                label_renderer.Draw(*t.gpu_channel_labels[c], 0.f, y, win_width, view_height, scale,
+                                    true, false);
             }
         }
 
         if (state->GetViewMode() != CHANNEL && t.gpu_track_label) {
-            float y = std::round(win_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+            float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
-            label_renderer.Draw(*t.gpu_track_label, y, win_width, win_height, scale, selected);
+            label_renderer.Draw(*t.gpu_track_label, 0.f, y, win_width, view_height, scale, selected,
+                                false);
         }
     }
 
@@ -432,10 +519,13 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
 }
 
 bool Gui::PointerMove(GdkEventMotion* motion_event) {
+    const float view_height = win_height - timeline_height;
     const float scale = get_scale_factor();
     mouse_x = std::min(std::max(static_cast<float>(motion_event->x) * scale / win_width, 0.f), 1.f);
-    mouse_y =
-        std::min(std::max(static_cast<float>(motion_event->y) * scale / win_height, 0.f), 1.f);
+    mouse_y = std::min(
+        std::max((static_cast<float>(motion_event->y) - timeline_height) * scale / view_height,
+                 0.f),
+        1.f);
 
     if (mouse_down) {
         ZoomWindow& z = state->zoom_window;

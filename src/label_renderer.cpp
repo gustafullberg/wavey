@@ -64,18 +64,23 @@ void LabelRenderer::Terminate() {
 }
 
 void LabelRenderer::Draw(const GpuTrackLabel& label,
+                         float x,
                          float y,
                          float win_width,
                          float win_height,
                          float scale_factor,
-                         bool selected) {
+                         bool selected,
+                         bool centered_h) {
+    if (centered_h) {
+        x -= 0.5f * scale_factor * label.Width();
+    }
     glm::vec3 color_shadow = glm::vec3(.1f, 0.2f, 0.1f);
     glm::vec3 color_text = selected ? glm::vec3(.9f, 0.9f, 0.5f) : glm::vec3(.5f, 0.9f, 0.5f);
     glm::mat4 mvp = glm::ortho(0.f, win_width, win_height, 0.f, -1.f, 1.f);
-    glm::mat4 mvp_shadow = glm::translate(mvp, glm::vec3(1.f, y + 1.f, 0.f));
+    glm::mat4 mvp_shadow = glm::translate(mvp, glm::vec3(x + 1.f, y + 1.f, 0.f));
     mvp_shadow = glm::scale(
         mvp_shadow, glm::vec3(label.Width() * scale_factor, label.Height() * scale_factor, 1.f));
-    mvp = glm::translate(mvp, glm::vec3(0.f, y, 0.f));
+    mvp = glm::translate(mvp, glm::vec3(x, y, 0.f));
     mvp = glm::scale(mvp,
                      glm::vec3(label.Width() * scale_factor, label.Height() * scale_factor, 1.f));
     glActiveTexture(GL_TEXTURE0);

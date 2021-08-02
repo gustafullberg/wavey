@@ -4,6 +4,7 @@
 #include <chrono>
 #include <future>
 #include <list>
+#include <map>
 #include <memory>
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
@@ -74,8 +75,12 @@ class State {
     void ScrollDown();
     void MoveTrackUp();
     void MoveTrackDown();
+    bool HasTimeLabel(const std::string& time);
+    const GpuTrackLabel& GetTimeLabel(const std::string& time) const;
 
     std::list<Track> tracks;
+    std::map<std::string, std::unique_ptr<TrackLabel>> time_labels;
+    std::map<std::string, std::unique_ptr<GpuTrackLabel>> gpu_time_labels;
     ZoomWindow zoom_window;
     ViewMode view_mode = ALL;
     int last_played_track = 0;

@@ -12,11 +12,13 @@ class LabelRenderer {
     void Init();
     void Terminate();
     void Draw(const GpuTrackLabel& label,
+              float x,
               float y,
               float win_width,
               float win_height,
               float scale_factor,
-              bool selected);
+              bool selected,
+              bool centered_h);
 
    private:
     GLuint vao = 0;

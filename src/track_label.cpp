@@ -12,11 +12,14 @@ class TrackLabelImpl : public TrackLabel {
                    int channel,
                    int num_channels,
                    int samplerate);
+    TrackLabelImpl(const std::string& s);
     virtual ~TrackLabelImpl() = default;
+    void Init(const std::string& s);
     virtual bool HasImageData() const;
     virtual const unsigned char* ImageData() const;
     virtual int Width() const;
     virtual int Height() const;
+    void RemoveMargin();
 
    private:
     bool DamageEvent(GdkEventExpose* event);
@@ -38,20 +41,13 @@ TrackLabelImpl::TrackLabelImpl(const std::string& path,
         channels = std::to_string(num_channels) + " channels";
     }
 
-    window.override_color(Gdk::RGBA("white"));
-    window.override_background_color(Gdk::RGBA("black"));
-    label.override_background_color(Gdk::RGBA("black"));
-    label.set_margin_start(5);
-    label.set_margin_top(5);
+    std::string s;
     if (num_channels) {
-        label.set_markup("<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) +
-                         " Hz");
+        s = "<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) + " Hz";
     } else {
-        label.set_markup("<b>Error:</b> Failed to load " + path);
+        s = "<b>Error:</b> Failed to load " + path;
     }
-    window.add(label);
-    window.signal_damage_event().connect(sigc::mem_fun(*this, &TrackLabelImpl::DamageEvent));
-    window.show_all();
+    Init(s);
 }
 
 TrackLabelImpl::TrackLabelImpl(const std::string& path,
@@ -62,20 +58,34 @@ TrackLabelImpl::TrackLabelImpl(const std::string& path,
     std::string channels =
         "channel " + std::to_string(channel) + "/" + std::to_string(num_channels);
 
+    std::string s;
+    if (num_channels) {
+        s = "<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) + " Hz";
+    } else {
+        s = "<b>Error:</b> Failed to load " + path;
+    }
+    Init(s);
+}
+
+TrackLabelImpl::TrackLabelImpl(const std::string& s) {
+    Init(s);
+}
+
+void TrackLabelImpl::Init(const std::string& s) {
     window.override_color(Gdk::RGBA("white"));
     window.override_background_color(Gdk::RGBA("black"));
     label.override_background_color(Gdk::RGBA("black"));
     label.set_margin_start(5);
     label.set_margin_top(5);
-    if (num_channels) {
-        label.set_markup("<b>" + name + "</b> - " + channels + " - " + std::to_string(samplerate) +
-                         " Hz");
-    } else {
-        label.set_markup("<b>Error:</b> Failed to load " + path);
-    }
+    label.set_markup(s);
     window.add(label);
     window.signal_damage_event().connect(sigc::mem_fun(*this, &TrackLabelImpl::DamageEvent));
     window.show_all();
+}
+
+void TrackLabelImpl::RemoveMargin() {
+    label.set_margin_start(0);
+    label.set_margin_top(0);
 }
 
 bool TrackLabelImpl::DamageEvent(GdkEventExpose* event) {
@@ -112,4 +122,10 @@ std::unique_ptr<TrackLabel> TrackLabel::CreateChannelLabel(const std::string& pa
                                                            int num_channels,
                                                            int samplerate) {
     return std::make_unique<TrackLabelImpl>(path, name, channel, num_channels, samplerate);
+}
+
+std::unique_ptr<TrackLabel> TrackLabel::CreateTimeLabel(const std::string time) {
+    TrackLabelImpl* label = new TrackLabelImpl("<small>" + time + "</small>");
+    label->RemoveMargin();
+    return std::unique_ptr<TrackLabel>(label);
 }

@@ -20,6 +20,7 @@ class TrackLabel {
                                                           int channel,
                                                           int num_channels,
                                                           int samplerate);
+    static std::unique_ptr<TrackLabel> CreateTimeLabel(const std::string time);
 };
 
 #endif

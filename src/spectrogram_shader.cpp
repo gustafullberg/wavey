@@ -58,7 +58,11 @@ void SpectrogramShader::Init() {
     glUseProgram(0);
 }
 
-void SpectrogramShader::Draw(const glm::mat4& mvp, float start_time, float samplerate, bool bark, float vertical_zoom) {
+void SpectrogramShader::Draw(const glm::mat4& mvp,
+                             float start_time,
+                             float samplerate,
+                             bool bark,
+                             float vertical_zoom) {
     float nyquist_freq = .5f * samplerate;
     glUseProgram(program);
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));

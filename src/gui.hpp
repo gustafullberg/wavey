@@ -32,8 +32,13 @@ class Gui : public Gtk::Window {
     void UpdateFrequency();
     void UpdateTitle();
     void UpdateCurrentWorkingDirectory(std::string_view filename);
-  void OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context, int x, int y, const Gtk::SelectionData& selection_data, guint info, guint time);
-  
+    void OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context,
+                        int x,
+                        int y,
+                        const Gtk::SelectionData& selection_data,
+                        guint info,
+                        guint time);
+
     Gtk::HeaderBar headerbar;
     Gtk::Button open;
     Gtk::VBox box;

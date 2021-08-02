@@ -182,7 +182,8 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                                    glm::vec2(length - z.Left(), 0.f), color_line);
             if (view_spectrogram) {
                 if (t.gpu_spectrogram) {
-                  spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale, z.VerticalZoom());
+                    spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale,
+                                            z.VerticalZoom());
                     t.gpu_spectrogram->Draw(c);
                 }
             } else {
@@ -652,8 +653,8 @@ void Gui::UpdateFrequency() {
                                            std::round(f), display_gain_db);
             } else {
                 float a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
-                s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS (gain: %.1f dB)</tt>",
-                                           a, display_gain_db);
+                s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS (gain: %.1f dB)</tt>", a,
+                                           display_gain_db);
             }
         }
     }

@@ -7,7 +7,11 @@
 class SpectrogramShader : public Shader {
    public:
     void Init();
-    void Draw(const glm::mat4& mvp, float start_time, float samplerate, bool bark, float vertical_zoom);
+    void Draw(const glm::mat4& mvp,
+              float start_time,
+              float samplerate,
+              bool bark,
+              float vertical_zoom);
 };
 
 #endif

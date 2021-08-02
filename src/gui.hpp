@@ -2,11 +2,9 @@
 #define GUI_HPP
 
 #include <gtkmm.h>
-#include "label_renderer.hpp"
-#include "primitive_renderer.hpp"
-#include "spectrogram_shader.hpp"
-#include "state.hpp"
-#include "wave_shader.hpp"
+#include "renderer.hpp"
+
+class State;
 
 class Gui : public Gtk::Window {
    public:
@@ -26,6 +24,7 @@ class Gui : public Gtk::Window {
     void ChooseFiles();
     void SaveSelectionTo();
     void StartTimeUpdate();
+    float TimelineHeight();
     void UpdateWidgets();
     bool UpdateTime();
     void UpdateZoom();
@@ -51,13 +50,9 @@ class Gui : public Gtk::Window {
     Gtk::Label status_view_start;
     Gtk::Label status_view_end;
     Gtk::Label status_view_length;
-    WaveShader wave_shader;
-    SpectrogramShader spectrogram_shader;
-    PrimitiveRenderer prim_renderer;
-    LabelRenderer label_renderer;
+    std::unique_ptr<Renderer> renderer;
     int win_width = 0;
     int win_height = 0;
-    float timeline_height = 0.f;
     float mouse_x = 0;
     float mouse_y = 0;
     bool mouse_down = false;

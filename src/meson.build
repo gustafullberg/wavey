@@ -9,6 +9,7 @@ src = files(
   'label_renderer.cpp',
   'main.cpp',
   'primitive_renderer.cpp',
+  'renderer.cpp',
   'shader.cpp',
   'spectrogram.cpp',
   'spectrogram_shader.cpp',

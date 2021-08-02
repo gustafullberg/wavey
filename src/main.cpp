@@ -1,5 +1,7 @@
 #include <gtkmm.h>
+#include "audio_system.hpp"
 #include "gui.hpp"
+#include "state.hpp"
 
 int main(int argc, char** argv) {
     AudioSystem audio;

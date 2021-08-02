@@ -217,7 +217,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
         std::string key = TimeToString(t, dt, show_minutes);
         if (state->HasTimeLabel(key)) {
             float x = (t - z.Left()) / view_length * win_width;
-            const GpuTrackLabel& label = state->GetTimeLabel(key);
+            const GpuLabel& label = state->GetTimeLabel(key);
             timeline_height = std::max(timeline_height, label.Height() * 2.f);
             label_renderer.Draw(label, x, 0.f, win_width, win_height, scale, false, true);
         } else {

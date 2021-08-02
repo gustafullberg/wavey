@@ -4,14 +4,14 @@
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 #include <glm/glm.hpp>
-#include "gpu_track_label.hpp"
+#include "gpu_label.hpp"
 #include "shader.hpp"
 
 class LabelRenderer {
    public:
     void Init();
     void Terminate();
-    void Draw(const GpuTrackLabel& label,
+    void Draw(const GpuLabel& label,
               float x,
               float y,
               float win_width,

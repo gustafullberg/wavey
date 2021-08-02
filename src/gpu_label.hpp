@@ -1,13 +1,13 @@
-#ifndef GPU_TRACK_LABEL_HPP
-#define GPU_TRACK_LABEL_HPP
+#ifndef GPU_LABEL_HPP
+#define GPU_LABEL_HPP
 
 #define GL_GLEXT_PROTOTYPES
 #include <GL/gl.h>
 
-class GpuTrackLabel {
+class GpuLabel {
    public:
-    GpuTrackLabel(const unsigned char* image_data, int width, int height);
-    ~GpuTrackLabel();
+    GpuLabel(const unsigned char* image_data, int width, int height);
+    ~GpuLabel();
     void Draw();
     float Width() const { return width; }
     float Height() const { return height; }

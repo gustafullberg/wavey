@@ -1,6 +1,6 @@
-#include "gpu_track_label.hpp"
+#include "gpu_label.hpp"
 
-GpuTrackLabel::GpuTrackLabel(const unsigned char* image_data, int width, int height)
+GpuLabel::GpuLabel(const unsigned char* image_data, int width, int height)
     : width(width), height(height) {
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D, tex);
@@ -11,8 +11,8 @@ GpuTrackLabel::GpuTrackLabel(const unsigned char* image_data, int width, int hei
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-GpuTrackLabel::~GpuTrackLabel() {
+GpuLabel::~GpuLabel() {
     glDeleteTextures(1, &tex);
 }
 
-void GpuTrackLabel::Draw() {}
+void GpuLabel::Draw() {}

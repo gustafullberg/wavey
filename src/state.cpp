@@ -155,16 +155,16 @@ bool State::CreateResources(bool* view_reset) {
 
         // Create track label.
         if (!t.label && t.audio_buffer) {
-            t.label = TrackLabel::CreateTrackLabel(
-                t.path, t.short_name, t.audio_buffer->NumChannels(), t.audio_buffer->Samplerate());
+            t.label = Label::CreateTrackLabel(t.path, t.short_name, t.audio_buffer->NumChannels(),
+                                              t.audio_buffer->Samplerate());
         }
 
         // Create channel lables.
         for (size_t i = 0; i < t.channel_labels.size(); ++i) {
             if (!t.channel_labels[i]) {
-                t.channel_labels[i] = TrackLabel::CreateChannelLabel(t.path, t.short_name, i + 1,
-                                                                     t.audio_buffer->NumChannels(),
-                                                                     t.audio_buffer->Samplerate());
+                t.channel_labels[i] = Label::CreateChannelLabel(t.path, t.short_name, i + 1,
+                                                                t.audio_buffer->NumChannels(),
+                                                                t.audio_buffer->Samplerate());
             }
         }
 
@@ -200,8 +200,8 @@ bool State::CreateResources(bool* view_reset) {
 
         // Create GPU representation of track label.
         if (!t.gpu_track_label && t.label && t.label->HasImageData()) {
-            t.gpu_track_label = std::make_unique<GpuTrackLabel>(
-                t.label->ImageData(), t.label->Width(), t.label->Height());
+            t.gpu_track_label = std::make_unique<GpuLabel>(t.label->ImageData(), t.label->Width(),
+                                                           t.label->Height());
         }
 
         // Create GPU representations of channel labels.
@@ -209,7 +209,7 @@ bool State::CreateResources(bool* view_reset) {
         for (size_t i = 0; i < t.gpu_channel_labels.size(); ++i) {
             if (!t.gpu_channel_labels[i]) {
                 if (t.channel_labels[i] && t.channel_labels[i]->HasImageData()) {
-                    t.gpu_channel_labels[i] = std::make_unique<GpuTrackLabel>(
+                    t.gpu_channel_labels[i] = std::make_unique<GpuLabel>(
                         t.channel_labels[i]->ImageData(), t.channel_labels[i]->Width(),
                         t.channel_labels[i]->Height());
                 } else {
@@ -228,10 +228,9 @@ bool State::CreateResources(bool* view_reset) {
         for (const auto& it : time_labels) {
             if (gpu_time_labels.find(it.first) == gpu_time_labels.end() &&
                 it.second->HasImageData()) {
-                gpu_time_labels.insert(std::pair<std::string, std::unique_ptr<GpuTrackLabel>>(
-                    it.first,
-                    std::make_unique<GpuTrackLabel>(it.second->ImageData(), it.second->Width(),
-                                                    it.second->Height())));
+                gpu_time_labels.insert(std::pair<std::string, std::unique_ptr<GpuLabel>>(
+                    it.first, std::make_unique<GpuLabel>(it.second->ImageData(), it.second->Width(),
+                                                         it.second->Height())));
             }
         }
     }
@@ -407,12 +406,12 @@ bool State::HasTimeLabel(const std::string& time) {
         return true;
 
     if (time_labels.find(time) == time_labels.end()) {
-        time_labels.insert(std::pair<std::string, std::unique_ptr<TrackLabel>>(
-            time, TrackLabel::CreateTimeLabel(time)));
+        time_labels.insert(
+            std::pair<std::string, std::unique_ptr<Label>>(time, Label::CreateTimeLabel(time)));
     }
     return false;
 }
 
-const GpuTrackLabel& State::GetTimeLabel(const std::string& time) const {
+const GpuLabel& State::GetTimeLabel(const std::string& time) const {
     return *gpu_time_labels.find(time)->second;
 }

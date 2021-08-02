@@ -63,7 +63,7 @@ void LabelRenderer::Terminate() {
     glDeleteVertexArrays(1, &vao);
 }
 
-void LabelRenderer::Draw(const GpuTrackLabel& label,
+void LabelRenderer::Draw(const GpuLabel& label,
                          float x,
                          float y,
                          float win_width,

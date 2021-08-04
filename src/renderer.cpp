@@ -64,7 +64,7 @@ void TimelineResolution(float view_length, float& dt, float& dt_marker) {
 }
 
 float TimelineStart(float view_start, float dt) {
-    return std::ceil(view_start / dt) * dt;
+    return std::floor(view_start / dt) * dt;
 }
 }  // namespace
 
@@ -134,7 +134,7 @@ void RendererImpl::Draw(State* state,
 
     bool show_minutes = z.Right() >= 60.f;
     for (float t = TimelineStart(z.Left(), dt); t < z.Right(); t += dt) {
-        if (t == 0.f) {
+        if (t <= 0.f) {
             continue;
         }
         std::string key = TimeToString(t, dt, show_minutes);
@@ -147,12 +147,13 @@ void RendererImpl::Draw(State* state,
     }
 
     glViewport(0, win_height - timeline_height, win_width, 0.5f * timeline_height);
-    glm::mat4 mvp_timeline = glm::ortho(z.Left(), z.Right(), 0.f, 1.f, -1.f, 1.f);
-    for (float t = TimelineStart(z.Left(), dt); t < z.Right(); t += dt) {
-        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t, 0.5f), glm::vec2(t, 1.f), color_timeline);
-    }
-    for (float t = TimelineStart(z.Left(), dt_marker); t < z.Right(); t += dt_marker) {
-        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t, 0.f), glm::vec2(t, 0.5f), color_timeline);
+    glm::mat4 mvp_timeline = glm::ortho(0.f, view_length, 0.f, 1.f, -1.f, 1.f);
+    for (float t = TimelineStart(z.Left(), dt) - z.Left(); t < view_length; t += dt) {
+        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t, 0.0f), glm::vec2(t, 1.f), color_timeline);
+        for (float t2 = t + dt_marker; t2 < t + dt - 1e-4f; t2 += dt_marker) {
+            prim_renderer.DrawLine(mvp_timeline, glm::vec2(t2, 0.f), glm::vec2(t2, 0.5f),
+                                   color_timeline);
+        }
     }
 
     const float view_height = win_height - timeline_height;

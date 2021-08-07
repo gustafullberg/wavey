@@ -41,25 +41,21 @@ std::string TimeToString(float t, float dt, bool show_minutes) {
     return str.str();
 }
 
-void TimelineResolution(float view_length, float& dt, float& dt_marker) {
+void TimelineResolution(float view_length, float& dt_labeled, int& unlabeled_ratio) {
+    unlabeled_ratio = 10;
     if (view_length < 0.2f) {
-        dt = 0.01f;
-        dt_marker = 0.1f * dt;
+        dt_labeled = 0.01f;
     } else if (view_length < 2.f) {
-        dt = 0.1f;
-        dt_marker = 0.1f * dt;
+        dt_labeled = 0.1f;
     } else if (view_length < 20.f) {
-        dt = 1.f;
-        dt_marker = 0.1f * dt;
+        dt_labeled = 1.f;
     } else if (view_length < 200.f) {
-        dt = 10.f;
-        dt_marker = 0.1f * dt;
+        dt_labeled = 10.f;
     } else if (view_length < 20.f * 60.f) {
-        dt = 60.f;
-        dt_marker = 0.5f * dt;
+        dt_labeled = 60.f;
+        unlabeled_ratio = 2;
     } else {
-        dt = 600.f;
-        dt_marker = 0.1f * dt;
+        dt_labeled = 600.f;
     }
 }
 
@@ -129,32 +125,35 @@ void RendererImpl::Draw(State* state,
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Timeline
-    float dt, dt_marker;
-    TimelineResolution(view_length, dt, dt_marker);
-
-    bool show_minutes = z.Right() >= 60.f;
-    for (float t = TimelineStart(z.Left(), dt); t < z.Right(); t += dt) {
-        if (t <= 0.f) {
-            continue;
-        }
-        std::string key = TimeToString(t, dt, show_minutes);
-        if (state->HasTimeLabel(key)) {
-            float x = (t - z.Left()) / view_length * win_width;
-            const GpuLabel& label = state->GetTimeLabel(key);
-            timeline_height = std::max(timeline_height, label.Height() * 2.f);
-            label_renderer.Draw(label, x, 0.f, win_width, win_height, scale_factor, false, true);
+    float dt_labeled;
+    int unlabeled_ratio;
+    TimelineResolution(view_length, dt_labeled, unlabeled_ratio);
+    glViewport(0, win_height - timeline_height, win_width, timeline_height);
+    const glm::mat4 mvp_timeline = glm::ortho(0.f, view_length, 0.f, 1.f, -1.f, 1.f);
+    const float start = TimelineStart(z.Left(), dt_labeled) - z.Left();
+    const float dt = dt_labeled / unlabeled_ratio;
+    const bool show_minutes = z.Right() >= 60.f;
+    float max_label_height = 0.f;
+    for (int i = 0; start + i * dt < view_length; i++) {
+        const float t_view = start + i * dt;
+        const bool labeled_marker = i % unlabeled_ratio == 0;
+        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t_view, 0.0f),
+                               glm::vec2(t_view, labeled_marker ? 0.5f : 0.25f), color_timeline);
+        if (labeled_marker) {
+            const float t = t_view + z.Left();
+            if (t > 0.f) {
+                std::string key = TimeToString(t, dt_labeled, show_minutes);
+                if (state->HasTimeLabel(key)) {
+                    const float x = t_view / view_length * win_width;
+                    const GpuLabel& label = state->GetTimeLabel(key);
+                    max_label_height = std::max(max_label_height, label.Height());
+                    label_renderer.Draw(label, x, 0.f, win_width, timeline_height, scale_factor,
+                                        false, true);
+                }
+            }
         }
     }
-
-    glViewport(0, win_height - timeline_height, win_width, 0.5f * timeline_height);
-    glm::mat4 mvp_timeline = glm::ortho(0.f, view_length, 0.f, 1.f, -1.f, 1.f);
-    for (float t = TimelineStart(z.Left(), dt) - z.Left(); t < view_length; t += dt) {
-        prim_renderer.DrawLine(mvp_timeline, glm::vec2(t, 0.0f), glm::vec2(t, 1.f), color_timeline);
-        for (float t2 = t + dt_marker; t2 < t + dt - 1e-4f; t2 += dt_marker) {
-            prim_renderer.DrawLine(mvp_timeline, glm::vec2(t2, 0.f), glm::vec2(t2, 0.5f),
-                                   color_timeline);
-        }
-    }
+    timeline_height = std::max(timeline_height, max_label_height * 2.f);
 
     const float view_height = win_height - timeline_height;
     glViewport(0, 0, win_width, view_height);

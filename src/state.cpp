@@ -231,6 +231,7 @@ bool State::CreateResources(bool* view_reset) {
                 gpu_time_labels.insert(std::pair<std::string, std::unique_ptr<GpuLabel>>(
                     it.first, std::make_unique<GpuLabel>(it.second->ImageData(), it.second->Width(),
                                                          it.second->Height())));
+                max_timelabel_height = std::max(max_timelabel_height, it.second->Height());
             }
         }
     }

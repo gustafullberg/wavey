@@ -84,6 +84,7 @@ class State {
     ZoomWindow zoom_window;
     ViewMode view_mode = ALL;
     int last_played_track = 0;
+    int max_timelabel_height = 0;
 
    private:
     void LoadListOfFiles(const std::string& file_name);

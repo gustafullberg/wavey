@@ -71,16 +71,28 @@ GpuWaveform::~GpuWaveform() {
     glDeleteVertexArrays(1, &vao);
 }
 
-void GpuWaveform::Draw(int channel, float start_time, float end_time, bool low_res) {
-    const float rate = low_res ? samplerate / 1000.f * 2.f : samplerate;
+void GpuWaveform::Draw(int channel,
+                       float start_time,
+                       float end_time,
+                       bool draw_low_res,
+                       bool draw_points) {
+    const float rate = draw_low_res ? samplerate / 1000.f * 2.f : samplerate;
     const int start_index = std::max(static_cast<int>(std::floor(start_time * rate)), 0);
     const int end_index =
         std::min(start_index + static_cast<int>(std::ceil((end_time - start_time) * rate)),
                  num_vertices - 1);
 
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, low_res ? vbo_lod : vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, draw_low_res ? vbo_lod : vbo);
     glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, num_channels * sizeof(float),
                           (const void*)((start_index * num_channels + channel) * sizeof(float)));
-    glDrawArrays(GL_LINE_STRIP, 0, end_index - start_index + 1);
+    glDrawArrays(draw_points ? GL_POINTS : GL_LINE_STRIP, 0, end_index - start_index + 1);
+}
+
+void GpuWaveform::DrawLines(int channel, float start_time, float end_time, bool draw_low_res) {
+    Draw(channel, start_time, end_time, draw_low_res, false);
+}
+
+void GpuWaveform::DrawPoints(int channel, float start_time, float end_time, bool draw_low_res) {
+    Draw(channel, start_time, end_time, draw_low_res, true);
 }

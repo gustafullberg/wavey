@@ -10,6 +10,8 @@ src = files(
   'main.cpp',
   'primitive_renderer.cpp',
   'renderer.cpp',
+  'sample_line_shader.cpp',
+  'sample_point_shader.cpp',
   'shader.cpp',
   'spectrogram.cpp',
   'spectrogram_shader.cpp',

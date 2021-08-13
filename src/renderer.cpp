@@ -9,6 +9,8 @@
 
 #include "label_renderer.hpp"
 #include "primitive_renderer.hpp"
+#include "sample_line_shader.hpp"
+#include "sample_point_shader.hpp"
 #include "spectrogram_shader.hpp"
 #include "state.hpp"
 #include "wave_shader.hpp"
@@ -80,6 +82,8 @@ class RendererImpl : public Renderer {
 
    private:
     WaveShader wave_shader;
+    SampleLineShader sample_line_shader;
+    SamplePointShader sample_point_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;
     LabelRenderer label_renderer;
@@ -93,6 +97,8 @@ class RendererImpl : public Renderer {
 
 RendererImpl::RendererImpl() {
     wave_shader.Init();
+    sample_line_shader.Init();
+    sample_point_shader.Init();
     spectrogram_shader.Init();
     prim_renderer.Init();
     label_renderer.Init();
@@ -100,10 +106,13 @@ RendererImpl::RendererImpl() {
     glClearColor(0.2f, 0.2f, 0.2f, 1.f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 }
 
 RendererImpl::~RendererImpl() {
     wave_shader.Terminate();
+    sample_line_shader.Terminate();
+    sample_point_shader.Terminate();
     spectrogram_shader.Terminate();
     prim_renderer.Terminate();
     label_renderer.Terminate();
@@ -191,10 +200,18 @@ void RendererImpl::Draw(State* state,
                 }
             } else {
                 float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
-                const bool use_low_res = samples_per_pixel > 1000.f;
-                const float rate = use_low_res ? samplerate * 2.f / 1000.f : samplerate;
-                wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                t.gpu_waveform->Draw(c, z.Left(), z.Right(), use_low_res);
+                const bool draw_low_res = samples_per_pixel > 1000.f;
+                const bool draw_discrete_samples = samples_per_pixel < 0.25f;
+                const float rate = draw_low_res ? samplerate * 2.f / 1000.f : samplerate;
+                if (draw_discrete_samples) {
+                    sample_line_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                    t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
+                    sample_point_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                    t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
+                } else {
+                    wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                    t.gpu_waveform->DrawLines(c, z.Left(), z.Right(), draw_low_res);
+                }
             }
 
             if (state->GetViewMode() == CHANNEL && t.gpu_channel_labels[c]) {

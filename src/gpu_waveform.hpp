@@ -9,9 +9,11 @@ class GpuWaveform {
    public:
     GpuWaveform(const AudioBuffer& ab);
     ~GpuWaveform();
-    void Draw(int channel, float start_time, float end_time, bool low_res);
+    void DrawLines(int channel, float start_time, float end_time, bool draw_low_res);
+    void DrawPoints(int channel, float start_time, float end_time, bool draw_low_res);
 
    private:
+    void Draw(int channel, float start_time, float end_time, bool draw_low_res, bool draw_points);
     GLuint vao = 0;
     GLuint vbo = 0;
     GLuint vbo_lod = 0;

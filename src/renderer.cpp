@@ -18,7 +18,9 @@
 namespace {
 std::string TimeToString(float t, float dt, bool show_minutes) {
     int decimals;
-    if (dt < 0.1f) {
+    if (dt < 0.01f) {
+        decimals = 3;
+    } else if (dt < 0.1f) {
         decimals = 2;
     } else if (dt < 1.f) {
         decimals = 1;
@@ -45,7 +47,10 @@ std::string TimeToString(float t, float dt, bool show_minutes) {
 
 void TimelineResolution(float view_length, float& dt_labeled, int& unlabeled_ratio) {
     unlabeled_ratio = 10;
-    if (view_length < 0.2f) {
+    if (view_length < 0.01f) {
+        dt_labeled = 0.001f;
+        unlabeled_ratio = 1;
+    } else if (view_length < 0.2f) {
         dt_labeled = 0.01f;
     } else if (view_length < 2.f) {
         dt_labeled = 0.1f;

@@ -24,7 +24,7 @@ in float y_scaled[];
 void main() {
     vec4 pos_sample = gl_in[0].gl_Position;
 
-    if(y_scaled[0] <= 1. || y_scaled[0] >= -1.) {
+    if(y_scaled[0] <= 1. && y_scaled[0] >= -1.) {
         gl_Position = pos_sample;
         gl_PointSize = 3.;
         EmitVertex();

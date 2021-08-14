@@ -40,18 +40,6 @@ Gui::Gui(State* state) : state(state) {
 
     add(box);
 
-    box.pack_start(grid_top, false, true);
-    grid_top.set_row_homogeneous(true);
-    grid_top.set_column_homogeneous(true);
-    grid_top.attach(status_view_start, 0, 0, 1, 1);
-    grid_top.attach(status_view_length, 1, 0, 1, 1);
-    grid_top.attach(status_view_end, 2, 0, 1, 1);
-    status_view_start.set_xalign(0);
-    status_view_start.set_margin_left(5);
-    status_view_length.set_xalign(0.5f);
-    status_view_end.set_xalign(1);
-    status_view_end.set_margin_right(5);
-
     glarea.set_required_version(3, 3);
     glarea.signal_realize().connect(sigc::mem_fun(*this, &Gui::Realize));
     glarea.signal_unrealize().connect(sigc::mem_fun(*this, &Gui::Unrealize));
@@ -506,31 +494,6 @@ void Gui::UpdateZoom() {
     adjustment->set_step_increment(std::max(0.1f * page_size, 0.001f));
     adjustment->set_page_increment(page_size);
     adjustment->set_value(z.Left());
-
-    {
-        Glib::ustring s = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Left()));
-        if (s != str_view_start) {
-            str_view_start = s;
-            status_view_start.set_markup(str_view_start);
-        }
-    }
-
-    {
-        Glib::ustring s = Glib::ustring::compose("<tt>%1</tt>", FormatTime(z.Right()));
-        if (s != str_view_end) {
-            str_view_end = s;
-            status_view_end.set_markup(str_view_end);
-        }
-    }
-
-    {
-        Glib::ustring s =
-            Glib::ustring::compose("<tt>(%1)</tt>", FormatTime(z.Right() - z.Left(), false));
-        if (s != str_view_length) {
-            str_view_length = s;
-            status_view_length.set_markup(str_view_length);
-        }
-    }
 }
 
 void Gui::UpdateFrequency() {

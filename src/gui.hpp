@@ -44,13 +44,9 @@ class Gui : public Gtk::Window {
     Gtk::VBox box;
     Gtk::GLArea glarea;
     Gtk::Scrollbar scrollbar;
-    Gtk::Grid grid_top;
     Gtk::Grid grid_bottom;
     Gtk::Label status_time;
     Gtk::Label status_frequency;
-    Gtk::Label status_view_start;
-    Gtk::Label status_view_end;
-    Gtk::Label status_view_length;
     int win_width = 0;
     int win_height = 0;
     float mouse_x = 0;
@@ -63,9 +59,6 @@ class Gui : public Gtk::Window {
     Glib::ustring str_title;
     Glib::ustring str_time;
     Glib::ustring str_frequency;
-    Glib::ustring str_view_start;
-    Glib::ustring str_view_end;
-    Glib::ustring str_view_length;
 
     // Last opened file.
     std::string current_working_directory;

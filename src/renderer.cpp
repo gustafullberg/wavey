@@ -45,24 +45,22 @@ std::string TimeToString(float t, float dt, bool show_minutes) {
     return str.str();
 }
 
+static std::pair<float, int> available_resolutions[] = {
+    {0.001f, 1}, {0.005f, 5}, {0.01f, 10}, {0.05f, 5}, {0.1f, 10},  {0.5f, 5},    {1.0f, 10},
+    {5.0f, 5},   {10.0f, 10}, {30.0f, 3},  {60.0f, 2}, {300.0f, 5}, {600.0f, 10}, {1800.0f, 3}};
+
 void TimelineResolution(float view_length, float& dt_labeled, int& unlabeled_ratio) {
-    unlabeled_ratio = 10;
-    if (view_length < 0.01f) {
-        dt_labeled = 0.001f;
-        unlabeled_ratio = 1;
-    } else if (view_length < 0.2f) {
-        dt_labeled = 0.01f;
-    } else if (view_length < 2.f) {
-        dt_labeled = 0.1f;
-    } else if (view_length < 20.f) {
-        dt_labeled = 1.f;
-    } else if (view_length < 200.f) {
-        dt_labeled = 10.f;
-    } else if (view_length < 20.f * 60.f) {
-        dt_labeled = 60.f;
-        unlabeled_ratio = 2;
-    } else {
-        dt_labeled = 600.f;
+    // Find optimal timeline resolution with at most kMaxNumLabels labeled markers.
+    constexpr float kMaxNumLabels = 10.0f;
+    constexpr int kNumResolutions =
+        sizeof(available_resolutions) / sizeof(available_resolutions[0]);
+    for (int i = 0; i < kNumResolutions; i++) {
+        const auto& r = available_resolutions[i];
+        if (view_length < r.first * kMaxNumLabels || i == kNumResolutions - 1) {
+            dt_labeled = r.first;
+            unlabeled_ratio = r.second;
+            return;
+        }
     }
 }
 

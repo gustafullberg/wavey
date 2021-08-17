@@ -140,7 +140,7 @@ void RendererImpl::Draw(State* state,
     float dt_labeled;
     int unlabeled_ratio;
     TimelineResolution(view_length, dt_labeled, unlabeled_ratio);
-    timeline_height = 2.f * state->max_timelabel_height;
+    timeline_height = 2.f * (state->max_timelabel_height * scale_factor);
     glViewport(0, win_height - timeline_height, win_width, timeline_height);
     const glm::mat4 mvp_timeline = glm::ortho(0.f, view_length, 0.f, 1.f, -1.f, 1.f);
     const float start = TimelineStart(z.Left(), dt_labeled) - z.Left();

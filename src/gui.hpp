@@ -50,7 +50,7 @@ class Gui : public Gtk::Window {
     Gtk::Label status_view_start;
     Gtk::Label status_view_end;
     Gtk::Label status_view_length;
-    std::unique_ptr<Renderer> renderer;
+    Renderer* renderer = nullptr;
     int win_width = 0;
     int win_height = 0;
     float mouse_x = 0;

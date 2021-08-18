@@ -111,13 +111,12 @@ void Gui::OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context,
 
 void Gui::Realize() {
     glarea.make_current();
-    renderer = Renderer::Create();
+    renderer.reset(Renderer::Create());
 }
 
 void Gui::Unrealize() {
     state->UnloadFiles();
-    delete renderer;
-    renderer = nullptr;
+    renderer.reset();
 }
 
 bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {

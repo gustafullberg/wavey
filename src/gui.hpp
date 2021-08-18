@@ -38,6 +38,7 @@ class Gui : public Gtk::Window {
                         guint info,
                         guint time);
 
+    std::unique_ptr<Renderer> renderer;
     Gtk::HeaderBar headerbar;
     Gtk::Button open;
     Gtk::VBox box;
@@ -50,7 +51,6 @@ class Gui : public Gtk::Window {
     Gtk::Label status_view_start;
     Gtk::Label status_view_end;
     Gtk::Label status_view_length;
-    Renderer* renderer = nullptr;
     int win_width = 0;
     int win_height = 0;
     float mouse_x = 0;

@@ -28,7 +28,7 @@ class Gui : public Gtk::Window {
     void UpdateWidgets();
     bool UpdateTime();
     void UpdateZoom();
-    void UpdateFrequency();
+    void UpdatePointer();
     void UpdateTitle();
     void UpdateCurrentWorkingDirectory(std::string_view filename);
     void OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context,
@@ -46,7 +46,9 @@ class Gui : public Gtk::Window {
     Gtk::Scrollbar scrollbar;
     Gtk::Grid grid_bottom;
     Gtk::Label status_time;
-    Gtk::Label status_frequency;
+    Gtk::Label status_pointer;
+    Gtk::Label label_selection;
+    Gtk::Label label_pointer;
     int win_width = 0;
     int win_height = 0;
     float mouse_x = 0;
@@ -58,7 +60,7 @@ class Gui : public Gtk::Window {
     State* state = nullptr;
     Glib::ustring str_title;
     Glib::ustring str_time;
-    Glib::ustring str_frequency;
+    Glib::ustring str_pointer;
 
     // Last opened file.
     std::string current_working_directory;

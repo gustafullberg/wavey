@@ -8,19 +8,8 @@ Glib::ustring FormatTime(float t, bool show_minutes = true) {
     if (show_minutes || minutes > 0.f) {
         return Glib::ustring::sprintf("%02.f:%06.03f", minutes, seconds);
     } else {
-        return Glib::ustring::sprintf("%.03f s", seconds);
+        return Glib::ustring::sprintf("%.03f", seconds);
     }
-}
-
-Glib::ustring FormatSelectionDuration(float duration, int samplerate) {
-    Glib::ustring duration_status =
-        FormatTime(duration, /*show_minutes=*/false) +
-        Glib::ustring::sprintf(" - %d samples", static_cast<int>(duration * samplerate));
-    if (duration > 1e-5f && duration < 1e5f) {
-        float frequency = 1.f / duration;
-        duration_status += Glib::ustring::sprintf(" - %.03f Hz", frequency);
-    }
-    return duration_status;
 }
 }  // namespace
 
@@ -60,15 +49,24 @@ Gui::Gui(State* state) : state(state) {
 
     box.pack_start(grid_bottom, false, true);
     grid_bottom.set_row_homogeneous(true);
-    grid_bottom.attach(status_time, 0, 0, 1, 1);
-    grid_bottom.attach(status_frequency, 1, 0, 1, 1);
+    grid_bottom.attach(label_selection, 0, 0, 1, 1);
+    grid_bottom.attach(status_time, 1, 0, 1, 1);
+    grid_bottom.attach(label_pointer, 0, 1, 1, 1);
+    grid_bottom.attach(status_pointer, 1, 1, 1, 1);
     status_time.set_xalign(0);
     status_time.set_margin_left(5);
     status_time.set_margin_right(5);
-    status_frequency.set_hexpand(true);
-    status_frequency.set_xalign(1);
-    status_frequency.set_margin_left(5);
-    status_frequency.set_margin_right(5);
+    label_selection.set_xalign(0);
+    label_selection.set_margin_left(5);
+    label_selection.set_margin_right(5);
+    label_selection.set_markup("<small>Selection</small>");
+    label_pointer.set_xalign(0);
+    label_pointer.set_margin_left(5);
+    label_pointer.set_margin_right(5);
+    label_pointer.set_markup("<small>Pointer</small>");
+    status_pointer.set_xalign(0);
+    status_pointer.set_margin_left(5);
+    status_pointer.set_margin_right(5);
 
     show_all();
     UpdateWidgets();
@@ -440,7 +438,7 @@ void Gui::StartTimeUpdate() {
 void Gui::UpdateWidgets() {
     UpdateTime();
     UpdateZoom();
-    UpdateFrequency();
+    UpdatePointer();
     UpdateTitle();
 }
 
@@ -461,7 +459,7 @@ bool Gui::UpdateTime() {
 
     Glib::ustring s;
     if (playing || !state->Selection()) {
-        s = Glib::ustring::compose("<tt>Time: <b>%1</b></tt> %2", FormatTime(time),
+        s = Glib::ustring::compose("<tt><b>%1</b></tt> <small>%2</small>", FormatTime(time),
                                    follow_playback && playing ? "[follow]" : "");
     } else {
         float s_start = time;
@@ -471,9 +469,21 @@ bool Gui::UpdateTime() {
 
         const float s_duration = s_end - s_start;
         const int samplerate = state->SelectedTrack() ? state->GetCurrentSamplerate() : 0;
-        s = Glib::ustring::compose("<tt>Time: %1 - %2 (%3)</tt>", FormatTime(s_start),
-                                   FormatTime(s_end),
-                                   FormatSelectionDuration(s_duration, samplerate));
+
+        // Start time, end time and selection length.
+        s = Glib::ustring::compose(
+            "<tt><b>%1</b></tt> - <tt><b>%2</b>  </tt><small>Length </small><tt>%3</tt>",
+            FormatTime(s_start), FormatTime(s_end), FormatTime(s_duration, false));
+
+        // Duration in samples.
+        s += Glib::ustring::sprintf("<tt>  %d</tt><small> samples</small>",
+                                    static_cast<int>(s_duration * samplerate));
+
+        // Duration in Hertz.
+        if (s_duration > 1e-5f && s_duration < 10.f) {
+            float frequency = 1.f / s_duration;
+            s += Glib::ustring::sprintf("<tt>  %.03f</tt><small> Hz</small>", frequency);
+        }
     }
 
     if (s != str_time) {
@@ -496,8 +506,12 @@ void Gui::UpdateZoom() {
     adjustment->set_value(z.Left());
 }
 
-void Gui::UpdateFrequency() {
-    Glib::ustring s = "";
+void Gui::UpdatePointer() {
+    Glib::ustring s;
+    ZoomWindow& z = state->zoom_window;
+    const float time = z.GetTime(mouse_x);
+    s = Glib::ustring::compose("<tt><b>%1</b>  </tt>", FormatTime(time));
+
     if (state->tracks.size()) {
         ZoomWindow& z = state->zoom_window;
         int track_number = z.GetTrack(mouse_y);
@@ -519,19 +533,21 @@ void Gui::UpdateFrequency() {
                 } else {
                     f = y * nyquist_freq;
                 }
-                s = Glib::ustring::sprintf("<tt>Frequency: %.0f Hz (gain: %.1f dB)</tt>",
-                                           std::round(f), display_gain_db);
+                s += Glib::ustring::sprintf(
+                    "<small>Frequency </small><tt>%.0f</tt><small> Hz</small><tt>  </tt>",
+                    std::round(f));
             } else {
                 float a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
-                s = Glib::ustring::sprintf("<tt>Amplitude: %.1f dBFS (gain: %.1f dB)</tt>", a,
-                                           display_gain_db);
+                s += Glib::ustring::sprintf(
+                    "<small>Amplitude </small><tt>%.1f</tt><small> dBFS</small><tt>  </tt>", a);
             }
+            s += Glib::ustring::sprintf("<small>Gain </small><tt>%.1f</tt><small> dB</small>",
+                                        display_gain_db);
         }
     }
-
-    if (s != str_frequency) {
-        str_frequency = s;
-        status_frequency.set_markup(str_frequency);
+    if (s != str_pointer) {
+        str_pointer = s;
+        status_pointer.set_markup(str_pointer);
     }
 }
 

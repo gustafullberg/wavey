@@ -65,6 +65,7 @@ Gui::Gui(State* state) : state(state) {
     glarea.add_events(Gdk::BUTTON_RELEASE_MASK);
     glarea.add_events(Gdk::POINTER_MOTION_MASK);
     glarea.add_events(Gdk::SCROLL_MASK);
+    glarea.add_events(Gdk::SMOOTH_SCROLL_MASK);
     box.pack_start(glarea);
 
     box.pack_start(scrollbar, false, false);
@@ -385,6 +386,23 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
     } else if (dir == GDK_SCROLL_RIGHT) {
         auto adjustment = scrollbar.get_adjustment();
         scrollbar.set_value(scrollbar.get_value() + adjustment->get_step_increment());
+    } else if (dir == GDK_SCROLL_SMOOTH) {
+        if (scroll_event->delta_y != 0.0) {
+            if (ctrl) {
+                constexpr double kVerticalZoomSpeed = 0.25;
+                state->zoom_window.ZoomVertical(1.0 + kVerticalZoomSpeed * scroll_event->delta_y);
+            } else {
+                constexpr double kZoomSpeed = 0.25;
+                state->zoom_window.Zoom(x, 1.0 - kZoomSpeed * scroll_event->delta_y);
+            }
+        }
+        if (scroll_event->delta_x != 0.0) {
+            constexpr double kPanSpeed = 0.25;
+            auto adjustment = scrollbar.get_adjustment();
+            scrollbar.set_value(scrollbar.get_value() +
+                                kPanSpeed * adjustment->get_step_increment() *
+                                    (scroll_event->delta_x > 0.0 ? 1.0 : -1.0));
+        }
     }
 
     UpdateWidgets();

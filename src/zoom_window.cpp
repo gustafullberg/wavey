@@ -34,6 +34,10 @@ void ZoomWindow::ZoomOutVertical() {
     vertical_zoom = std::max(vertical_zoom / one_db_in_linear, 1.0e-2f);
 }
 
+void ZoomWindow::ZoomVertical(float factor) {
+    vertical_zoom = std::max(std::min(vertical_zoom * factor, 100.f), 1.0e-2f);
+}
+
 void ZoomWindow::ToggleSingleTrack(std::optional<int> track) {
     if (!ShowingAllTracks()) {
         y_top = 0.f;

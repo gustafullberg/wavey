@@ -69,11 +69,8 @@ LabelImpl::LabelImpl(const std::string& s) {
 }
 
 void LabelImpl::Init(const std::string& s) {
-    window.override_color(Gdk::RGBA("white"));
-    window.override_background_color(Gdk::RGBA("black"));
-    label.override_background_color(Gdk::RGBA("black"));
-    label.set_margin_start(5);
-    label.set_margin_top(5);
+    label.get_style_context()->add_class("offscreenbackground");
+    label.get_style_context()->add_class("offscreenmargin");
     label.set_markup(s);
     window.add(label);
     window.signal_damage_event().connect(sigc::mem_fun(*this, &LabelImpl::DamageEvent));
@@ -81,8 +78,7 @@ void LabelImpl::Init(const std::string& s) {
 }
 
 void LabelImpl::RemoveMargin() {
-    label.set_margin_start(0);
-    label.set_margin_top(0);
+    label.get_style_context()->remove_class("offscreenmargin");
 }
 
 bool LabelImpl::DamageEvent(GdkEventExpose* event) {

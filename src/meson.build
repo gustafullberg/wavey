@@ -20,4 +20,4 @@ src = files(
   'zoom_window.cpp'
   )
 
-executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw, openmp], install : true)
+executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw, openmp], install : true, cpp_args : ['-DGTKMM_DISABLE_DEPRECATED', '-DGDKMM_DISABLE_DEPRECATED', '-DGLIBMM_DISABLE_DEPRECATED', '-DGIOMM_DISABLE_DEPRECATED'])

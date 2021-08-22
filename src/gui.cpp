@@ -14,6 +14,17 @@ Glib::ustring FormatTime(float t, bool show_minutes = true) {
 }  // namespace
 
 Gui::Gui(State* state) : state(state) {
+
+    // CSS rules
+    auto css = Gtk::CssProvider::create();
+    std::string rules;
+    rules += ".offscreenbackground { background-color: black; color: white; }";
+    rules += ".offscreenmargin { margin-left: 5px; margin-top: 5px; }";
+    css->load_from_data(rules);
+    auto screen = Gdk::Screen::get_default();
+    auto ctx = get_style_context();
+    ctx->add_provider_for_screen(screen, css, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
     signal_key_press_event().connect(sigc::mem_fun(*this, &Gui::KeyPress), false);
     add_events(Gdk::KEY_PRESS_MASK);
 
@@ -54,19 +65,19 @@ Gui::Gui(State* state) : state(state) {
     grid_bottom.attach(label_pointer, 0, 1, 1, 1);
     grid_bottom.attach(status_pointer, 1, 1, 1, 1);
     status_time.set_xalign(0);
-    status_time.set_margin_left(5);
-    status_time.set_margin_right(5);
+    status_time.set_margin_start(5);
+    status_time.set_margin_end(5);
     label_selection.set_xalign(0);
-    label_selection.set_margin_left(5);
-    label_selection.set_margin_right(5);
+    label_selection.set_margin_start(5);
+    label_selection.set_margin_end(5);
     label_selection.set_markup("<small>Selection</small>");
     label_pointer.set_xalign(0);
-    label_pointer.set_margin_left(5);
-    label_pointer.set_margin_right(5);
+    label_pointer.set_margin_start(5);
+    label_pointer.set_margin_end(5);
     label_pointer.set_markup("<small>Pointer</small>");
     status_pointer.set_xalign(0);
-    status_pointer.set_margin_left(5);
-    status_pointer.set_margin_right(5);
+    status_pointer.set_margin_start(5);
+    status_pointer.set_margin_end(5);
 
     show_all();
     UpdateWidgets();

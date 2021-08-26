@@ -17,7 +17,8 @@ class LabelRenderer {
               float win_width,
               float win_height,
               float scale_factor,
-              bool selected,
+              const glm::vec4& color_text,
+              const glm::vec4& color_shadow,
               bool centered_h);
 
    private:
@@ -27,7 +28,7 @@ class LabelRenderer {
     class LabelShader : public Shader {
        public:
         void Init();
-        void Draw(const glm::mat4& mvp, const glm::vec3& color);
+        void Draw(const glm::mat4& mvp, const glm::vec4& color);
     } shader;
 };
 

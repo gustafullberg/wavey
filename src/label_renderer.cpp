@@ -21,11 +21,11 @@ const std::string kFragmentSource = R"(
 in vec2 tex_coord_f;
 out vec4 o;
 layout(location = 1) uniform sampler2D tex;
-layout(location = 2) uniform vec3 color;
+layout(location = 2) uniform vec4 color;
 
 void main() {
     float a = texture(tex, tex_coord_f).r;
-    o = vec4(color, a);
+    o = color * vec4(1.0, 1.0, 1.0, a);
 })";
 }  // namespace
 
@@ -36,10 +36,10 @@ void LabelRenderer::LabelShader::Init() {
     glUseProgram(0);
 }
 
-void LabelRenderer::LabelShader::Draw(const glm::mat4& mvp, const glm::vec3& color) {
+void LabelRenderer::LabelShader::Draw(const glm::mat4& mvp, const glm::vec4& color) {
     glUseProgram(program);
     glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(mvp));
-    glUniform3fv(2, 1, glm::value_ptr(color));
+    glUniform4fv(2, 1, glm::value_ptr(color));
 }
 
 void LabelRenderer::Init() {
@@ -69,13 +69,12 @@ void LabelRenderer::Draw(const GpuLabel& label,
                          float win_width,
                          float win_height,
                          float scale_factor,
-                         bool selected,
+                         const glm::vec4& color_text,
+                         const glm::vec4& color_shadow,
                          bool centered_h) {
     if (centered_h) {
         x -= 0.5f * scale_factor * label.Width();
     }
-    glm::vec3 color_shadow = glm::vec3(.1f, 0.2f, 0.1f);
-    glm::vec3 color_text = selected ? glm::vec3(.9f, 0.9f, 0.5f) : glm::vec3(.5f, 0.9f, 0.5f);
     glm::mat4 mvp = glm::ortho(0.f, win_width, win_height, 0.f, -1.f, 1.f);
     glm::mat4 mvp_shadow = glm::translate(mvp, glm::vec3(x + 1.f, y + 1.f, 0.f));
     mvp_shadow = glm::scale(

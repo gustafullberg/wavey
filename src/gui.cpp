@@ -14,7 +14,6 @@ Glib::ustring FormatTime(float t, bool show_minutes = true) {
 }  // namespace
 
 Gui::Gui(State* state) : state(state) {
-
     // CSS rules
     auto css = Gtk::CssProvider::create();
     std::string rules;

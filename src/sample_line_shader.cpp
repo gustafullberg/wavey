@@ -39,16 +39,19 @@ void main() {
 })";
 
 const std::string kFragmentSource = R"(
-out vec4 color;
+out vec4 o;
+layout(location = 3) uniform vec4 color;
 
 void main() {
-    color = vec4(0.5, 0.9, 0.5, 0.3);
+    o = color;
 })";
 
 }  // namespace
 
-void SampleLineShader::Init() {
+void SampleLineShader::Init(const glm::vec4& color) {
     Shader::Init(kVertexSource, kGeometrySource, kFragmentSource);
+    glUseProgram(program);
+    glUniform4fv(3, 1, glm::value_ptr(color));
 }
 
 void SampleLineShader::Draw(const glm::mat4& mvp, float samplerate, float vertical_zoom) {

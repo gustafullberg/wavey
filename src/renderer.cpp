@@ -91,22 +91,32 @@ class RendererImpl : public Renderer {
     PrimitiveRenderer prim_renderer;
     LabelRenderer label_renderer;
     float timeline_height = 0;
-    glm::vec4 color_timeline{.5f, .9f, .5f, .5f};
-    glm::vec4 color_selection{.5f, .9f, .5f, .1f};
-    glm::vec4 color_line{.5f, .9f, .5f, .1f};
-    glm::vec4 color_cursor{.5f, .9f, .5f, .5f};
-    glm::vec4 color_play_indicator{.9f, .5f, .5f, 1.f};
+
+    // Color palette.
+    glm::vec4 color_background{0.2f, 0.2f, 0.2f, 1.0f};
+    glm::vec4 color_timeline{0.7f, 0.7f, 0.7f, 0.5f};
+    glm::vec4 color_selection{0.5f, 0.9f, 0.5f, 0.1f};
+    glm::vec4 color_line{0.5f, 0.9f, 0.5f, 0.1f};
+    glm::vec4 color_cursor{0.5f, 0.9f, 0.5f, 0.5f};
+    glm::vec4 color_play_indicator{0.9f, 0.5f, 0.5f, 1.0f};
+    glm::vec4 color_text{0.5f, 0.9f, 0.5f, 1.0f};
+    glm::vec4 color_text_selected{0.9f, 0.9f, 0.5f, 1.0f};
+    glm::vec4 color_text_shadow{0.1f, 0.2f, 0.1f, 1.f};
+    glm::vec4 color_text_timeline{0.7f, 0.7f, 0.7f, 1.0f};
+    glm::vec4 color_wave{0.5f, 0.9f, 0.5f, 1.0f};
+    glm::vec4 color_sample_point{0.5f, 0.9f, 0.5f, 1.0f};
+    glm::vec4 color_sample_line{0.5f, 0.9f, 0.5f, 0.3f};
 };
 
 RendererImpl::RendererImpl() {
-    wave_shader.Init();
-    sample_line_shader.Init();
-    sample_point_shader.Init();
+    wave_shader.Init(color_wave);
+    sample_line_shader.Init(color_sample_line);
+    sample_point_shader.Init(color_sample_point);
     spectrogram_shader.Init();
     prim_renderer.Init();
     label_renderer.Init();
 
-    glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+    glClearColor(color_background.r, color_background.g, color_background.b, color_background.a);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
@@ -159,7 +169,7 @@ void RendererImpl::Draw(State* state,
                     const float x = t_view / view_length * win_width;
                     const GpuLabel& label = state->GetTimeLabel(key);
                     label_renderer.Draw(label, x, 0.f, win_width, timeline_height, scale_factor,
-                                        false, true);
+                                        color_text_timeline, color_text_shadow, true);
                 }
             }
         }
@@ -222,7 +232,7 @@ void RendererImpl::Draw(State* state,
                     std::round(view_height * (i + static_cast<float>(c) / num_channels - z.Top()) /
                                (z.Bottom() - z.Top()));
                 label_renderer.Draw(*t.gpu_channel_labels[c], 0.f, y, win_width, view_height,
-                                    scale_factor, true, false);
+                                    scale_factor, color_text_selected, color_text_shadow, false);
             }
         }
 
@@ -230,7 +240,8 @@ void RendererImpl::Draw(State* state,
             float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
             label_renderer.Draw(*t.gpu_track_label, 0.f, y, win_width, view_height, scale_factor,
-                                selected, false);
+                                selected ? color_text_selected : color_text, color_text_shadow,
+                                false);
         }
     }
 

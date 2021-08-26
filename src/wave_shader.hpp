@@ -6,7 +6,7 @@
 
 class WaveShader : public Shader {
    public:
-    void Init();
+    void Init(const glm::vec4& color);
     void Draw(const glm::mat4& mvp, float samplerate, float vertical_zoom);
 };
 

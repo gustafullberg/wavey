@@ -69,6 +69,7 @@ LabelImpl::LabelImpl(const std::string& s) {
 }
 
 void LabelImpl::Init(const std::string& s) {
+    window.get_style_context()->add_class("offscreenbackground");
     label.get_style_context()->add_class("offscreenbackground");
     label.get_style_context()->add_class("offscreenmargin");
     label.set_markup(s);

@@ -1,6 +1,11 @@
 # wavey
 Linux tool to analyze and play audio files.
 
+### Screenshots
+![Bark-scale spectrogram](https://user-images.githubusercontent.com/5707617/131128638-0470e049-801a-494b-a492-65e153ca4040.png)
+
+![Waveform](https://user-images.githubusercontent.com/5707617/131128660-0270f8ac-b391-4508-abb8-35d7441c5d9b.png)
+
 ### Usage
 #### General
 - ``Ctrl+O`` - Open files

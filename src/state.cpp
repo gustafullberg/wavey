@@ -2,6 +2,8 @@
 #include <sys/stat.h>
 #include <fstream>
 
+#include "audio_mixer.hpp"
+
 namespace {
 uint64_t GetModTime(std::string path) {
     struct stat statbuf;
@@ -246,8 +248,10 @@ void State::SetLooping(bool do_loop) {
 void State::TogglePlayback() {
     if (SelectedTrack()) {
         Track& t = GetTrack(*selected_track);
+        std::unique_ptr<AudioMixer> mixer =
+            std::make_unique<AudioMixer>(t.audio_buffer->NumChannels(), audio->NumOutputChannels());
         if (t.audio_buffer) {
-            audio->TogglePlayback(t.audio_buffer, Cursor(), Selection());
+            audio->TogglePlayback(t.audio_buffer, std::move(mixer), Cursor(), Selection());
             last_played_track = *selected_track;
         }
     }

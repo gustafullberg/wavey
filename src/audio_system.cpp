@@ -1,9 +1,15 @@
 #include "audio_system.hpp"
+
 #include <cmath>
 #include <cstring>
+#include "assert.h"
+
+#include <iostream>
+#include <memory>
 
 AudioSystem::AudioSystem() {
     Pa_Initialize();
+    output_device_ = Pa_GetDefaultOutputDevice();
 }
 
 AudioSystem::~AudioSystem() {
@@ -13,21 +19,31 @@ AudioSystem::~AudioSystem() {
     Pa_Terminate();
 }
 
+int AudioSystem::NumOutputChannels() {
+    return 2;
+}
+
 void AudioSystem::SetLooping(bool do_loop) {
     loop = do_loop;
 }
 
 void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab,
+                                 std::unique_ptr<AudioMixer> mixer,
                                  float start,
                                  std::optional<float> end) {
     if (stream && Pa_IsStreamActive(stream)) {
         Pa_AbortStream(stream);
     } else {
-        Play(ab, start, end);
+        Play(ab, std::move(mixer), start, end);
     }
 }
 
-void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, std::optional<float> end) {
+void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab,
+                       std::unique_ptr<AudioMixer> mixer,
+                       float start,
+                       std::optional<float> end) {
+    mixer_ = std::move(mixer);
+    assert(mixer_->NumOutputChannels() == NumOutputChannels());
     if (stream && (num_channels != ab->NumChannels() || samplerate != ab->Samplerate())) {
         Pa_CloseStream(stream);
         stream = nullptr;
@@ -35,11 +51,25 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab, float start, std::option
         Pa_AbortStream(stream);
     }
 
+    const PaDeviceInfo* output_device_info = Pa_GetDeviceInfo(output_device_);
+    PaStreamParameters output_stream_parameter = {
+        .device = output_device_,
+        .channelCount = NumOutputChannels(),
+        .sampleFormat = paFloat32,
+        .suggestedLatency = output_device_info->defaultHighOutputLatency,
+        .hostApiSpecificStreamInfo = nullptr,
+    };
+
     if (!stream) {
-        num_channels = ab->NumChannels();
+        num_channels = NumOutputChannels();
         samplerate = ab->Samplerate();
-        Pa_OpenDefaultStream(&stream, 0, num_channels, paFloat32, samplerate,
-                             paFramesPerBufferUnspecified, Callback, this);
+        PaError err = Pa_OpenStream(&stream, nullptr, &output_stream_parameter, samplerate,
+                                    paFramesPerBufferUnspecified, paNoFlag, Callback, this);
+        if (err != paNoError) {
+            std::cerr << "An error occured while opening audio stream: " << Pa_GetErrorText(err)
+                      << " (" << err << ")" << std::endl;
+            return;
+        }
     }
     playingBuffer = ab;
     if (end && start > *end) {
@@ -76,8 +106,7 @@ int AudioSystem::Callback(const void* input_buffer,
     const int frames_to_copy = std::min(frames, t->end_index - t->index);
     const float* samples = t->playingBuffer->Samples();
 
-    memcpy(out, &samples[t->num_channels * t->index],
-           sizeof(float) * t->num_channels * frames_to_copy);
+    t->mixer_->Mix(&samples[t->playingBuffer->NumChannels() * t->index], out, frames_to_copy);
     t->index += frames_to_copy;
     if (frames_to_copy < frames) {
         if (t->loop) {

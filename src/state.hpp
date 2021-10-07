@@ -31,7 +31,6 @@ struct Track {
     std::future<std::unique_ptr<Spectrogram>> future_spectrogram;
     bool reload = false;
     bool remove = false;
-
     int GetSamplerate() { return audio_buffer ? audio_buffer->Samplerate() : 0; }
 };
 

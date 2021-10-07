@@ -1,5 +1,6 @@
 src = files(
   'audio_buffer.cpp',
+  'audio_mixer.cpp',
   'audio_system.cpp',
   'gpu_label.cpp',
   'gpu_spectrogram.cpp',

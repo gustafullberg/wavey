@@ -44,7 +44,7 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab,
                        std::optional<float> end) {
     mixer_ = std::move(mixer);
     assert(mixer_->NumOutputChannels() == NumOutputChannels());
-    if (stream && (num_channels != ab->NumChannels() || samplerate != ab->Samplerate())) {
+    if (stream && samplerate != ab->Samplerate()) {
         Pa_CloseStream(stream);
         stream = nullptr;
     } else if (stream) {

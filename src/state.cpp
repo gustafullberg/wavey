@@ -248,12 +248,12 @@ void State::SetLooping(bool do_loop) {
 void State::TogglePlayback() {
     if (SelectedTrack()) {
         Track& t = GetTrack(*selected_track);
-        std::unique_ptr<AudioMixer> mixer =
-            std::make_unique<AudioMixer>(t.audio_buffer->NumChannels(), audio->NumOutputChannels());
-        if (selected_channel) {
-            mixer->Solo(*selected_channel);
-        }
         if (t.audio_buffer) {
+            std::unique_ptr<AudioMixer> mixer = std::make_unique<AudioMixer>(
+                t.audio_buffer->NumChannels(), audio->NumOutputChannels());
+            if (selected_channel) {
+                mixer->Solo(*selected_channel);
+            }
             audio->TogglePlayback(t.audio_buffer, std::move(mixer), Cursor(), Selection());
             last_played_track = *selected_track;
         }

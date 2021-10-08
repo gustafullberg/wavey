@@ -1,17 +1,18 @@
 #include "audio_mixer.hpp"
 
 #include <cassert>
-#include <cstdio>
 
 AudioMixer::AudioMixer(int num_input_channels, int num_output_channels)
     : gain_(num_output_channels, std::vector<float>(num_input_channels)),
       num_output_channels_(num_output_channels),
       num_input_channels_(num_input_channels) {
-    printf("creating mixer output channels: %d, input channels: %d\n", num_output_channels_,
-           num_input_channels_);
-    for (int m = 0; m < num_input_channels_; m++) {
-        int output_chan = m % num_output_channels_;
-        gain_[output_chan][m] = 1.0f;
+    if (num_input_channels > 1) {
+        for (int m = 0; m < num_input_channels_; m++) {
+            int output_chan = m % num_output_channels_;
+            gain_[output_chan][m] = 1.0f;
+        }
+    } else {
+        Solo(0);
     }
 }
 

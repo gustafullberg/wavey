@@ -8,6 +8,7 @@
 #include <memory>
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
+#include "file_notification.hpp"
 #include "gpu_label.hpp"
 #include "gpu_spectrogram.hpp"
 #include "gpu_waveform.hpp"
@@ -16,6 +17,7 @@
 #include "zoom_window.hpp"
 
 struct Track {
+    explicit Track(const std::string& filename);
     std::string path;
     std::string short_name;
     uint64_t mod_time;
@@ -31,14 +33,16 @@ struct Track {
     std::future<std::unique_ptr<Spectrogram>> future_spectrogram;
     bool reload = false;
     bool remove = false;
+    std::optional<int> watch_id_;
     int GetSamplerate() { return audio_buffer ? audio_buffer->Samplerate() : 0; }
+    void Reload();
 };
 
 enum ViewMode { ALL, TRACK, CHANNEL };
 
 class State {
    public:
-    State(AudioSystem* audio) : audio(audio){};
+    State(AudioSystem* audio) : audio(audio) {}
     void LoadFile(const std::string& file_name);
     void UnloadFiles();
     void UnloadSelectedTrack();
@@ -77,6 +81,10 @@ class State {
     bool HasTimeLabel(const std::string& time);
     const GpuLabel& GetTimeLabel(const std::string& time) const;
 
+    bool DoAutoRefresh() const { return track_change_notifier_.has_value(); }
+    void StartMonitoringTrackChange(std::function<void(int)> on_track_change);
+    void StopMonitoringTrackChange();
+
     std::list<Track> tracks;
     std::map<std::string, std::unique_ptr<Label>> time_labels;
     std::map<std::string, std::unique_ptr<GpuLabel>> gpu_time_labels;
@@ -87,12 +95,20 @@ class State {
 
    private:
     void LoadListOfFiles(const std::string& file_name);
+
+    void MonitorTrack(Track& t);
+    void UnmonitorTrack(Track& t);
+
     AudioSystem* audio;
     int next_id = 0;
     float cursor = 0.f;
     std::optional<float> selection;
     std::optional<int> selected_track;
     std::optional<int> selected_channel;
+
+    std::optional<FileModificationNotifier> track_change_notifier_;
+    std::map<int, Track*> track_notification_map_;
+    std::function<void(int)> on_track_changed_;
 };
 
 #endif

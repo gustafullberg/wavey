@@ -2,6 +2,7 @@ src = files(
   'audio_buffer.cpp',
   'audio_mixer.cpp',
   'audio_system.cpp',
+  'file_notification.cpp',
   'gpu_label.cpp',
   'gpu_spectrogram.cpp',
   'gpu_waveform.cpp',

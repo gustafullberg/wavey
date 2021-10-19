@@ -107,7 +107,6 @@ class State {
     std::optional<int> selected_channel;
 
     std::optional<FileModificationNotifier> track_change_notifier_;
-    std::map<int, Track*> track_notification_map_;
     std::function<void(int)> on_track_changed_;
 };
 

@@ -44,10 +44,11 @@ int FileModificationNotifier::Watch(const std::string& filename) {
 }
 
 void FileModificationNotifier::Unwatch(int id) {
-    if (std::find(watch_descriptor_.begin(), watch_descriptor_.end(), id) ==
-        watch_descriptor_.end()) {
+    std::vector<int>::iterator wd = std::find(watch_descriptor_.begin(), watch_descriptor_.end(), id);
+    if ( wd == watch_descriptor_.end()) {
         return;
     }
+    watch_descriptor_.erase(wd);
     inotify_rm_watch(inotify_fd_, id);
 }
 

@@ -94,7 +94,11 @@ void State::UnloadFiles() {
 
 void State::UnloadSelectedTrack() {
     if (selected_track) {
-        GetSelectedTrack().remove = true;
+        Track& t = GetSelectedTrack();
+        t.remove = true;
+        if(track_change_notifier_ && t.watch_id_) {
+          track_change_notifier_->Unwatch(*t.watch_id_);
+        }
     }
 }
 

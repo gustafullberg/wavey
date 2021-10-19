@@ -134,8 +134,10 @@ bool State::CreateResources(bool* view_reset) {
         i++;
     }
 
-    bool all_resources_loaded = true;
+    bool resources_to_load = false;
     for (Track& t : tracks) {
+        resources_to_load = resources_to_load || !t.gpu_waveform || !t.gpu_spectrogram || !t.gpu_track_label;
+
         // Create audio buffer.
         if (!t.audio_buffer) {
             if (!t.future_audio_buffer.valid()) {
@@ -207,26 +209,22 @@ bool State::CreateResources(bool* view_reset) {
         }
 
         // Create GPU representations of channel labels.
-        bool gpu_channel_labels_loaded = true;
         for (size_t i = 0; i < t.gpu_channel_labels.size(); ++i) {
             if (!t.gpu_channel_labels[i]) {
+                resources_to_load = true;
                 if (t.channel_labels[i] && t.channel_labels[i]->HasImageData()) {
                     t.gpu_channel_labels[i] = std::make_unique<GpuLabel>(
                         t.channel_labels[i]->ImageData(), t.channel_labels[i]->Width(),
                         t.channel_labels[i]->Height());
-                } else {
-                    gpu_channel_labels_loaded = false;
                 }
             }
         }
 
-        all_resources_loaded = all_resources_loaded && t.gpu_waveform && t.gpu_spectrogram &&
-                               t.gpu_track_label && gpu_channel_labels_loaded;
     }
 
     // Timeline labels.
     if (time_labels.size() != gpu_time_labels.size()) {
-        all_resources_loaded = false;
+        resources_to_load = true;
         for (const auto& it : time_labels) {
             if (gpu_time_labels.find(it.first) == gpu_time_labels.end() &&
                 it.second->HasImageData()) {
@@ -238,7 +236,7 @@ bool State::CreateResources(bool* view_reset) {
         }
     }
 
-    return all_resources_loaded;
+    return resources_to_load;
 }
 
 void State::SetLooping(bool do_loop) {

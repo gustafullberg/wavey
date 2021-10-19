@@ -123,13 +123,13 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
                    view_bark_scale, playing, play_time);
 
     bool view_reset;
-    bool all_resources_loaded = state->CreateResources(&view_reset);
+    bool resources_to_load = state->CreateResources(&view_reset);
     if (view_reset) {
         UpdateWidgets();
     }
 
     // Redraw continuously until all resources are loaded and if playing audio.
-    if (!all_resources_loaded || playing) {
+    if (resources_to_load || playing) {
         queue_draw();
     }
     return true;

@@ -32,10 +32,10 @@ void AudioMixer::Gain(float linear_gain) {
     }
 }
 
-void AudioMixer::Mix(const float* input_buffer, float* output_buffer, size_t num_frames) {
+void AudioMixer::Mix(const float* input_buffer, float* output_buffer, std::size_t num_frames) {
     float* out = output_buffer;
     float* in = const_cast<float*>(input_buffer);
-    for (size_t n = 0; n < num_frames; n++) {
+    for (std::size_t n = 0; n < num_frames; n++) {
         for (int i = 0; i < num_output_channels_; i++) {
             *out = 0.0;
             for (int j = 0; j < num_input_channels_; j++) {

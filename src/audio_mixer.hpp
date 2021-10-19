@@ -8,7 +8,7 @@ class AudioMixer {
     AudioMixer(int num_input_channels, int num_output_channels);
     ~AudioMixer() = default;
 
-    void Mix(const float* input_buffer, float* output_buffer, size_t num_frames);
+    void Mix(const float* input_buffer, float* output_buffer, std::size_t num_frames);
     int NumOutputChannels() const { return num_output_channels_; }
     void Solo(int channel);
     void Gain(float linear_gain);

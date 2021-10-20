@@ -284,11 +284,29 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     if (key_event->keyval == GDK_KEY_r && ctrl) {
         state->ReloadFiles();
         queue_draw();
+    } else if (key_event->keyval == GDK_KEY_r) {
+        if (state->DoAutoRefresh()) {
+            state->StopMonitoringTrackChange();
+        } else {
+            state->StartMonitoringTrackChange([this](int watch_id) {
+                Glib::signal_idle().connect_once(std::bind(&Gui::OnTrackChanged, this, watch_id));
+            });
+        }
     }
 
     UpdateWidgets();
     queue_draw();
     return false;
+}
+
+void Gui::OnTrackChanged(int watch_id) {
+    for (Track& t : state->tracks) {
+        if (t.watch_id_ == watch_id) {
+            t.Reload();
+            queue_draw();
+            return;
+        }
+    }
 }
 
 bool Gui::ButtonPress(GdkEventButton* button_event) {

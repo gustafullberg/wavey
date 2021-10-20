@@ -37,6 +37,7 @@ class Gui : public Gtk::Window {
                         const Gtk::SelectionData& selection_data,
                         guint info,
                         guint time);
+    void OnTrackChanged(int watch_id);
 
     std::unique_ptr<Renderer> renderer;
     Gtk::HeaderBar headerbar;

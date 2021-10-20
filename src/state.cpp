@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "audio_mixer.hpp"
+#include "file_notification.hpp"
 
 namespace {
 uint64_t GetModTime(std::string path) {
@@ -14,17 +15,29 @@ uint64_t GetModTime(std::string path) {
 }
 }  // namespace
 
+Track::Track(const std::string& filename) : path(filename) {
+    const size_t separator_pos = path.rfind('/');
+    short_name = separator_pos != std::string::npos ? path.substr(separator_pos + 1) : path;
+    mod_time = GetModTime(path);
+}
+
+void Track::Reload() {
+    uint64_t current_mod_time = GetModTime(path);
+    if (mod_time != current_mod_time) {
+        mod_time = current_mod_time;
+        reload = true;
+    }
+}
+
 void State::LoadFile(const std::string& file_name) {
     if (file_name.size() >= 4 && file_name.substr(file_name.size() - 4).compare(".lof") == 0) {
         return LoadListOfFiles(file_name);
     }
 
-    Track track;
-    track.path = file_name;
-    const size_t separator_pos = file_name.rfind('/');
-    track.short_name =
-        separator_pos != std::string::npos ? file_name.substr(separator_pos + 1) : file_name;
-    track.mod_time = GetModTime(track.path);
+    Track track(file_name);
+    if (track_change_notifier_) {
+        MonitorTrack(track);
+    }
     tracks.push_back(std::move(track));
 
     // Make sure a track is selected.
@@ -80,18 +93,45 @@ void State::UnloadFiles() {
 
 void State::UnloadSelectedTrack() {
     if (selected_track) {
-        GetSelectedTrack().remove = true;
+        Track& t = GetSelectedTrack();
+        t.remove = true;
+        if(track_change_notifier_ && t.watch_id_) {
+          track_change_notifier_->Unwatch(*t.watch_id_);
+        }
     }
 }
 
 void State::ReloadFiles() {
     for (Track& t : tracks) {
-        uint64_t mod_time = GetModTime(t.path);
-        if (mod_time != t.mod_time) {
-            t.mod_time = mod_time;
-            t.reload = true;
-        }
+        t.Reload();
     }
+}
+
+void State::MonitorTrack(Track& t) {
+    int wd = track_change_notifier_->Watch(t.path);
+    t.watch_id_ = wd;
+}
+
+void State::UnmonitorTrack(Track& t) {
+    track_change_notifier_->Unwatch(*t.watch_id_);
+    t.watch_id_.reset();
+}
+
+void State::StartMonitoringTrackChange(std::function<void(int)> on_track_change) {
+    on_track_changed_ = std::move(on_track_change);
+    track_change_notifier_.emplace([this](int id) {
+        on_track_changed_(id);
+    });
+    for (Track& t : tracks) {
+        MonitorTrack(t);
+    }
+}
+void State::StopMonitoringTrackChange() {
+    track_change_notifier_.reset();
+    for (Track& t : tracks) {
+        t.watch_id_.reset();
+    }
+    on_track_changed_ = [](int) {};
 }
 
 bool State::CreateResources(bool* view_reset) {

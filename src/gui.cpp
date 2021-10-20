@@ -1,8 +1,6 @@
 #include "gui.hpp"
 #include "state.hpp"
 
-#include <iostream>
-
 namespace {
 Glib::ustring FormatTime(float t, bool show_minutes = true) {
     float minutes = std::floor(t / 60.f);
@@ -284,11 +282,9 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Reload all files.
     if (key_event->keyval == GDK_KEY_r && ctrl) {
-        std::cerr << "Reloading" << std::endl;
         state->ReloadFiles();
         queue_draw();
-    } else if (key_event->keyval == GDK_KEY_R) {
-        std::cerr << "Toggle autorefresh" << std::endl;
+    } else if (key_event->keyval == GDK_KEY_r) {
         if (state->DoAutoRefresh()) {
             state->StopMonitoringTrackChange();
         } else {
@@ -304,7 +300,6 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 }
 
 void Gui::OnTrackChanged(int watch_id) {
-    std::cerr << "Track with watch_id: " << watch_id << " changed" << std::endl;
     for (Track& t : state->tracks) {
         if (t.watch_id_ == watch_id) {
             t.Reload();

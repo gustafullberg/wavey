@@ -1,7 +1,6 @@
 #include "state.hpp"
 #include <sys/stat.h>
 #include <fstream>
-#include <iostream>
 
 #include "audio_mixer.hpp"
 #include "file_notification.hpp"
@@ -121,7 +120,6 @@ void State::UnmonitorTrack(Track& t) {
 void State::StartMonitoringTrackChange(std::function<void(int)> on_track_change) {
     on_track_changed_ = std::move(on_track_change);
     track_change_notifier_.emplace([this](int id) {
-        std::cerr << "Modified: " << id << std::endl;
         on_track_changed_(id);
     });
     for (Track& t : tracks) {

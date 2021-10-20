@@ -11,7 +11,6 @@
 #include <unistd.h>
 
 #include <functional>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
@@ -68,7 +67,6 @@ void FileModificationNotifier::Monitor() {
     };
 
     for (;;) {
-        std::cerr << "Wait for event" << std::endl;
         int poll_num = poll(poll_fds, 2, -1);
         assert(poll_num != -1);
         if (poll_num > 0) {

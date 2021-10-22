@@ -41,12 +41,14 @@ class Gui : public Gtk::Window {
     void OnActionAutoReload();
     void OnActionReload();
     void OnActionFollow();
+    void OnActionView(const Glib::ustring& parameter);
 
     std::unique_ptr<Renderer> renderer;
     Gtk::HeaderBar headerbar;
     Gtk::Button open;
     Gtk::MenuButton menu_button;
     Glib::RefPtr<Gio::SimpleActionGroup> action_group;
+    Glib::RefPtr<Gio::SimpleAction> action_view;
     Glib::RefPtr<Gio::SimpleAction> action_autoreload;
     Glib::RefPtr<Gio::SimpleAction> action_reload;
     Glib::RefPtr<Gio::SimpleAction> action_follow;

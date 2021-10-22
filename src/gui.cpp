@@ -38,6 +38,8 @@ Gui::Gui(State* state) : state(state) {
     headerbar.add(open);
 
     action_group = Gio::SimpleActionGroup::create();
+    action_view = action_group->add_action_radio_string(
+        "view", sigc::mem_fun(*this, &Gui::OnActionView), "waveform");
     action_autoreload = action_group->add_action_bool(
         "autoreload", sigc::mem_fun(*this, &Gui::OnActionAutoReload), state->DoAutoRefresh());
     action_reload = action_group->add_action("reload", sigc::mem_fun(*this, &Gui::OnActionReload));
@@ -46,6 +48,11 @@ Gui::Gui(State* state) : state(state) {
     insert_action_group("app", action_group);
 
     menu = Gio::Menu::create();
+    Glib::RefPtr<Gio::Menu> view_section = Gio::Menu::create();
+    view_section->append("Waveform", "app.view::waveform");
+    view_section->append("Spectrogram - Linear", "app.view::spectrogram_linear");
+    view_section->append("Spectrogram - Bark", "app.view::spectrogram_bark");
+    menu->append_section(view_section);
     Glib::RefPtr<Gio::Menu> reload_section = Gio::Menu::create();
     reload_section->append("Auto Reload Modified Files", "app.autoreload");
     reload_section->append("Reload Modified Files", "app.reload");
@@ -269,12 +276,14 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     // Toggle spectrogram view.
     if (key_event->keyval == GDK_KEY_s && !ctrl) {
         view_spectrogram = !view_spectrogram;
+        OnActionView("");
     }
 
     // Toggle bark scale spectrograms.
     if (key_event->keyval == GDK_KEY_b) {
         if (view_spectrogram) {
             view_bark_scale = !view_bark_scale;
+            OnActionView("");
         }
     }
 
@@ -622,4 +631,22 @@ void Gui::OnActionReload() {
 void Gui::OnActionFollow() {
     follow_playback = !follow_playback;
     action_follow->change_state(follow_playback);
+}
+
+void Gui::OnActionView(const Glib::ustring& parameter) {
+    if (parameter == "waveform") {
+        view_spectrogram = false;
+    } else if (parameter == "spectrogram_linear") {
+        view_spectrogram = true;
+        view_bark_scale = false;
+    } else if (parameter == "spectrogram_bark") {
+        view_spectrogram = true;
+        view_bark_scale = true;
+    }
+
+    Glib::ustring p = view_spectrogram
+                          ? (view_bark_scale ? "spectrogram_bark" : "spectrogram_linear")
+                          : "waveform";
+    action_view->change_state(p);
+    queue_draw();
 }

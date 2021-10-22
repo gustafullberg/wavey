@@ -32,10 +32,30 @@ Gui::Gui(State* state) : state(state) {
     set_titlebar(headerbar);
     headerbar.set_has_subtitle(false);
     headerbar.set_show_close_button();
-    open.set_label("_Open");
+    open.set_image_from_icon_name("document-open-symbolic");
     open.set_use_underline();
     open.signal_clicked().connect(sigc::mem_fun(*this, &Gui::ChooseFiles));
     headerbar.add(open);
+
+    action_group = Gio::SimpleActionGroup::create();
+    action_autoreload = action_group->add_action_bool(
+        "autoreload", sigc::mem_fun(*this, &Gui::OnActionAutoReload), state->DoAutoRefresh());
+    action_reload = action_group->add_action("reload", sigc::mem_fun(*this, &Gui::OnActionReload));
+    action_follow = action_group->add_action_bool(
+        "follow", sigc::mem_fun(*this, &Gui::OnActionFollow), follow_playback);
+    insert_action_group("app", action_group);
+
+    menu = Gio::Menu::create();
+    Glib::RefPtr<Gio::Menu> reload_section = Gio::Menu::create();
+    reload_section->append("Auto Reload Modified Files", "app.autoreload");
+    reload_section->append("Reload Modified Files", "app.reload");
+    menu->append_section(reload_section);
+    Glib::RefPtr<Gio::Menu> playback_section = Gio::Menu::create();
+    playback_section->append("Follow Cursor During Playback", "app.follow");
+    menu->append_section(playback_section);
+    menu_button.set_menu_model(menu);
+    menu_button.set_image_from_icon_name("open-menu-symbolic");
+    headerbar.add(menu_button);
 
     add(box);
 
@@ -166,7 +186,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Follow playback
     if (key_event->keyval == GDK_KEY_f && !ctrl) {
-        follow_playback = !follow_playback;
+        OnActionFollow();
     }
 
     // Zoom to selection.
@@ -282,16 +302,9 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
 
     // Reload all files.
     if (key_event->keyval == GDK_KEY_r && ctrl) {
-        state->ReloadFiles();
-        queue_draw();
+        OnActionReload();
     } else if (key_event->keyval == GDK_KEY_r) {
-        if (state->DoAutoRefresh()) {
-            state->StopMonitoringTrackChange();
-        } else {
-            state->StartMonitoringTrackChange([this](int watch_id) {
-                Glib::signal_idle().connect_once(std::bind(&Gui::OnTrackChanged, this, watch_id));
-            });
-        }
+        OnActionAutoReload();
     }
 
     UpdateWidgets();
@@ -487,8 +500,7 @@ bool Gui::UpdateTime() {
 
     Glib::ustring s;
     if (playing || !state->Selection()) {
-        s = Glib::ustring::compose("<tt><b>%1</b></tt> <small>%2</small>", FormatTime(time),
-                                   follow_playback && playing ? "[follow]" : "");
+        s = Glib::ustring::compose("<tt><b>%1</b></tt>", FormatTime(time));
     } else {
         float s_start = time;
         float s_end = *state->Selection();
@@ -585,4 +597,28 @@ void Gui::UpdateTitle() {
         str_title = s;
         set_title(str_title);
     }
+}
+
+void Gui::OnActionAutoReload() {
+    bool active = state->DoAutoRefresh();
+
+    if (active) {
+        state->StopMonitoringTrackChange();
+    } else {
+        state->StartMonitoringTrackChange([this](int watch_id) {
+            Glib::signal_idle().connect_once(std::bind(&Gui::OnTrackChanged, this, watch_id));
+        });
+    }
+
+    action_autoreload->change_state(!active);
+}
+
+void Gui::OnActionReload() {
+    state->ReloadFiles();
+    queue_draw();
+}
+
+void Gui::OnActionFollow() {
+    follow_playback = !follow_playback;
+    action_follow->change_state(follow_playback);
 }

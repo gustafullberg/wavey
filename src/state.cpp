@@ -95,8 +95,8 @@ void State::UnloadSelectedTrack() {
     if (selected_track) {
         Track& t = GetSelectedTrack();
         t.remove = true;
-        if(track_change_notifier_ && t.watch_id_) {
-          track_change_notifier_->Unwatch(*t.watch_id_);
+        if (track_change_notifier_ && t.watch_id_) {
+            track_change_notifier_->Unwatch(*t.watch_id_);
         }
     }
 }
@@ -119,9 +119,7 @@ void State::UnmonitorTrack(Track& t) {
 
 void State::StartMonitoringTrackChange(std::function<void(int)> on_track_change) {
     on_track_changed_ = std::move(on_track_change);
-    track_change_notifier_.emplace([this](int id) {
-        on_track_changed_(id);
-    });
+    track_change_notifier_.emplace([this](int id) { on_track_changed_(id); });
     for (Track& t : tracks) {
         MonitorTrack(t);
     }
@@ -176,7 +174,8 @@ bool State::CreateResources(bool* view_reset) {
 
     bool resources_to_load = false;
     for (Track& t : tracks) {
-        resources_to_load = resources_to_load || !t.gpu_waveform || !t.gpu_spectrogram || !t.gpu_track_label;
+        resources_to_load =
+            resources_to_load || !t.gpu_waveform || !t.gpu_spectrogram || !t.gpu_track_label;
 
         // Create audio buffer.
         if (!t.audio_buffer) {
@@ -259,7 +258,6 @@ bool State::CreateResources(bool* view_reset) {
                 }
             }
         }
-
     }
 
     // Timeline labels.

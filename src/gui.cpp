@@ -605,6 +605,7 @@ void Gui::OnActionAutoReload() {
     if (active) {
         state->StopMonitoringTrackChange();
     } else {
+        OnActionReload();
         state->StartMonitoringTrackChange([this](int watch_id) {
             Glib::signal_idle().connect_once(std::bind(&Gui::OnTrackChanged, this, watch_id));
         });

@@ -158,14 +158,8 @@ bool State::CreateResources(bool* view_reset) {
 
             // Reload track.
             if (t.reload) {
-                t.audio_buffer.reset();
-                t.spectrogram.reset();
-                t.label.reset();
-                t.channel_labels.resize(0);
-                t.gpu_waveform.reset();
-                t.gpu_spectrogram.reset();
-                t.gpu_track_label.reset();
-                t.gpu_channel_labels.resize(0);
+                t.future_audio_buffer =
+                    std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
                 t.reload = false;
             }
         }
@@ -174,25 +168,34 @@ bool State::CreateResources(bool* view_reset) {
 
     bool resources_to_load = false;
     for (Track& t : tracks) {
-        resources_to_load =
-            resources_to_load || !t.gpu_waveform || !t.gpu_spectrogram || !t.gpu_track_label;
+        resources_to_load = resources_to_load || !t.audio_buffer || !t.gpu_waveform ||
+                            !t.gpu_spectrogram || !t.gpu_track_label;
 
-        // Create audio buffer.
-        if (!t.audio_buffer) {
-            if (!t.future_audio_buffer.valid()) {
-                // Asynchronous creation of audio buffer.
-                t.future_audio_buffer =
-                    std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
-            } else {
-                // Check if audio buffer is ready.
-                if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
-                    std::future_status::ready) {
-                    t.audio_buffer = t.future_audio_buffer.get();
-                    t.channel_labels.resize(t.audio_buffer->NumChannels());
-                    t.gpu_channel_labels.resize(t.audio_buffer->NumChannels());
-                    ResetView();
-                    *view_reset = true;
-                }
+        // Asynchronous creation of audio buffer.
+        if (!t.audio_buffer && !t.future_audio_buffer.valid()) {
+            t.future_audio_buffer =
+                std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
+        }
+
+        // Check if new audio buffer is loaded.
+        if (t.future_audio_buffer.valid()) {
+            resources_to_load = true;
+            if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
+                std ::future_status::ready) {
+                t.audio_buffer = t.future_audio_buffer.get();
+
+                t.spectrogram.reset();
+                t.label.reset();
+                t.channel_labels.resize(0);
+                t.channel_labels.resize(t.audio_buffer->NumChannels());
+                t.gpu_waveform.reset();
+                t.gpu_spectrogram.reset();
+                t.gpu_track_label.reset();
+                t.gpu_channel_labels.resize(0);
+                t.gpu_channel_labels.resize(t.audio_buffer->NumChannels());
+
+                ResetView();
+                *view_reset = true;
             }
         }
 

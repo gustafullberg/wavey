@@ -86,7 +86,6 @@ void State::UnloadFiles() {
 
     tracks.clear();
     ResetView();
-    selected_track.reset();
     time_labels.clear();
     gpu_time_labels.clear();
 }
@@ -148,11 +147,6 @@ bool State::CreateResources(bool* view_reset) {
                 tracks.erase(i++);
                 ResetView();
                 *view_reset = true;
-                if (selected_track && tracks.size()) {
-                    selected_track = std::min(*selected_track, static_cast<int>(tracks.size()) - 1);
-                } else {
-                    selected_track.reset();
-                }
                 continue;
             }
 
@@ -333,8 +327,21 @@ void State::ResetView() {
     const float view_end = zoom_window.Right();
     const bool restore_view = view_start != 0.f || view_end != zoom_window.MaxX();
 
-    view_mode = ALL;
-    selected_channel.reset();
+    // Make sure selected_track dows not exceed its maximum value.
+    if (selected_track && tracks.size()) {
+        selected_track = std::min(*selected_track, static_cast<int>(tracks.size()) - 1);
+    } else {
+        selected_track.reset();
+    }
+
+    // Make sure selected_channel does not exceed its maximum value.
+    if (selected_track && selected_channel) {
+        selected_channel =
+            std::min(*selected_channel, GetSelectedTrack().audio_buffer->NumChannels() - 1);
+    } else {
+        selected_channel.reset();
+    }
+
     zoom_window.Reset();
     if (tracks.size()) {
         for (Track& t : tracks) {
@@ -345,6 +352,21 @@ void State::ResetView() {
 
     if (restore_view) {
         zoom_window.ZoomRange(view_start, view_end);
+    }
+
+    if (view_mode == TRACK) {
+        if (selected_track) {
+            zoom_window.ShowSingleTrack(selected_track);
+        } else {
+            view_mode = ALL;
+        }
+    } else if (view_mode == CHANNEL) {
+        if (selected_channel) {
+            int num_channels = GetSelectedTrack().audio_buffer->NumChannels();
+            zoom_window.ShowSingleChannel(*selected_track, *selected_channel, num_channels);
+        } else {
+            view_mode = ALL;
+        }
     }
 }
 

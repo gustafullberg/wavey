@@ -87,7 +87,6 @@ void FileModificationNotifier::Monitor() {
                      ptr += sizeof(struct inotify_event) + event->len) {
                     event = (const struct inotify_event*)ptr;
                     if (event->mask & IN_CLOSE_WRITE) {
-                        printf("IN_CLOSE_WRITE: ");
                         on_modification_(event->wd);
                     }
                 }

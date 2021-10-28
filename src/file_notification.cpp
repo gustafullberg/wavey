@@ -1,19 +1,11 @@
 #include "file_notification.hpp"
 
 #include <assert.h>
-#include <errno.h>
 #include <poll.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
-#include <sys/types.h>
 #include <unistd.h>
-
-#include <functional>
-#include <memory>
-#include <string>
-#include <thread>
 
 constexpr size_t BUFFER_LENGTH = 4096;
 
@@ -72,10 +64,9 @@ void FileModificationNotifier::Monitor() {
         assert(poll_num != -1);
         if (poll_num > 0) {
             if (poll_fds[kCloseIndex].revents & POLLIN) {
-                /* Console input is available. Empty stdin and quit */
-                char c;
-                while (read(close_fd_, &c, 1) > 0)
-                    continue;
+                // Read the event counter.
+                uint64_t c;
+                read(close_fd_, &c, sizeof(c));
                 break;
             }
 

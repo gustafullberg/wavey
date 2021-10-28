@@ -3,37 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-namespace {
-void MakeLowResBuffer(std::vector<float>& buffer,
-                      const AudioBuffer& ab,
-                      const int down_sampling_factor) {
-    const int num_channels = ab.NumChannels();
-    const int num_vertices = ab.NumFrames();
-    const float* samples = ab.Samples();
-
-    // Each channel has 2 output samples for every 1000 input samples.
-    buffer.resize(2 * num_channels *
-                  ((num_vertices + down_sampling_factor - 1) / down_sampling_factor));
-
-    int dest_idx = 0;
-    for (int i = 0; i < num_vertices; i += down_sampling_factor) {
-        const int end = std::min(i + down_sampling_factor, num_vertices);
-        for (int c = 0; c < num_channels; c++) {
-            float min = 1.f;
-            float max = -1.f;
-            for (int k = i; k < end; k++) {
-                min = std::min(min, samples[num_channels * k + c]);
-                max = std::max(max, samples[num_channels * k + c]);
-            }
-            buffer[dest_idx + c] = min;
-            buffer[dest_idx + c + num_channels] = max;
-        }
-        dest_idx += 2 * num_channels;
-    }
-}
-}  // namespace
-
-GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
+GpuWaveform::GpuWaveform(const AudioBuffer& ab, const std::vector<float>& buffer_lod) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
 
     num_channels = ab.NumChannels();
@@ -49,10 +19,7 @@ GpuWaveform::GpuWaveform(const AudioBuffer& ab) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-    std::vector<float> buffer_lod;
-    MakeLowResBuffer(buffer_lod, ab, 1000);
     num_vertices_lod = num_channels ? buffer_lod.size() / num_channels : 0;
-
     glGenBuffers(1, &vbo_lod);
     glBindBuffer(GL_ARRAY_BUFFER, vbo_lod);
     glBufferData(GL_ARRAY_BUFFER, buffer_lod.size() * sizeof(float), buffer_lod.data(),

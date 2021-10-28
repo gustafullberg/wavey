@@ -9,6 +9,8 @@ src = files(
   'gui.cpp',
   'label.cpp',
   'label_renderer.cpp',
+  'low_res_waveform.cpp',
+  'low_res_waveform.hpp',
   'main.cpp',
   'primitive_renderer.cpp',
   'renderer.cpp',

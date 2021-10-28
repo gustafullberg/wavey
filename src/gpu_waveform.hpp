@@ -7,7 +7,7 @@
 
 class GpuWaveform {
    public:
-    GpuWaveform(const AudioBuffer& ab);
+    GpuWaveform(const AudioBuffer& ab, const std::vector<float>& buffer_lod);
     ~GpuWaveform();
     void DrawLines(int channel, float start_time, float end_time, bool draw_low_res);
     void DrawPoints(int channel, float start_time, float end_time, bool draw_low_res);

@@ -80,6 +80,8 @@ void State::UnloadFiles() {
     for (Track& t : tracks) {
         if (t.future_audio_buffer.valid())
             t.future_audio_buffer.wait();
+        if (t.future_lowres_waveform.valid())
+            t.future_lowres_waveform.wait();
         if (t.future_spectrogram.valid())
             t.future_spectrogram.wait();
     }
@@ -138,9 +140,11 @@ bool State::CreateResources(bool* view_reset) {
         if (t.remove || t.reload) {
             // Make sure async work is completed.
             if (t.future_audio_buffer.valid())
-                t.future_audio_buffer.wait();
+                t.future_audio_buffer.get();
+            if (t.future_lowres_waveform.valid())
+                t.future_lowres_waveform.get();
             if (t.future_spectrogram.valid())
-                t.future_spectrogram.wait();
+                t.future_spectrogram.get();
 
             // Remove track.
             if (t.remove) {
@@ -228,7 +232,19 @@ bool State::CreateResources(bool* view_reset) {
 
         // Create GPU representation of waveform.
         if (!t.gpu_waveform && t.audio_buffer) {
-            t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer);
+            if (!t.future_lowres_waveform.valid()) {
+                // Asynchronous creation of low-res waveform.
+                t.future_lowres_waveform =
+                    std::async([&t] { return std::make_unique<LowResWaveform>(*t.audio_buffer); });
+            } else {
+                if (t.future_lowres_waveform.wait_for(std::chrono::seconds(0)) ==
+                    std::future_status::ready) {
+                    std::unique_ptr<LowResWaveform> lowres_waveform =
+                        t.future_lowres_waveform.get();
+                    t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer,
+                                                                   lowres_waveform->GetBuffer());
+                }
+            }
         }
 
         // Create GPU representation of spectrogram.

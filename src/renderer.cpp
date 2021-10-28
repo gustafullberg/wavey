@@ -212,18 +212,20 @@ void RendererImpl::Draw(State* state,
                     t.gpu_spectrogram->Draw(c);
                 }
             } else {
-                float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
-                const bool draw_low_res = samples_per_pixel > 1000.f;
-                const bool draw_discrete_samples = samples_per_pixel < 0.25f;
-                const float rate = draw_low_res ? samplerate * 2.f / 1000.f : samplerate;
-                if (draw_discrete_samples) {
-                    sample_line_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                    t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
-                    sample_point_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                    t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
-                } else {
-                    wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                    t.gpu_waveform->DrawLines(c, z.Left(), z.Right(), draw_low_res);
+                if (t.gpu_waveform) {
+                    float samples_per_pixel = (z.Right() - z.Left()) * samplerate / win_width;
+                    const bool draw_low_res = samples_per_pixel > 1000.f;
+                    const bool draw_discrete_samples = samples_per_pixel < 0.25f;
+                    const float rate = draw_low_res ? samplerate * 2.f / 1000.f : samplerate;
+                    if (draw_discrete_samples) {
+                        sample_line_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                        t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
+                        sample_point_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                        t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
+                    } else {
+                        wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                        t.gpu_waveform->DrawLines(c, z.Left(), z.Right(), draw_low_res);
+                    }
                 }
             }
 

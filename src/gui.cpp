@@ -114,6 +114,11 @@ Gui::Gui(State* state) : state(state) {
     drag_dest_set(list_drop_targets, Gtk::DEST_DEFAULT_MOTION | Gtk::DEST_DEFAULT_DROP,
                   Gdk::ACTION_COPY | Gdk::ACTION_MOVE);
     signal_drag_data_received().connect(sigc::mem_fun(*this, &Gui::OnDroppedFiles));
+
+    // Start file monitoring.
+    if (!state->DoAutoRefresh()) {
+        OnActionAutoReload();
+    }
 }
 
 void Gui::OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context,

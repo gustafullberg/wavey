@@ -29,7 +29,6 @@ class Gui : public Gtk::Window {
     bool UpdateTime();
     void UpdateZoom();
     void UpdatePointer();
-    void UpdateTitle();
     void UpdateCurrentWorkingDirectory(std::string_view filename);
     void OnDroppedFiles(const Glib::RefPtr<Gdk::DragContext>& context,
                         int x,

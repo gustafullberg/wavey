@@ -30,6 +30,7 @@ Gui::Gui(State* state) : state(state) {
     set_default_size(800, 600);
 
     set_titlebar(headerbar);
+    set_title("wavey");
     headerbar.set_has_subtitle(false);
     headerbar.set_show_close_button();
     open.set_image_from_icon_name("document-open-symbolic");
@@ -494,7 +495,6 @@ void Gui::UpdateWidgets() {
     UpdateTime();
     UpdateZoom();
     UpdatePointer();
-    UpdateTitle();
 }
 
 bool Gui::UpdateTime() {
@@ -602,14 +602,6 @@ void Gui::UpdatePointer() {
     if (s != str_pointer) {
         str_pointer = s;
         status_pointer.set_markup(str_pointer);
-    }
-}
-
-void Gui::UpdateTitle() {
-    Glib::ustring s = state->SelectedTrack() ? state->GetSelectedTrack().short_name : "wavey";
-    if (s != str_title) {
-        str_title = s;
-        set_title(str_title);
     }
 }
 

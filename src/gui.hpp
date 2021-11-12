@@ -14,6 +14,7 @@ class Gui : public Gtk::Window {
     void Realize();
     void Unrealize();
     bool Render(const Glib::RefPtr<Gdk::GLContext> context);
+    void Redraw();
     void Resize(int width, int height);
     bool KeyPress(GdkEventKey* key_event);
     bool ButtonPress(GdkEventButton* button_event);

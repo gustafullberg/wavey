@@ -163,9 +163,13 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
 
     // Redraw continuously until all resources are loaded and if playing audio.
     if (resources_to_load || playing) {
-        queue_draw();
+        Redraw();
     }
     return true;
+}
+
+void Gui::Redraw() {
+    glarea.queue_draw();
 }
 
 float Gui::TimelineHeight() {
@@ -175,7 +179,7 @@ float Gui::TimelineHeight() {
 void Gui::Resize(int width, int height) {
     win_width = width;
     win_height = height;
-    queue_draw();
+    Redraw();
 }
 
 bool Gui::KeyPress(GdkEventKey* key_event) {
@@ -300,7 +304,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         float time;
         if (state->Playing(&time)) {
             StartTimeUpdate();
-            queue_draw();
+            Redraw();
         }
         return true;
     }
@@ -323,7 +327,7 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     }
 
     UpdateWidgets();
-    queue_draw();
+    Redraw();
     return false;
 }
 
@@ -331,7 +335,7 @@ void Gui::OnTrackChanged(int watch_id) {
     for (Track& t : state->tracks) {
         if (t.watch_id_ == watch_id) {
             t.Reload();
-            queue_draw();
+            Redraw();
             return;
         }
     }
@@ -346,12 +350,12 @@ bool Gui::ButtonPress(GdkEventButton* button_event) {
             const float time = state->zoom_window.GetTime(x);
             state->SetCursor(time);
             mouse_down = true;
-            queue_draw();
+            Redraw();
         } else if (button_event->type == GDK_2BUTTON_PRESS) {
             if (state->SelectedTrack() && state->GetSelectedTrack().audio_buffer) {
                 state->SetCursor(0.f);
                 state->SetSelection(state->GetSelectedTrack().audio_buffer->Duration());
-                queue_draw();
+                Redraw();
             }
         }
         UpdateWidgets();
@@ -364,7 +368,7 @@ bool Gui::ButtonRelease(GdkEventButton* button_event) {
         if (button_event->type == GDK_BUTTON_RELEASE) {
             state->FixSelection();
             UpdateWidgets();
-            queue_draw();
+            Redraw();
         }
         mouse_down = false;
     }
@@ -388,13 +392,13 @@ bool Gui::PointerMove(GdkEventMotion* motion_event) {
         // Mouse needs to move at least one pixel to count as a interval selection.
         if (dt >= (z.Right() - z.Left()) / win_width) {
             state->SetSelection(time);
-            queue_draw();
+            Redraw();
         }
     }
 
     bool changed = state->SetSelectedTrack(state->zoom_window.GetTrack(mouse_y));
     if (changed) {
-        queue_draw();
+        Redraw();
     }
 
     UpdateWidgets();
@@ -430,7 +434,7 @@ bool Gui::ScrollWheel(GdkEventScroll* scroll_event) {
     }
 
     UpdateWidgets();
-    queue_draw();
+    Redraw();
     return true;
 }
 
@@ -438,7 +442,7 @@ void Gui::Scrolling() {
     auto adjustment = scrollbar.get_adjustment();
     state->zoom_window.PanTo(adjustment->get_value());
     UpdateWidgets();
-    queue_draw();
+    Redraw();
 }
 
 void Gui::UpdateCurrentWorkingDirectory(std::string_view filename) {
@@ -622,7 +626,7 @@ void Gui::OnActionAutoReload() {
 
 void Gui::OnActionReload() {
     state->ReloadFiles();
-    queue_draw();
+    Redraw();
 }
 
 void Gui::OnActionFollow() {
@@ -645,5 +649,5 @@ void Gui::OnActionView(const Glib::ustring& parameter) {
                           ? (view_bark_scale ? "spectrogram_bark" : "spectrogram_linear")
                           : "waveform";
     action_view->change_state(p);
-    queue_draw();
+    Redraw();
 }

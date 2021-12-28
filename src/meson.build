@@ -16,6 +16,8 @@ src = files(
   'shader.cpp',
   'spectrogram.cpp',
   'spectrogram_shader.cpp',
+  'spectrum_state.cpp',
+  'spectrum_window.cpp',
   'state.cpp',
   'wave_shader.cpp',
   'zoom_window.cpp'

@@ -1,5 +1,9 @@
 #include "gui.hpp"
+
+#include <iostream>
+
 #include "state.hpp"
+
 
 namespace {
 Glib::ustring FormatTime(float t, bool show_minutes = true) {
@@ -326,9 +330,35 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         OnActionAutoReload();
     }
 
+    // Create a spectrogram
+    if (key_event->keyval == GDK_KEY_p && ctrl) {
+      OnSpectrumKeyPressed();
+    }
+
     UpdateWidgets();
     Redraw();
     return false;
+}
+
+void Gui::OnSpectrumKeyPressed() {
+  std::optional<int> selected_track = state->SelectedTrack();
+  if(!selected_track) {
+    return;
+  }
+  const Track& t = state->GetTrack(*selected_track);
+  if(!t.audio_buffer) {
+    return;
+  }
+  int selected_channel;
+  const int num_channels = t.audio_buffer->NumChannels();
+  int hover_track = state->zoom_window.GetTrack(mouse_y);
+  if (hover_track == *selected_track) {
+    selected_channel = state->zoom_window.GetChannel(mouse_y, num_channels);
+  } else {
+    selected_channel = 0;
+  }
+
+  signal_add_spectrum_.emit(t, 0.0f, 2.0f, selected_channel);
 }
 
 void Gui::OnTrackChanged(int watch_id) {

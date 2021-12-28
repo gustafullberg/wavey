@@ -1,14 +1,18 @@
 #ifndef GUI_HPP
 #define GUI_HPP
 
+#include <functional>
+
 #include <gtkmm.h>
 #include "renderer.hpp"
+#include "state.hpp"
 
 class State;
 
 class Gui : public Gtk::Window {
    public:
     Gui(State* state);
+  sigc::signal<void(const Track&, float, float, int)>& signal_add_spectrum() {return signal_add_spectrum_; }
 
    private:
     void Realize();
@@ -42,6 +46,9 @@ class Gui : public Gtk::Window {
     void OnActionReload();
     void OnActionFollow();
     void OnActionView(const Glib::ustring& parameter);
+  void OnSpectrumKeyPressed();
+
+  sigc::signal<void(const Track&, float, float, int)> signal_add_spectrum_;
 
     std::unique_ptr<Renderer> renderer;
     Gtk::HeaderBar headerbar;

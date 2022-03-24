@@ -357,8 +357,11 @@ void Gui::OnSpectrumKeyPressed() {
   } else {
     selected_channel = 0;
   }
-
-  signal_add_spectrum_.emit(t, 0.0f, 2.0f, selected_channel);
+  if(state->Selection()) {
+      signal_add_spectrum_.emit(t, state->Cursor(), state->Selection().value(), selected_channel);
+  } else {
+      signal_add_spectrum_.emit(t, 0.0f, t.audio_buffer->Duration(), selected_channel);
+  }
 }
 
 void Gui::OnTrackChanged(int watch_id) {

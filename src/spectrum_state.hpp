@@ -6,10 +6,12 @@
 #include <complex>
 #include <vector>
 #include "state.hpp"
+#include <fftw3.h>
 
-class Spectrum {
+
+struct Spectrum {
   std::string name_;
-  std::future<std::unique_ptr<std::vector<std::complex<float>>>> future_spectrum_;
+  std::future<std::vector<float>> future_spectrum_;
   float gain_ = 1.0f;
 };
 
@@ -20,7 +22,7 @@ class SpectrumState {
   void Add(const Track& track, float begin, float end, int channel);
 
  private:
-  std::list<Spectrum> spectrums_;
+  std::list<std::unique_ptr<Spectrum>> spectrums_;
 };
 
 

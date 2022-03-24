@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <assert.h>
 
 class AudioBuffer {
    public:
@@ -12,6 +13,9 @@ class AudioBuffer {
     int NumFrames() const { return num_frames; }
     float Duration() const { return static_cast<float>(num_frames) / samplerate; }
     const float* Samples() const { return samples.data(); }
+    const float* Samples(float start) const {
+        assert( start  < Duration()); 
+        return samples.data() + num_channels * static_cast<int>(start * samplerate); }
     operator bool() const { return samplerate != 0; }
 
    private:

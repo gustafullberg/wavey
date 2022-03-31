@@ -6,6 +6,8 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <optional>
+
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
 #include "file_notification.hpp"
@@ -38,9 +40,10 @@ struct Track {
     std::optional<int> watch_id_;
     int GetSamplerate() { return audio_buffer ? audio_buffer->Samplerate() : 0; }
     void Reload();
+    std::optional<int> selected_channel;
 };
 
-enum ViewMode { ALL, TRACK, CHANNEL };
+enum ViewMode { ALL, TRACK };
 
 class State {
    public:
@@ -106,7 +109,6 @@ class State {
     float cursor = 0.f;
     std::optional<float> selection;
     std::optional<int> selected_track;
-    std::optional<int> selected_channel;
 
     std::optional<FileModificationNotifier> track_change_notifier_;
     std::function<void(int)> on_track_changed_;

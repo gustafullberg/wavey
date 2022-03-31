@@ -190,13 +190,14 @@ void RendererImpl::Draw(State* state,
                                    color_selection);
         }
 
-        const int num_channels = t.audio_buffer->NumChannels();
+        const int num_channels = t.selected_channel ? 1 : t.audio_buffer->NumChannels();
         const int samplerate = t.audio_buffer->Samplerate();
         const float length = t.audio_buffer->Duration();
 
         for (int c = 0; c < num_channels; c++) {
             const float trackOffset = i;
             const float channelOffset = (2.f * c + 1.f) / (2.f * num_channels);
+            const int channel_index = t.selected_channel ? *t.selected_channel : c;
             glm::mat4 mvp_channel =
                 glm::translate(mvp, glm::vec3(0.f, trackOffset + channelOffset, 0.f));
             mvp_channel = glm::scale(mvp_channel, glm::vec3(1.f, -0.5f / num_channels, 1.f));
@@ -209,7 +210,7 @@ void RendererImpl::Draw(State* state,
                 if (t.gpu_spectrogram) {
                     spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale,
                                             z.VerticalZoom());
-                    t.gpu_spectrogram->Draw(c);
+                    t.gpu_spectrogram->Draw(channel_index);
                 }
             } else {
                 if (t.gpu_waveform) {
@@ -219,26 +220,26 @@ void RendererImpl::Draw(State* state,
                     const float rate = draw_low_res ? samplerate * 2.f / 1000.f : samplerate;
                     if (draw_discrete_samples) {
                         sample_line_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                        t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
+                        t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(), draw_low_res);
                         sample_point_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                        t.gpu_waveform->DrawPoints(c, z.Left(), z.Right(), draw_low_res);
+                        t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(), draw_low_res);
                     } else {
                         wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                        t.gpu_waveform->DrawLines(c, z.Left(), z.Right(), draw_low_res);
+                        t.gpu_waveform->DrawLines(channel_index, z.Left(), z.Right(), draw_low_res);
                     }
                 }
             }
 
-            if (state->GetViewMode() == CHANNEL && t.gpu_channel_labels[c]) {
+            if (t.selected_channel && t.gpu_channel_labels[*t.selected_channel]) {
                 float y =
-                    std::round(view_height * (i + static_cast<float>(c) / num_channels - z.Top()) /
+                    std::round(view_height * (i + /* static_cast<float>(*t.selected_channel) / num_channels */ - z.Top()) /
                                (z.Bottom() - z.Top()));
-                label_renderer.Draw(*t.gpu_channel_labels[c], 0.f, y, win_width, view_height,
+                label_renderer.Draw(*t.gpu_channel_labels[*t.selected_channel], 0.f, y, win_width, view_height,
                                     scale_factor, color_text_selected, color_text_shadow, false);
             }
         }
 
-        if (state->GetViewMode() != CHANNEL && t.gpu_track_label) {
+        if (!t.selected_channel && t.gpu_track_label) {
             float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
             label_renderer.Draw(*t.gpu_track_label, 0.f, y, win_width, view_height, scale_factor,

@@ -300,8 +300,8 @@ void State::TogglePlayback() {
         if (t.audio_buffer) {
             std::unique_ptr<AudioMixer> mixer = std::make_unique<AudioMixer>(
                 t.audio_buffer->NumChannels(), audio->NumOutputChannels());
-            if (selected_channel) {
-                mixer->Solo(*selected_channel);
+            if (t.selected_channel) {
+                mixer->Solo(*t.selected_channel);
             }
             audio->TogglePlayback(t.audio_buffer, std::move(mixer), Cursor(), Selection());
             last_played_track = *selected_track;
@@ -351,11 +351,13 @@ void State::ResetView() {
     }
 
     // Make sure selected_channel does not exceed its maximum value.
-    if (selected_track && selected_channel) {
-        selected_channel =
-            std::min(*selected_channel, GetSelectedTrack().audio_buffer->NumChannels() - 1);
-    } else {
-        selected_channel.reset();
+    for (Track& t : tracks) {
+        if (t.selected_channel && t.audio_buffer &&
+            *t.selected_channel > t.audio_buffer->NumChannels()) {
+            t.selected_channel = std::min(*t.selected_channel, t.audio_buffer->NumChannels() - 1);
+        } else {
+            t.selected_channel.reset();
+        }
     }
 
     zoom_window.Reset();
@@ -376,13 +378,6 @@ void State::ResetView() {
         } else {
             view_mode = ALL;
         }
-    } else if (view_mode == CHANNEL) {
-        if (selected_channel) {
-            int num_channels = GetSelectedTrack().audio_buffer->NumChannels();
-            zoom_window.ShowSingleChannel(*selected_track, *selected_channel, num_channels);
-        } else {
-            view_mode = ALL;
-        }
     }
 }
 
@@ -391,7 +386,6 @@ int State::GetCurrentSamplerate() {
 }
 
 void State::ToggleViewSingleTrack() {
-    selected_channel.reset();
     if (view_mode == ALL && selected_track) {
         view_mode = TRACK;
         zoom_window.ShowSingleTrack(selected_track);
@@ -406,30 +400,30 @@ void State::ToggleViewSingleChannel(float mouse_y) {
         return;
     }
 
-    int num_channels = GetSelectedTrack().audio_buffer->NumChannels();
-    if (view_mode == CHANNEL || num_channels == 1) {
-        selected_channel.reset();
-        view_mode = TRACK;
-        zoom_window.ShowSingleTrack(selected_track);
+    Track& current_track = GetSelectedTrack();
+    if (current_track.selected_channel) {
+        current_track.selected_channel.reset();
+        return;
+    }
+
+    int num_channels = current_track.audio_buffer->NumChannels();
+    if (num_channels == 1) {
+        current_track.selected_channel.reset();
+        return;
+    }
+    int hover_track = zoom_window.GetTrack(mouse_y);
+    if (hover_track == *selected_track) {
+        current_track.selected_channel = zoom_window.GetChannel(mouse_y, num_channels);
     } else {
-        int hover_track = zoom_window.GetTrack(mouse_y);
-        if (hover_track == *selected_track) {
-            selected_channel = zoom_window.GetChannel(mouse_y, num_channels);
-        } else {
-            selected_channel = 0;
-        }
-        view_mode = CHANNEL;
-        zoom_window.ShowSingleChannel(*selected_track, *selected_channel, num_channels);
+        current_track.selected_channel = 0;
     }
 }
 
 void State::ScrollUp() {
-    if (view_mode == CHANNEL) {
-        if (selected_track && selected_channel && GetSelectedTrack().audio_buffer &&
-            *selected_channel > 0) {
-            selected_channel = *selected_channel - 1;
-            zoom_window.ShowSingleChannel(*selected_track, *selected_channel,
-                                          GetSelectedTrack().audio_buffer->NumChannels());
+    if (view_mode == TRACK && GetSelectedTrack().selected_channel) {
+        if (selected_track && GetSelectedTrack().selected_channel && GetSelectedTrack().audio_buffer &&
+            *GetSelectedTrack().selected_channel > 0) {
+            GetSelectedTrack().selected_channel = *GetSelectedTrack().selected_channel - 1;
         }
     } else {
         if (selected_track && *selected_track > 0) {
@@ -442,12 +436,10 @@ void State::ScrollUp() {
 }
 
 void State::ScrollDown() {
-    if (view_mode == CHANNEL) {
-        if (selected_track && selected_channel && GetSelectedTrack().audio_buffer &&
-            *selected_channel < GetSelectedTrack().audio_buffer->NumChannels() - 1) {
-            selected_channel = *selected_channel + 1;
-            zoom_window.ShowSingleChannel(*selected_track, *selected_channel,
-                                          GetSelectedTrack().audio_buffer->NumChannels());
+    if (view_mode == TRACK && GetSelectedTrack().selected_channel) {
+        if (selected_track && GetSelectedTrack().selected_channel && GetSelectedTrack().audio_buffer &&
+            *GetSelectedTrack().selected_channel < GetSelectedTrack().audio_buffer->NumChannels() - 1) {
+            GetSelectedTrack().selected_channel = *GetSelectedTrack().selected_channel + 1;
         }
     } else {
         if (selected_track && *selected_track < static_cast<int>(tracks.size()) - 1) {

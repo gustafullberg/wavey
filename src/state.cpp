@@ -352,8 +352,7 @@ void State::ResetView() {
 
     // Make sure selected_channel does not exceed its maximum value.
     for (Track& t : tracks) {
-        if (t.selected_channel && t.audio_buffer &&
-            *t.selected_channel > t.audio_buffer->NumChannels()) {
+        if (t.selected_channel && t.audio_buffer) {
             t.selected_channel = std::min(*t.selected_channel, t.audio_buffer->NumChannels() - 1);
         } else {
             t.selected_channel.reset();
@@ -421,8 +420,8 @@ void State::ToggleViewSingleChannel(float mouse_y) {
 
 void State::ScrollUp() {
     if (view_mode == TRACK && GetSelectedTrack().selected_channel) {
-        if (selected_track && GetSelectedTrack().selected_channel && GetSelectedTrack().audio_buffer &&
-            *GetSelectedTrack().selected_channel > 0) {
+        if (selected_track && GetSelectedTrack().selected_channel &&
+            GetSelectedTrack().audio_buffer && *GetSelectedTrack().selected_channel > 0) {
             GetSelectedTrack().selected_channel = *GetSelectedTrack().selected_channel - 1;
         }
     } else {
@@ -437,8 +436,10 @@ void State::ScrollUp() {
 
 void State::ScrollDown() {
     if (view_mode == TRACK && GetSelectedTrack().selected_channel) {
-        if (selected_track && GetSelectedTrack().selected_channel && GetSelectedTrack().audio_buffer &&
-            *GetSelectedTrack().selected_channel < GetSelectedTrack().audio_buffer->NumChannels() - 1) {
+        if (selected_track && GetSelectedTrack().selected_channel &&
+            GetSelectedTrack().audio_buffer &&
+            *GetSelectedTrack().selected_channel <
+                GetSelectedTrack().audio_buffer->NumChannels() - 1) {
             GetSelectedTrack().selected_channel = *GetSelectedTrack().selected_channel + 1;
         }
     } else {

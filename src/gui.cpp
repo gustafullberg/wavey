@@ -585,7 +585,7 @@ void Gui::UpdatePointer() {
             // Track space: On what y-coordinate is the pointer?
             float y = 1.f - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
             // Channel space: On what y-coordinate is the pointer?
-            float num_channels = t.audio_buffer->NumChannels();
+            float num_channels = t.selected_channel ? 1 : t.audio_buffer->NumChannels();
             y = std::fmod(num_channels * y, 1.f);
             if (view_spectrogram) {
                 float f = 0.f;

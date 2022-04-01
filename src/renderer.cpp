@@ -220,9 +220,11 @@ void RendererImpl::Draw(State* state,
                     const float rate = draw_low_res ? samplerate * 2.f / 1000.f : samplerate;
                     if (draw_discrete_samples) {
                         sample_line_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                        t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(), draw_low_res);
+                        t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(),
+                                                   draw_low_res);
                         sample_point_shader.Draw(mvp_channel, rate, z.VerticalZoom());
-                        t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(), draw_low_res);
+                        t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(),
+                                                   draw_low_res);
                     } else {
                         wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
                         t.gpu_waveform->DrawLines(channel_index, z.Left(), z.Right(), draw_low_res);
@@ -231,11 +233,10 @@ void RendererImpl::Draw(State* state,
             }
 
             if (t.selected_channel && t.gpu_channel_labels[*t.selected_channel]) {
-                float y =
-                    std::round(view_height * (i + /* static_cast<float>(*t.selected_channel) / num_channels */ - z.Top()) /
-                               (z.Bottom() - z.Top()));
-                label_renderer.Draw(*t.gpu_channel_labels[*t.selected_channel], 0.f, y, win_width, view_height,
-                                    scale_factor, color_text_selected, color_text_shadow, false);
+                float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+                label_renderer.Draw(*t.gpu_channel_labels[*t.selected_channel], 0.f, y, win_width,
+                                    view_height, scale_factor, color_text_selected,
+                                    color_text_shadow, false);
             }
         }
 

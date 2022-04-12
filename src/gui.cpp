@@ -162,7 +162,7 @@ bool Gui::Render(const Glib::RefPtr<Gdk::GLContext> context) {
     }
 
     // Redraw continuously until all resources are loaded and if playing audio.
-    if (resources_to_load || playing) {
+    if (view_reset || resources_to_load || playing) {
         Redraw();
     }
     return true;

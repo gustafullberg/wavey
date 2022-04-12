@@ -341,10 +341,9 @@ void Gui::OnTrackChanged(int watch_id) {
     for (Track& t : state->tracks) {
         if (t.watch_id_ == watch_id) {
             t.Reload();
-            Redraw();
-            return;
         }
     }
+    Redraw();
 }
 
 bool Gui::ButtonPress(GdkEventButton* button_event) {

@@ -79,8 +79,11 @@ class State {
     void ToggleViewSingleTrack();
     void ToggleViewSingleChannel(float mouse_y);
     ViewMode GetViewMode() { return view_mode; }
-    void ScrollUp();
-    void ScrollDown();
+    void ScrollTrackUp();
+    void ScrollTrackDown();
+    void ScrollChannelUp();
+    void ScrollChannelDown();
+
     void MoveTrackUp();
     void MoveTrackDown();
     bool HasTimeLabel(const std::string& time);

@@ -1,5 +1,6 @@
 #include "state.hpp"
 #include <sys/stat.h>
+#include <algorithm>
 #include <fstream>
 
 #include "audio_mixer.hpp"
@@ -418,12 +419,9 @@ void State::ToggleViewSingleChannel(float mouse_y) {
     }
 }
 
-void State::ScrollUp() {
+void State::ScrollTrackUp() {
     if (view_mode == TRACK && GetSelectedTrack().selected_channel) {
-        if (selected_track && GetSelectedTrack().selected_channel &&
-            GetSelectedTrack().audio_buffer && *GetSelectedTrack().selected_channel > 0) {
-            GetSelectedTrack().selected_channel = *GetSelectedTrack().selected_channel - 1;
-        }
+        ScrollChannelUp();
     } else {
         if (selected_track && *selected_track > 0) {
             selected_track = *selected_track - 1;
@@ -434,14 +432,9 @@ void State::ScrollUp() {
     }
 }
 
-void State::ScrollDown() {
+void State::ScrollTrackDown() {
     if (view_mode == TRACK && GetSelectedTrack().selected_channel) {
-        if (selected_track && GetSelectedTrack().selected_channel &&
-            GetSelectedTrack().audio_buffer &&
-            *GetSelectedTrack().selected_channel <
-                GetSelectedTrack().audio_buffer->NumChannels() - 1) {
-            GetSelectedTrack().selected_channel = *GetSelectedTrack().selected_channel + 1;
-        }
+        ScrollChannelDown();
     } else {
         if (selected_track && *selected_track < static_cast<int>(tracks.size()) - 1) {
             selected_track = *selected_track + 1;
@@ -450,6 +443,23 @@ void State::ScrollDown() {
             }
         }
     }
+}
+
+void State::ScrollChannelUp() {
+    if (!GetSelectedTrack().selected_channel) {
+        return;
+    }
+    GetSelectedTrack().selected_channel =
+        std::min(GetSelectedTrack().audio_buffer->NumChannels() - 1,
+                 GetSelectedTrack().selected_channel.value() + 1);
+}
+
+void State::ScrollChannelDown() {
+    if (!GetSelectedTrack().selected_channel) {
+        return;
+    }
+    GetSelectedTrack().selected_channel =
+        std::max(0, GetSelectedTrack().selected_channel.value() - 1);
 }
 
 void State::MoveTrackUp() {

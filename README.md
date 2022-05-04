@@ -25,6 +25,7 @@ Linux tool to analyze and play audio files.
 - ``End`` - Move cursor to the end
 - ``Up``, ``Down`` or ``mouse hover`` - Select file for playback
 - ``Shift+Up``or ``Shift+Down`` - Move selected track in the list
+- ``Ctrl+Up``or ``Ctrl+Down`` - Change displayed channel on the selected track 
 
 #### View
 - ``s`` - Spectrogram / waveform view
@@ -45,6 +46,7 @@ Linux tool to analyze and play audio files.
 - ``Ctrl+0`` - Reset vertical zoom
 - ``Left`` - Pan left
 - ``Right`` - Pan right
+- ``Shift+Z`` - Toggle only show the current channel on selected track 
 
 ### Build
 #### Build dependencies Debian

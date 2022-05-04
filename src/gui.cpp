@@ -274,13 +274,21 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         if (shift) {
             state->MoveTrackUp();
         } else {
-            state->ScrollUp();
+            if (ctrl) {
+                state->ScrollChannelUp();
+            } else {
+                state->ScrollTrackUp();
+            }
         }
     } else if (key_event->keyval == GDK_KEY_Down) {
         if (shift) {
             state->MoveTrackDown();
         } else {
-            state->ScrollDown();
+            if (ctrl) {
+                state->ScrollChannelDown();
+            } else {
+                state->ScrollTrackDown();
+            }
         }
     }
 

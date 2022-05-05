@@ -42,6 +42,7 @@ class Gui : public Gtk::Window {
     void OnActionReload();
     void OnActionFollow();
     void OnActionView(const Glib::ustring& parameter);
+    void OnCopy();
 
     std::unique_ptr<Renderer> renderer;
     Gtk::HeaderBar headerbar;

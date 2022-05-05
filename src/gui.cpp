@@ -196,6 +196,10 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         ChooseFiles();
     }
 
+    if (key_event->keyval == GDK_KEY_c && ctrl) {
+        OnCopy();
+    }
+
     // Full zoom out.
     if (key_event->keyval == GDK_KEY_f && ctrl) {
         state->zoom_window.ZoomOutFull();
@@ -343,6 +347,16 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
     UpdateWidgets();
     Redraw();
     return false;
+}
+
+void Gui::OnCopy() {
+    std::optional<int> track_index = state->SelectedTrack();
+    if (!track_index) {
+        return;
+    }
+    Track& track = state->GetTrack(*track_index);
+    Glib::RefPtr<Gtk::Clipboard> clipboard = Gtk::Clipboard::get();
+    clipboard->set_text(track.path);
 }
 
 void Gui::OnTrackChanged(int watch_id) {

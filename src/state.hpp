@@ -20,7 +20,7 @@
 #include "zoom_window.hpp"
 
 struct Track {
-    explicit Track(const std::string& filename);
+    Track(const std::string& filename, std::optional<std::string> track_label = std::nullopt);
     std::string path;
     std::string short_name;
     uint64_t mod_time;
@@ -48,7 +48,7 @@ enum ViewMode { ALL, TRACK };
 class State {
    public:
     State(AudioSystem* audio) : audio(audio) {}
-    void LoadFile(const std::string& file_name);
+    void LoadFile(const std::string& file_name, std::optional<std::string> label = std::nullopt);
     void UnloadFiles();
     void UnloadSelectedTrack();
     void ReloadFiles();

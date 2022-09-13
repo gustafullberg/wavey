@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <fstream>
+#include <optional>
 
 #include "audio_mixer.hpp"
 #include "file_notification.hpp"
@@ -14,11 +15,29 @@ uint64_t GetModTime(std::string path) {
     }
     return 0;
 }
+
+std::optional<std::string> GetLabelFromLofOptionString(const std::string& options) {
+    std::string::size_type n = options.find("label \"");
+    if (n == std::string::npos) {
+        return std::nullopt;
+    }
+    const std::string::size_type start = n + 7;
+    const std::string::size_type end = options.find("\"", start);
+    std::string label = options.substr(start, end - start);
+    return label;
+}
+
 }  // namespace
 
-Track::Track(const std::string& filename) : path(filename) {
+Track::Track(const std::string& filename, std::optional<std::string> track_label) : path(filename) {
     const size_t separator_pos = path.rfind('/');
-    short_name = separator_pos != std::string::npos ? path.substr(separator_pos + 1) : path;
+    std::string base_filename =
+        separator_pos != std::string::npos ? path.substr(separator_pos + 1) : path;
+    if (track_label.has_value()) {
+        short_name = *track_label + " <i>[" + base_filename + "]</i>";
+    } else {
+        short_name = base_filename;
+    }
     mod_time = GetModTime(path);
 }
 
@@ -30,12 +49,12 @@ void Track::Reload() {
     }
 }
 
-void State::LoadFile(const std::string& file_name) {
+void State::LoadFile(const std::string& file_name, std::optional<std::string> label) {
     if (file_name.size() >= 4 && file_name.substr(file_name.size() - 4).compare(".lof") == 0) {
         return LoadListOfFiles(file_name);
     }
 
-    Track track(file_name);
+    Track track(file_name, label);
     if (track_change_notifier_) {
         MonitorTrack(track);
     }
@@ -61,16 +80,18 @@ void State::LoadListOfFiles(const std::string& file_name) {
     while (std::getline(infile, line)) {
         if (line.size() >= 8 && line.substr(0, 6).compare("file \"") == 0) {
             size_t start = 6;
-            size_t end = line.find('\"', start);
-            if (end != std::string::npos) {
-                std::string path = line.substr(start, end - start);
+            size_t end_filename = line.find('\"', start);
+            if (end_filename != std::string::npos) {
+                std::string path = line.substr(start, end_filename - start);
                 // Prepend dir to path unless path starts with '/'.
                 if (path.size() >= 1 && path[0] != '/') {
                     path = dir + path;
                 }
 
+                std::string options_string = line.substr(end_filename, line.size());
+
                 // Load.
-                LoadFile(path);
+                LoadFile(path, GetLabelFromLofOptionString(options_string));
             }
         }
     }

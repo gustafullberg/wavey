@@ -33,6 +33,7 @@ Linux tool to analyze and play audio files.
 - ``z`` - Single file / all files view
 - ``Shift+z`` - Single channel / all channels view
 - ``f`` - Follow mode (view follows cursor during playback)
+- ``d`` - Display the waveform in db scale.
 
 #### Zoom
 - ``Mouse wheel`` - Zoom in / out

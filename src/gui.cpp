@@ -344,6 +344,11 @@ bool Gui::KeyPress(GdkEventKey* key_event) {
         OnActionAutoReload();
     }
 
+    // dB scale waveform
+    if (key_event->keyval == GDK_KEY_d) {
+        state->zoom_window.ToggleDbVerticalScale();
+    }
+
     UpdateWidgets();
     Redraw();
     return false;
@@ -622,7 +627,12 @@ void Gui::UpdatePointer() {
                     "<small>Frequency </small><tt>%.0f</tt><small> Hz</small><tt>  </tt>",
                     std::round(f));
             } else {
-                float a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
+                float a = 0;
+                if (z.DbVerticalScale()) {
+                    a = -(1.f - 2.f * std::abs(y - 0.5f) / z.VerticalZoom()) * 60;
+                } else {
+                    a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
+                }
                 s += Glib::ustring::sprintf(
                     "<small>Amplitude </small><tt>%.1f</tt><small> dBFS</small><tt>  </tt>", a);
             }

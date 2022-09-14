@@ -226,7 +226,7 @@ void RendererImpl::Draw(State* state,
                         t.gpu_waveform->DrawPoints(channel_index, z.Left(), z.Right(),
                                                    draw_low_res);
                     } else {
-                        wave_shader.Draw(mvp_channel, rate, z.VerticalZoom());
+                        wave_shader.Draw(mvp_channel, rate, z.VerticalZoom(), z.DbVerticalScale());
                         t.gpu_waveform->DrawLines(channel_index, z.Left(), z.Right(), draw_low_res);
                     }
                 }

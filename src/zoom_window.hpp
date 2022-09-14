@@ -40,6 +40,8 @@ class ZoomWindow {
     int GetChannel(float y, int num_channels) const;
     float VerticalZoom() const { return vertical_zoom; }
     void Reset();
+    bool DbVerticalScale() const { return db_vertical_scale; };
+    void ToggleDbVerticalScale() { db_vertical_scale = !db_vertical_scale; };
 
    private:
     void Zoom(float x, float factor);
@@ -50,5 +52,6 @@ class ZoomWindow {
     float y_bottom = 0.f;
     float y_max = 0.f;
     float vertical_zoom = 1.f;
+    bool db_vertical_scale = false;
 };
 #endif

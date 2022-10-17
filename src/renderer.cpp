@@ -76,11 +76,13 @@ class RendererImpl : public Renderer {
     virtual void Draw(State* state,
                       int win_width,
                       int win_height,
+                      int ui_bottom,
                       float scale_factor,
                       bool view_spectrogram,
                       bool view_bark_scale,
                       bool playing,
-                      float play_time);
+                      float play_time,
+                      const std::function<void(float, const char*)>& print_func);
     virtual float TimelineHeight() { return timeline_height; }
 
    private:
@@ -134,11 +136,13 @@ RendererImpl::~RendererImpl() {
 void RendererImpl::Draw(State* state,
                         int win_width,
                         int win_height,
+                        int ui_bottom,
                         float scale_factor,
                         bool view_spectrogram,
                         bool view_bark_scale,
                         bool playing,
-                        float play_time) {
+                        float play_time,
+                        const std::function<void(float, const char*)>& print_func) {
     const ZoomWindow& z = state->zoom_window;
     const float cursor_x = state->Cursor() - z.Left();
     const float view_length = z.Right() - z.Left();
@@ -175,8 +179,8 @@ void RendererImpl::Draw(State* state,
         }
     }
 
-    const float view_height = win_height - timeline_height;
-    glViewport(0, 0, win_width, view_height);
+    const float view_height = win_height - ui_bottom;
+    glViewport(0, ui_bottom, win_width, view_height);
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
@@ -232,20 +236,28 @@ void RendererImpl::Draw(State* state,
                 }
             }
 
-            if (t.selected_channel && t.gpu_channel_labels[*t.selected_channel]) {
+            if (t.selected_channel) {
+                std::string label = t.short_name + " - channel " +
+                                    std::to_string(*t.selected_channel + 1) + "/" +
+                                    std::to_string(t.audio_buffer->NumChannels()) + " - " +
+                                    std::to_string(samplerate) + " Hz";
                 float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-                label_renderer.Draw(*t.gpu_channel_labels[*t.selected_channel], 0.f, y, win_width,
-                                    view_height, scale_factor, color_text_selected,
-                                    color_text_shadow, false);
+                print_func(y, label.c_str());
             }
         }
 
-        if (!t.selected_channel && t.gpu_track_label) {
+        if (!t.selected_channel) {
+            std::string label = t.short_name + " - ";
+            if (num_channels == 1) {
+                label += "mono";
+            } else if (num_channels == 2) {
+                label += "stereo";
+            } else {
+                label += std::to_string(num_channels) + " channels";
+            }
+            label += " - " + std::to_string(samplerate) + " Hz";
             float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-            bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
-            label_renderer.Draw(*t.gpu_track_label, 0.f, y, win_width, view_height, scale_factor,
-                                selected ? color_text_selected : color_text, color_text_shadow,
-                                false);
+            print_func(y, label.c_str());
         }
     }
 

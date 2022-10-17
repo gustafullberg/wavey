@@ -188,8 +188,8 @@ bool State::CreateResources(bool* view_reset) {
 
     bool resources_to_load = false;
     for (Track& t : tracks) {
-        resources_to_load = resources_to_load || !t.audio_buffer || !t.gpu_waveform ||
-                            !t.gpu_spectrogram || !t.gpu_track_label;
+        resources_to_load =
+            resources_to_load || !t.audio_buffer || !t.gpu_waveform || !t.gpu_spectrogram;
 
         // Asynchronous creation of audio buffer.
         if (!t.audio_buffer && !t.future_audio_buffer.valid()) {
@@ -203,34 +203,12 @@ bool State::CreateResources(bool* view_reset) {
             if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
                 std ::future_status::ready) {
                 t.audio_buffer = t.future_audio_buffer.get();
-
                 t.spectrogram.reset();
-                t.label.reset();
-                t.channel_labels.resize(0);
-                t.channel_labels.resize(t.audio_buffer->NumChannels());
                 t.gpu_waveform.reset();
                 t.gpu_spectrogram.reset();
-                t.gpu_track_label.reset();
-                t.gpu_channel_labels.resize(0);
-                t.gpu_channel_labels.resize(t.audio_buffer->NumChannels());
 
                 ResetView();
                 *view_reset = true;
-            }
-        }
-
-        // Create track label.
-        if (!t.label && t.audio_buffer) {
-            t.label = Label::CreateTrackLabel(t.path, t.short_name, t.audio_buffer->NumChannels(),
-                                              t.audio_buffer->Samplerate());
-        }
-
-        // Create channel lables.
-        for (size_t i = 0; i < t.channel_labels.size(); ++i) {
-            if (!t.channel_labels[i]) {
-                t.channel_labels[i] = Label::CreateChannelLabel(t.path, t.short_name, i + 1,
-                                                                t.audio_buffer->NumChannels(),
-                                                                t.audio_buffer->Samplerate());
             }
         }
 
@@ -274,24 +252,6 @@ bool State::CreateResources(bool* view_reset) {
             t.gpu_spectrogram =
                 std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
             t.spectrogram.reset();
-        }
-
-        // Create GPU representation of track label.
-        if (!t.gpu_track_label && t.label && t.label->HasImageData()) {
-            t.gpu_track_label = std::make_unique<GpuLabel>(t.label->ImageData(), t.label->Width(),
-                                                           t.label->Height());
-        }
-
-        // Create GPU representations of channel labels.
-        for (size_t i = 0; i < t.gpu_channel_labels.size(); ++i) {
-            if (!t.gpu_channel_labels[i]) {
-                resources_to_load = true;
-                if (t.channel_labels[i] && t.channel_labels[i]->HasImageData()) {
-                    t.gpu_channel_labels[i] = std::make_unique<GpuLabel>(
-                        t.channel_labels[i]->ImageData(), t.channel_labels[i]->Width(),
-                        t.channel_labels[i]->Height());
-                }
-            }
         }
     }
 

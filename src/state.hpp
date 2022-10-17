@@ -26,12 +26,8 @@ struct Track {
     uint64_t mod_time;
     std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<Spectrogram> spectrogram;
-    std::unique_ptr<Label> label;
-    std::vector<std::unique_ptr<Label>> channel_labels;
     std::unique_ptr<GpuWaveform> gpu_waveform;
     std::unique_ptr<GpuSpectrogram> gpu_spectrogram;
-    std::unique_ptr<GpuLabel> gpu_track_label;
-    std::vector<std::unique_ptr<GpuLabel>> gpu_channel_labels;
     std::future<std::shared_ptr<AudioBuffer>> future_audio_buffer;
     std::future<std::unique_ptr<LowResWaveform>> future_lowres_waveform;
     std::future<std::unique_ptr<Spectrogram>> future_spectrogram;

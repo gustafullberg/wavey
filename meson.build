@@ -6,5 +6,8 @@ portaudio = dependency('portaudio-2.0')
 sndfile = dependency('sndfile')
 fftw = dependency('fftw3f')
 openmp = dependency('openmp')
+sdl2 = dependency('sdl2')
+
+subdir('third_party')
 subdir('src')
 subdir('resources')

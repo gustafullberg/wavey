@@ -471,8 +471,7 @@ void State::ScrollChannelUp() {
         return;
     }
     GetSelectedTrack().selected_channel =
-        std::min(GetSelectedTrack().audio_buffer->NumChannels() - 1,
-                 GetSelectedTrack().selected_channel.value() + 1);
+        std::max(0, GetSelectedTrack().selected_channel.value() - 1);
 }
 
 void State::ScrollChannelDown() {
@@ -480,7 +479,8 @@ void State::ScrollChannelDown() {
         return;
     }
     GetSelectedTrack().selected_channel =
-        std::max(0, GetSelectedTrack().selected_channel.value() - 1);
+        std::min(GetSelectedTrack().audio_buffer->NumChannels() - 1,
+                 GetSelectedTrack().selected_channel.value() + 1);
 }
 
 void State::MoveTrackUp() {

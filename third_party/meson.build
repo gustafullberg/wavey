@@ -11,7 +11,7 @@ imgui_inc = include_directories(
   'imgui',
   'imgui/backends',
 )
-imgui_lib = static_library('imgui', imgui_src, include_directories: imgui_inc, dependencies : [sdl2])
+imgui_lib = static_library('imgui', imgui_src, include_directories: imgui_inc, dependencies : [sdl2, dl])
 imgui = declare_dependency(link_with: imgui_lib, include_directories: imgui_inc)
 
 

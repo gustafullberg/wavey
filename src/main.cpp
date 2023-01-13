@@ -50,6 +50,8 @@ int main(int argc, char** argv) {
     bool view_spectrogram = false;
     bool view_bark_scale = false;
 
+    int win_width = 1;
+
     bool run = true;
     while (run) {
         SDL_Event event;
@@ -113,6 +115,32 @@ int main(int argc, char** argv) {
                         state.FixSelection();
                     }
                     break;
+
+                case SDL_MOUSEWHEEL: {
+                    const uint8_t* keyboard = SDL_GetKeyboardState(nullptr);
+                    const bool ctrl = keyboard[SDL_SCANCODE_LCTRL] || keyboard[SDL_SCANCODE_RCTRL];
+                    int x, y;
+                    SDL_GetMouseState(&x, &y);
+                    if (event.wheel.y > 0) {
+                        if (ctrl) {
+                            state.zoom_window.ZoomInVertical();
+                        } else {
+                            state.zoom_window.ZoomIn(static_cast<float>(x) / win_width);
+                        }
+                    } else if (event.wheel.y < 0) {
+                        if (ctrl) {
+                            state.zoom_window.ZoomOutVertical();
+                        } else {
+                            state.zoom_window.ZoomOut(static_cast<float>(x) / win_width);
+                        }
+                    }
+                    if (event.wheel.x < 0) {
+                        state.zoom_window.PanLeft();
+                    } else if (event.wheel.x > 0) {
+                        state.zoom_window.PanRight();
+                    }
+                    break;
+                }
 
                 case SDL_KEYDOWN: {
                     SDL_Keycode key = event.key.keysym.sym;
@@ -312,6 +340,7 @@ int main(int argc, char** argv) {
         ImGuiStyle& style = ImGui::GetStyle();
         status_bar_height = ImGui::GetFrameHeight() * 3.0f + 2.0f * style.WindowPadding.y;
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        win_width = viewport->Size.x;
         ImGui::SetNextWindowPos(
             ImVec2(viewport->Pos.x, viewport->Pos.y + viewport->Size.y - status_bar_height));
         ImGui::SetNextWindowSize(ImVec2(viewport->Size.x, status_bar_height));

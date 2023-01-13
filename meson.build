@@ -1,5 +1,4 @@
 project('wavey', 'cpp', default_options : ['cpp_std=c++17'])
-gtkmm = dependency('gtkmm-3.0')
 gl = dependency('gl')
 glm = dependency('glm')
 portaudio = dependency('portaudio-2.0')

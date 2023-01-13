@@ -3,11 +3,8 @@ src = files(
   'audio_mixer.cpp',
   'audio_system.cpp',
   'file_notification.cpp',
-  'gpu_label.cpp',
   'gpu_spectrogram.cpp',
   'gpu_waveform.cpp',
-  'label.cpp',
-  'label_renderer.cpp',
   'low_res_waveform.cpp',
   'low_res_waveform.hpp',
   'main.cpp',
@@ -23,4 +20,4 @@ src = files(
   'zoom_window.cpp'
   )
 
-executable('wavey', src, dependencies : [gtkmm, gl, glm, portaudio, sndfile, fftw, openmp, sdl2, imgui], install : true, cpp_args : ['-DGTKMM_DISABLE_DEPRECATED', '-DGDKMM_DISABLE_DEPRECATED', '-DGLIBMM_DISABLE_DEPRECATED', '-DGIOMM_DISABLE_DEPRECATED'])
+executable('wavey', src, dependencies : [gl, glm, portaudio, sndfile, fftw, openmp, sdl2, imgui], install : true)

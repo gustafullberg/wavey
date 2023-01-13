@@ -1,10 +1,9 @@
 #include <SDL2/SDL.h>
-#include <gtkmm.h>
 #include "audio_system.hpp"
-#include "gui.hpp"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl.h"
+#include "renderer.hpp"
 #include "state.hpp"
 
 float scroll_value = 0.0f;
@@ -21,9 +20,6 @@ int main(int argc, char** argv) {
         state.LoadFile(argv[i]);
     }
 
-    argc = 1;
-    auto app = Gtk::Application::create(argc, argv, "com.github.gustafullberg.wavey",
-                                        Gio::APPLICATION_NON_UNIQUE);
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);

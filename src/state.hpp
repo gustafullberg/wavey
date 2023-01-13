@@ -11,10 +11,8 @@
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
 #include "file_notification.hpp"
-#include "gpu_label.hpp"
 #include "gpu_spectrogram.hpp"
 #include "gpu_waveform.hpp"
-#include "label.hpp"
 #include "low_res_waveform.hpp"
 #include "spectrogram.hpp"
 #include "zoom_window.hpp"
@@ -82,16 +80,12 @@ class State {
 
     void MoveTrackUp();
     void MoveTrackDown();
-    bool HasTimeLabel(const std::string& time);
-    const GpuLabel& GetTimeLabel(const std::string& time) const;
 
     bool DoAutoRefresh() const { return track_change_notifier_.has_value(); }
     void StartMonitoringTrackChange(std::function<void(int)> on_track_change);
     void StopMonitoringTrackChange();
 
     std::list<Track> tracks;
-    std::map<std::string, std::unique_ptr<Label>> time_labels;
-    std::map<std::string, std::unique_ptr<GpuLabel>> gpu_time_labels;
     ZoomWindow zoom_window;
     ViewMode view_mode = ALL;
     int last_played_track = 0;

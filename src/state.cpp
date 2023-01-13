@@ -110,8 +110,6 @@ void State::UnloadFiles() {
 
     tracks.clear();
     ResetView();
-    time_labels.clear();
-    gpu_time_labels.clear();
 }
 
 void State::UnloadSelectedTrack() {
@@ -252,20 +250,6 @@ bool State::CreateResources(bool* view_reset) {
             t.gpu_spectrogram =
                 std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
             t.spectrogram.reset();
-        }
-    }
-
-    // Timeline labels.
-    if (time_labels.size() != gpu_time_labels.size()) {
-        resources_to_load = true;
-        for (const auto& it : time_labels) {
-            if (gpu_time_labels.find(it.first) == gpu_time_labels.end() &&
-                it.second->HasImageData()) {
-                gpu_time_labels.insert(std::pair<std::string, std::unique_ptr<GpuLabel>>(
-                    it.first, std::make_unique<GpuLabel>(it.second->ImageData(), it.second->Width(),
-                                                         it.second->Height())));
-                max_timelabel_height = std::max(max_timelabel_height, it.second->Height());
-            }
         }
     }
 
@@ -467,20 +451,4 @@ void State::MoveTrackDown() {
                   *std::next(tracks.begin(), *selected_track + 1));
         selected_track = *selected_track + 1;
     }
-}
-
-bool State::HasTimeLabel(const std::string& time) {
-    const auto& it = gpu_time_labels.find(time);
-    if (it != gpu_time_labels.end())
-        return true;
-
-    if (time_labels.find(time) == time_labels.end()) {
-        time_labels.insert(
-            std::pair<std::string, std::unique_ptr<Label>>(time, Label::CreateTimeLabel(time)));
-    }
-    return false;
-}
-
-const GpuLabel& State::GetTimeLabel(const std::string& time) const {
-    return *gpu_time_labels.find(time)->second;
 }

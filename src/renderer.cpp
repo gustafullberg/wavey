@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "label_renderer.hpp"
 #include "primitive_renderer.hpp"
 #include "sample_line_shader.hpp"
 #include "sample_point_shader.hpp"
@@ -91,7 +90,6 @@ class RendererImpl : public Renderer {
     SamplePointShader sample_point_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;
-    LabelRenderer label_renderer;
     float timeline_height = 0;
 
     // Color palette.
@@ -116,7 +114,6 @@ RendererImpl::RendererImpl() {
     sample_point_shader.Init(color_sample_point);
     spectrogram_shader.Init();
     prim_renderer.Init();
-    label_renderer.Init();
 
     glClearColor(color_background.r, color_background.g, color_background.b, color_background.a);
     glEnable(GL_BLEND);
@@ -130,7 +127,6 @@ RendererImpl::~RendererImpl() {
     sample_point_shader.Terminate();
     spectrogram_shader.Terminate();
     prim_renderer.Terminate();
-    label_renderer.Terminate();
 }
 
 void RendererImpl::Draw(State* state,
@@ -169,12 +165,13 @@ void RendererImpl::Draw(State* state,
             const float t = t_view + z.Left();
             if (t > 0.f) {
                 std::string key = TimeToString(t, dt_labeled, show_minutes);
-                if (state->HasTimeLabel(key)) {
-                    const float x = t_view / view_length * win_width;
-                    const GpuLabel& label = state->GetTimeLabel(key);
-                    label_renderer.Draw(label, x, 0.f, win_width, timeline_height, scale_factor,
-                                        color_text_timeline, color_text_shadow, true);
-                }
+                // FIXME:
+                // if (state->HasTimeLabel(key)) {
+                // const float x = t_view / view_length * win_width;
+                // const GpuLabel& label = state->GetTimeLabel(key);
+                /*label_renderer.Draw(label, x, 0.f, win_width, timeline_height, scale_factor,
+                                    color_text_timeline, color_text_shadow, true);*/
+                //}
             }
         }
     }

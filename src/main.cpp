@@ -49,6 +49,7 @@ int main(int argc, char** argv) {
 
     bool view_spectrogram = false;
     bool view_bark_scale = false;
+    bool follow_playback = false;
 
     int win_width = 1;
 
@@ -169,7 +170,7 @@ int main(int argc, char** argv) {
 
                     // Follow playback.
                     if (key == SDLK_f && !ctrl) {
-                        // TODO.
+                        follow_playback = !follow_playback;
                     }
 
                     // Zoom to selection.
@@ -325,6 +326,12 @@ int main(int argc, char** argv) {
 
         float play_time;
         bool playing = state.Playing(&play_time);
+
+        if (follow_playback) {
+            if (play_time > state.zoom_window.Right() || play_time < state.zoom_window.Left()) {
+                state.zoom_window.PanTo(play_time);
+            }
+        }
 
         scroll_value = state.zoom_window.Left();
         scroll_max =

@@ -9,18 +9,10 @@
 
 float scroll_value = 0.0f;
 float scroll_max = 0.0f;
-float scroll_increment = 0.0f;
 float status_bar_height = 0.0f;
 float mouse_x = 0.0f;
 float mouse_y = 0.0f;
 bool mouse_down = false;
-
-void UpdateZoom(const ZoomWindow& z) {
-    const float view_length = z.Right() - z.Left();
-    scroll_max = z.MaxX() - view_length;
-    scroll_increment = std::max(0.1f * view_length, 0.001f);
-    scroll_value = std::min(std::max(scroll_value, 0.0f), scroll_max);
-}
 
 int main(int argc, char** argv) {
     AudioSystem audio;
@@ -218,12 +210,12 @@ int main(int argc, char** argv) {
 
                     // Pan left.
                     if (key == SDLK_LEFT) {
-                        scroll_value = std::max(scroll_value - scroll_increment, 0.0f);
+                        state.zoom_window.PanLeft();
                     }
 
                     // Pan right.
                     if (key == SDLK_RIGHT) {
-                        scroll_value = std::min(scroll_value + scroll_increment, scroll_max);
+                        state.zoom_window.PanRight();
                     }
 
                     // Move track up.
@@ -447,7 +439,6 @@ int main(int argc, char** argv) {
 
         bool view_reset;
         state.CreateResources(&view_reset);
-        UpdateZoom(state.zoom_window);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

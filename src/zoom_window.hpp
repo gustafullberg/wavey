@@ -30,6 +30,8 @@ class ZoomWindow {
     void ShowSingleChannel(int track, int channel, int num_channels);
     bool ShowingAllTracks() const;
     void PanTo(float time);
+    void PanLeft();
+    void PanRight();
     float Left() const { return x_left; }
     float Right() const { return x_right; }
     float Top() const { return y_top; }

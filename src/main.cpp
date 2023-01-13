@@ -205,13 +205,15 @@ int main(int argc, char** argv) {
                     // Scroll and move the cursor to the beginning.
                     if (key == SDLK_HOME) {
                         state.SetCursor(0.0f);
-                        scroll_value = 0.0f;
+                        state.zoom_window.PanTo(0.0f);
                     }
 
                     // Scroll and move the cursor to the end.
                     if (key == SDLK_END) {
                         state.SetCursor(state.zoom_window.MaxX());
-                        scroll_value = scroll_max;
+                        state.zoom_window.PanTo(
+                            state.zoom_window.MaxX() -
+                            (state.zoom_window.Right() - state.zoom_window.Left()));
                     }
 
                     // Pan left.
@@ -307,6 +309,10 @@ int main(int argc, char** argv) {
 
         float play_time;
         bool playing = state.Playing(&play_time);
+
+        scroll_value = state.zoom_window.Left();
+        scroll_max =
+            state.zoom_window.MaxX() - (state.zoom_window.Right() - state.zoom_window.Left());
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();

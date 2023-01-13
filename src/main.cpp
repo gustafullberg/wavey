@@ -178,22 +178,22 @@ int main(int argc, char** argv) {
                     }
 
                     // Zoom in vertically.
-                    if (key == SDLK_PLUS && ctrl) {
+                    if ((key == SDLK_PLUS || key == SDLK_KP_PLUS) && ctrl) {
                         state.zoom_window.ZoomInVertical();
                     }
 
                     // Zoom in horizontally.
-                    if (key == SDLK_PLUS && !ctrl) {
+                    if ((key == SDLK_PLUS || key == SDLK_KP_PLUS) && !ctrl) {
                         state.zoom_window.ZoomIn(.5f);
                     }
 
                     // Zoom out vertically.
-                    if (key == SDLK_MINUS && ctrl) {
+                    if ((key == SDLK_MINUS || key == SDLK_KP_MINUS) && ctrl) {
                         state.zoom_window.ZoomOutVertical();
                     }
 
                     // Zoom out horizontally.
-                    if (key == SDLK_MINUS && !ctrl) {
+                    if ((key == SDLK_MINUS || key == SDLK_KP_MINUS) && !ctrl) {
                         state.zoom_window.ZoomOut(.5f);
                     }
 

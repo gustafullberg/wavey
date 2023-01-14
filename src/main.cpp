@@ -169,9 +169,13 @@ int main(int argc, char** argv) {
                         // TODO.
                     }
 
-                    // Copy
+                    // Copy file path of selected track.
                     if (key == SDLK_c && ctrl) {
-                        // TODO.
+                        std::optional<int> track_index = state.SelectedTrack();
+                        if (track_index) {
+                            Track& track = state.GetTrack(*track_index);
+                            SDL_SetClipboardText(track.path.c_str());
+                        }
                     }
 
                     // Full zoom out.

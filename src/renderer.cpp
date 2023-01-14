@@ -72,18 +72,23 @@ class RendererImpl : public Renderer {
    public:
     RendererImpl();
     virtual ~RendererImpl();
-    virtual void Draw(State* state,
-                      int win_width,
-                      int win_height,
-                      int ui_bottom,
-                      float timeline_height,
-                      float scale_factor,
-                      bool view_spectrogram,
-                      bool view_bark_scale,
-                      bool playing,
-                      float play_time,
-                      const std::function<void(float, const char*)>& label_print_func,
-                      const std::function<void(float, float, const char*)>& time_print_func);
+    virtual void Draw(
+        State* state,
+        int win_width,
+        int win_height,
+        int ui_bottom,
+        float timeline_height,
+        float scale_factor,
+        bool view_spectrogram,
+        bool view_bark_scale,
+        bool playing,
+        float play_time,
+        const std::function<
+            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+            label_print_func,
+        const std::function<
+            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+            time_print_func);
 
    private:
     WaveShader wave_shader;
@@ -129,18 +134,23 @@ RendererImpl::~RendererImpl() {
     prim_renderer.Terminate();
 }
 
-void RendererImpl::Draw(State* state,
-                        int win_width,
-                        int win_height,
-                        int ui_bottom,
-                        float timeline_height,
-                        float scale_factor,
-                        bool view_spectrogram,
-                        bool view_bark_scale,
-                        bool playing,
-                        float play_time,
-                        const std::function<void(float, const char*)>& label_print_func,
-                        const std::function<void(float, float, const char*)>& time_print_func) {
+void RendererImpl::Draw(
+    State* state,
+    int win_width,
+    int win_height,
+    int ui_bottom,
+    float timeline_height,
+    float scale_factor,
+    bool view_spectrogram,
+    bool view_bark_scale,
+    bool playing,
+    float play_time,
+    const std::function<
+        void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+        label_print_func,
+    const std::function<
+        void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+        time_print_func) {
     const ZoomWindow& z = state->zoom_window;
     const float cursor_x = state->Cursor() - z.Left();
     const float view_length = z.Right() - z.Left();
@@ -167,7 +177,7 @@ void RendererImpl::Draw(State* state,
             if (t > 0.f) {
                 std::string key = TimeToString(t, dt_labeled, show_minutes);
                 const float x = t_view / view_length * win_width;
-                time_print_func(x, 0.0f, key.c_str());
+                time_print_func(x, color_timeline, color_text_shadow, key.c_str());
             }
         }
     }
@@ -182,7 +192,8 @@ void RendererImpl::Draw(State* state,
             continue;
         }
 
-        if (state->SelectedTrack() && i == state->SelectedTrack()) {
+        const bool selected_track = state->SelectedTrack() && i == state->SelectedTrack();
+        if (selected_track) {
             prim_renderer.DrawQuad(mvp, glm::vec2(0.f, i + 1), glm::vec2(view_length, i),
                                    color_selection);
         }
@@ -236,7 +247,8 @@ void RendererImpl::Draw(State* state,
                                     std::to_string(samplerate) + " Hz";
                 float y = std::round(timeline_height +
                                      view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-                label_print_func(y, label.c_str());
+                label_print_func(y, selected_track ? color_text_selected : color_text,
+                                 color_text_shadow, label.c_str());
             }
         }
 
@@ -252,7 +264,8 @@ void RendererImpl::Draw(State* state,
             label += " - " + std::to_string(samplerate) + " Hz";
             float y =
                 std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-            label_print_func(y, label.c_str());
+            label_print_func(y, selected_track ? color_text_selected : color_text,
+                             color_text_shadow, label.c_str());
         }
     }
 

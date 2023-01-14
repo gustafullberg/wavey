@@ -478,15 +478,32 @@ int main(int argc, char** argv) {
             &state, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y),
             static_cast<int>(status_bar_height), timeline_height, 1.0f, view_spectrogram,
             view_bark_scale, playing, play_time,
-            [&style](float y, const char* text) {
-                ImGui::SetCursorPosY(y + style.WindowPadding.y);
+            [&style](float y, const glm::vec4& color, const glm::vec4& color_shadow,
+                     const char* text) {
+                ImVec2 pos(style.WindowPadding.x, y + style.WindowPadding.y);
+                ImGui::SetCursorPos(ImVec2(pos.x + 1.0f, pos.y + 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color_shadow.r, color_shadow.g,
+                                                            color_shadow.b, color_shadow.a));
                 ImGui::Text("%s", text);
+                ImGui::PopStyleColor();
+                ImGui::SetCursorPos(pos);
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
+                ImGui::Text("%s", text);
+                ImGui::PopStyleColor();
             },
-            [&style](float x, float y, const char* text) {
+            [&style](float x, const glm::vec4& color, const glm::vec4& color_shadow,
+                     const char* text) {
                 ImVec2 text_size = ImGui::CalcTextSize(text);
-                ImGui::SetCursorPosX(x - 0.5f * text_size.x);
-                ImGui::SetCursorPosY(y + 0.5f * style.WindowPadding.y);
+                ImVec2 pos(x - 0.5f * text_size.x, 0.5f * style.WindowPadding.y);
+                ImGui::SetCursorPos(ImVec2(pos.x + 1.0f, pos.y + 1.0f));
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color_shadow.r, color_shadow.g,
+                                                            color_shadow.b, color_shadow.a));
                 ImGui::Text("%s", text);
+                ImGui::PopStyleColor();
+                ImGui::SetCursorPos(pos);
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
+                ImGui::Text("%s", text);
+                ImGui::PopStyleColor();
             });
 
         ImGui::End();  // End of overlay window.

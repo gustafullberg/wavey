@@ -410,37 +410,42 @@ int main(int argc, char** argv) {
 
                     ZoomWindow& z = state.zoom_window;
                     int track_number = z.GetTrack(mouse_y);
-                    Track& t = state.GetTrack(track_number);
-                    float display_gain_db = 20.0f * std::log10(z.VerticalZoom());
-                    if (t.audio_buffer) {
-                        // Track space: On what y-coordinate is the pointer?
-                        float y = 1.f - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
-                        // Channel space: On what y-coordinate is the pointer?
-                        float num_channels = t.selected_channel ? 1 : t.audio_buffer->NumChannels();
-                        y = std::fmod(num_channels * y, 1.f);
-                        if (view_spectrogram) {
-                            float f = 0.f;
-                            float nyquist_freq = 0.5f * t.audio_buffer->Samplerate();
-                            if (view_bark_scale) {
-                                const float bark_scaling =
-                                    26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f;
-                                f = 1960.f * (bark_scaling * y + 0.53f) /
-                                    (26.28f - bark_scaling * y);
+                    if (track_number < static_cast<int>(state.tracks.size())) {
+                        Track& t = state.GetTrack(track_number);
+                        float display_gain_db = 20.0f * std::log10(z.VerticalZoom());
+                        if (t.audio_buffer) {
+                            // Track space: On what y-coordinate is the pointer?
+                            float y =
+                                1.f - std::fmod(z.Top() + (z.Bottom() - z.Top()) * mouse_y, 1.f);
+                            // Channel space: On what y-coordinate is the pointer?
+                            float num_channels =
+                                t.selected_channel ? 1 : t.audio_buffer->NumChannels();
+                            y = std::fmod(num_channels * y, 1.f);
+                            if (view_spectrogram) {
+                                float f = 0.f;
+                                float nyquist_freq = 0.5f * t.audio_buffer->Samplerate();
+                                if (view_bark_scale) {
+                                    const float bark_scaling =
+                                        26.81f * nyquist_freq / (1960.f + nyquist_freq) - 0.53f;
+                                    f = 1960.f * (bark_scaling * y + 0.53f) /
+                                        (26.28f - bark_scaling * y);
+                                } else {
+                                    f = y * nyquist_freq;
+                                }
+                                ImGui::Text("%02.f:%06.03f  Frequency %.0f Hz  Gain %.1f",
+                                            pointer_minutes, pointer_seconds, std::round(f),
+                                            display_gain_db);
                             } else {
-                                f = y * nyquist_freq;
+                                float a = 0;
+                                if (z.DbVerticalScale()) {
+                                    a = -(1.f - 2.f * std::abs(y - 0.5f) / z.VerticalZoom()) * 60;
+                                } else {
+                                    a = 20.f *
+                                        std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
+                                }
+                                ImGui::Text("%02.f:%06.03f  Amplitude %.1f dBFS  Gain %.1f",
+                                            pointer_minutes, pointer_seconds, a, display_gain_db);
                             }
-                            ImGui::Text("%02.f:%06.03f  Frequency %.0f Hz  Gain %.1f",
-                                        pointer_minutes, pointer_seconds, std::round(f),
-                                        display_gain_db);
-                        } else {
-                            float a = 0;
-                            if (z.DbVerticalScale()) {
-                                a = -(1.f - 2.f * std::abs(y - 0.5f) / z.VerticalZoom()) * 60;
-                            } else {
-                                a = 20.f * std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
-                            }
-                            ImGui::Text("%02.f:%06.03f  Amplitude %.1f dBFS  Gain %.1f",
-                                        pointer_minutes, pointer_seconds, a, display_gain_db);
                         }
                     }
                 }

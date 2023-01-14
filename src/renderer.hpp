@@ -12,13 +12,14 @@ class Renderer {
                       int win_width,
                       int win_height,
                       int ui_bottom,
+                      float timeline_height,
                       float scale_factor,
                       bool view_spectrogram,
                       bool view_bark_scale,
                       bool playing,
                       float play_time,
-                      const std::function<void(float, const char*)>& print_func) = 0;
-    virtual float TimelineHeight() = 0;
+                      const std::function<void(float, const char*)>& label_print_func,
+                      const std::function<void(float, float, const char*)>& time_print_func) = 0;
     static Renderer* Create();
 };
 

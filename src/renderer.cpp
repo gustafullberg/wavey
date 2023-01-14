@@ -76,13 +76,14 @@ class RendererImpl : public Renderer {
                       int win_width,
                       int win_height,
                       int ui_bottom,
+                      float timeline_height,
                       float scale_factor,
                       bool view_spectrogram,
                       bool view_bark_scale,
                       bool playing,
                       float play_time,
-                      const std::function<void(float, const char*)>& print_func);
-    virtual float TimelineHeight() { return timeline_height; }
+                      const std::function<void(float, const char*)>& label_print_func,
+                      const std::function<void(float, float, const char*)>& time_print_func);
 
    private:
     WaveShader wave_shader;
@@ -90,7 +91,6 @@ class RendererImpl : public Renderer {
     SamplePointShader sample_point_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;
-    float timeline_height = 0;
 
     // Color palette.
     glm::vec4 color_background{0.2f, 0.2f, 0.2f, 1.0f};
@@ -133,12 +133,14 @@ void RendererImpl::Draw(State* state,
                         int win_width,
                         int win_height,
                         int ui_bottom,
+                        float timeline_height,
                         float scale_factor,
                         bool view_spectrogram,
                         bool view_bark_scale,
                         bool playing,
                         float play_time,
-                        const std::function<void(float, const char*)>& print_func) {
+                        const std::function<void(float, const char*)>& label_print_func,
+                        const std::function<void(float, float, const char*)>& time_print_func) {
     const ZoomWindow& z = state->zoom_window;
     const float cursor_x = state->Cursor() - z.Left();
     const float view_length = z.Right() - z.Left();
@@ -150,7 +152,6 @@ void RendererImpl::Draw(State* state,
     float dt_labeled;
     int unlabeled_ratio;
     TimelineResolution(view_length, dt_labeled, unlabeled_ratio);
-    timeline_height = 2.f * (state->max_timelabel_height * scale_factor);
     glViewport(0, win_height - timeline_height, win_width, timeline_height);
     const glm::mat4 mvp_timeline = glm::ortho(0.f, view_length, 0.f, 1.f, -1.f, 1.f);
     const float start = TimelineStart(z.Left(), dt_labeled) - z.Left();
@@ -165,18 +166,13 @@ void RendererImpl::Draw(State* state,
             const float t = t_view + z.Left();
             if (t > 0.f) {
                 std::string key = TimeToString(t, dt_labeled, show_minutes);
-                // FIXME:
-                // if (state->HasTimeLabel(key)) {
-                // const float x = t_view / view_length * win_width;
-                // const GpuLabel& label = state->GetTimeLabel(key);
-                /*label_renderer.Draw(label, x, 0.f, win_width, timeline_height, scale_factor,
-                                    color_text_timeline, color_text_shadow, true);*/
-                //}
+                const float x = t_view / view_length * win_width;
+                time_print_func(x, 0.0f, key.c_str());
             }
         }
     }
 
-    const float view_height = win_height - ui_bottom;
+    const float view_height = win_height - ui_bottom - timeline_height;
     glViewport(0, ui_bottom, win_width, view_height);
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
@@ -238,8 +234,9 @@ void RendererImpl::Draw(State* state,
                                     std::to_string(*t.selected_channel + 1) + "/" +
                                     std::to_string(t.audio_buffer->NumChannels()) + " - " +
                                     std::to_string(samplerate) + " Hz";
-                float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-                print_func(y, label.c_str());
+                float y = std::round(timeline_height +
+                                     view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+                label_print_func(y, label.c_str());
             }
         }
 
@@ -253,8 +250,9 @@ void RendererImpl::Draw(State* state,
                 label += std::to_string(num_channels) + " channels";
             }
             label += " - " + std::to_string(samplerate) + " Hz";
-            float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-            print_func(y, label.c_str());
+            float y =
+                std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+            label_print_func(y, label.c_str());
         }
     }
 

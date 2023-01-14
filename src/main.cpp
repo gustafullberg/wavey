@@ -8,6 +8,7 @@
 
 float scroll_value = 0.0f;
 float scroll_max = 0.0f;
+float timeline_height = 0.0f;
 float status_bar_height = 0.0f;
 float mouse_x = 0.0f;
 float mouse_y = 0.0f;
@@ -74,10 +75,11 @@ int main(int argc, char** argv) {
                         mouse_x = std::max(
                             std::min(static_cast<float>(event.motion.x) / io.DisplaySize.x, 1.0f),
                             0.0f);
-                        mouse_y = std::max(std::min(static_cast<float>(event.motion.y) /
-                                                        (io.DisplaySize.y - status_bar_height),
-                                                    1.0f),
-                                           0.0f);
+                        mouse_y = std::max(
+                            std::min((static_cast<float>(event.motion.y) - timeline_height) /
+                                         (io.DisplaySize.y - timeline_height - status_bar_height),
+                                     1.0f),
+                            0.0f);
 
                         if (mouse_down) {
                             ZoomWindow& z = state.zoom_window;
@@ -345,6 +347,7 @@ int main(int argc, char** argv) {
         // ImGui::ShowDemoWindow(&show_demo);
 
         ImGuiStyle& style = ImGui::GetStyle();
+        timeline_height = ImGui::GetFrameHeight() * 2.0f;
         status_bar_height = ImGui::GetFrameHeight() * 3.0f + 2.0f * style.WindowPadding.y;
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         win_width = viewport->Size.x;
@@ -464,13 +467,20 @@ int main(int argc, char** argv) {
             ImGuiWindowFlags_NoMouseInputs;
         ImGui::Begin("##Overlay", nullptr, overlay_flags);
 
-        renderer->Draw(&state, static_cast<int>(io.DisplaySize.x),
-                       static_cast<int>(io.DisplaySize.y), static_cast<int>(status_bar_height),
-                       1.0f, view_spectrogram, view_bark_scale, playing, play_time,
-                       [&style](float y, const char* text) {
-                           ImGui::SetCursorPosY(y + style.WindowPadding.y);
-                           ImGui::Text("%s", text);
-                       });
+        renderer->Draw(
+            &state, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y),
+            static_cast<int>(status_bar_height), timeline_height, 1.0f, view_spectrogram,
+            view_bark_scale, playing, play_time,
+            [&style](float y, const char* text) {
+                ImGui::SetCursorPosY(y + style.WindowPadding.y);
+                ImGui::Text("%s", text);
+            },
+            [&style](float x, float y, const char* text) {
+                ImVec2 text_size = ImGui::CalcTextSize(text);
+                ImGui::SetCursorPosX(x - 0.5f * text_size.x);
+                ImGui::SetCursorPosY(y + 0.5f * style.WindowPadding.y);
+                ImGui::Text("%s", text);
+            });
 
         ImGui::End();  // End of overlay window.
 

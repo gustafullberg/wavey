@@ -57,6 +57,8 @@ int main(int argc, char** argv) {
 
     int win_width = 1;
 
+    state.StartMonitoringTrackChange();
+
     bool run = true;
     while (run) {
         SDL_Event event;

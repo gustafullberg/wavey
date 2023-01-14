@@ -82,7 +82,7 @@ class State {
     void MoveTrackDown();
 
     bool DoAutoRefresh() const { return track_change_notifier_.has_value(); }
-    void StartMonitoringTrackChange(std::function<void(int)> on_track_change);
+    void StartMonitoringTrackChange();
     void StopMonitoringTrackChange();
 
     std::list<Track> tracks;
@@ -103,7 +103,6 @@ class State {
     std::optional<int> selected_track;
 
     std::optional<FileModificationNotifier> track_change_notifier_;
-    std::function<void(int)> on_track_changed_;
 };
 
 #endif

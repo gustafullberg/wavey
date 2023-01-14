@@ -138,9 +138,14 @@ void State::UnmonitorTrack(Track& t) {
     t.watch_id_.reset();
 }
 
-void State::StartMonitoringTrackChange(std::function<void(int)> on_track_change) {
-    on_track_changed_ = std::move(on_track_change);
-    track_change_notifier_.emplace([this](int id) { on_track_changed_(id); });
+void State::StartMonitoringTrackChange() {
+    track_change_notifier_.emplace([this](int id) {
+        for (Track& t : tracks) {
+            if (t.watch_id_ == id) {
+                t.Reload();
+            }
+        }
+    });
     for (Track& t : tracks) {
         MonitorTrack(t);
     }
@@ -150,7 +155,6 @@ void State::StopMonitoringTrackChange() {
     for (Track& t : tracks) {
         t.watch_id_.reset();
     }
-    on_track_changed_ = [](int) {};
 }
 
 bool State::CreateResources(bool* view_reset) {

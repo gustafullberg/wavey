@@ -37,6 +37,7 @@ int main(int argc, char** argv) {
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1);
+    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -72,6 +73,10 @@ int main(int argc, char** argv) {
                     }
                     break;
 
+                case SDL_DROPFILE:
+                    state.LoadFile(event.drop.file);
+                    break;
+
                 case SDL_MOUSEMOTION:
                     if (!io.WantCaptureMouse) {
                         mouse_x = std::max(
@@ -87,7 +92,7 @@ int main(int argc, char** argv) {
                             ZoomWindow& z = state.zoom_window;
                             const float time = z.GetTime(mouse_x);
                             const float dt = std::fabs(time - state.Cursor());
-                            // Mouse needs to move at least one pixel to count as a interval
+                            // Mouse needs to move at least one pixel to count as an interval
                             // selection.
                             if (dt >= (z.Right() - z.Left()) / io.DisplaySize.x) {
                                 state.SetSelection(time);

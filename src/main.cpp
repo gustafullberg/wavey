@@ -432,7 +432,7 @@ int main(int argc, char** argv) {
                                 } else {
                                     f = y * nyquist_freq;
                                 }
-                                ImGui::Text("%02.f:%06.03f  Frequency %.0f Hz  Gain %.1f",
+                                ImGui::Text("%02.f:%06.03f  Frequency %.0f Hz  Gain %.1f dB",
                                             pointer_minutes, pointer_seconds, std::round(f),
                                             display_gain_db);
                             } else {
@@ -443,7 +443,7 @@ int main(int argc, char** argv) {
                                     a = 20.f *
                                         std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
                                 }
-                                ImGui::Text("%02.f:%06.03f  Amplitude %.1f dBFS  Gain %.1f",
+                                ImGui::Text("%02.f:%06.03f  Amplitude %.1f dBFS  Gain %.1f dB",
                                             pointer_minutes, pointer_seconds, a, display_gain_db);
                             }
                         }

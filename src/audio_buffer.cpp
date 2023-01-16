@@ -32,7 +32,6 @@ AudioBuffer::AudioBuffer(std::string file_name) {
     std::cerr << file_name << " decoded in "
               << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms"
               << std::endl;
-    while(1);
 }
 
 void AudioBuffer::SaveTo(float start, float end, const std::string& filename) {

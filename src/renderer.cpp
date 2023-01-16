@@ -193,15 +193,20 @@ void RendererImpl::Draw(
         if (i >= z.Bottom())
             break;
 
-        const Track& t = state->GetTrack(i);
-        if (!t.audio_buffer) {
-            continue;
-        }
-
         const bool selected_track = state->SelectedTrack() && i == state->SelectedTrack();
         if (selected_track) {
             prim_renderer.DrawQuad(mvp, glm::vec2(0.f, i + 1), glm::vec2(view_length, i),
                                    color_selection);
+        }
+
+        const Track& t = state->GetTrack(i);
+
+        // Y-coordinate of track label (or status message).
+        float label_y =
+            std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+        if (t.status.size() || !t.audio_buffer) {
+            label_print_func(label_y, color_text, color_text_shadow, t.status.c_str());
+            continue;
         }
 
         const int num_channels = t.selected_channel ? 1 : t.audio_buffer->NumChannels();
@@ -247,39 +252,26 @@ void RendererImpl::Draw(
             }
 
             if (t.selected_channel) {
-                std::string label;
-                if (t.status.size()) {
-                    label = t.status;
-                } else {
-                    label = t.short_name + " - channel " + std::to_string(*t.selected_channel + 1) +
-                            "/" + std::to_string(t.audio_buffer->NumChannels()) + " - " +
-                            std::to_string(samplerate) + " Hz";
-                }
-                float y = std::round(timeline_height +
-                                     view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-                label_print_func(y, selected_track ? color_text_selected : color_text,
+                std::string label = t.short_name + " - channel " +
+                                    std::to_string(*t.selected_channel + 1) + "/" +
+                                    std::to_string(t.audio_buffer->NumChannels()) + " - " +
+                                    std::to_string(samplerate) + " Hz";
+                label_print_func(label_y, selected_track ? color_text_selected : color_text,
                                  color_text_shadow, label.c_str());
             }
         }
 
         if (!t.selected_channel) {
-            std::string label;
-            if (t.status.size()) {
-                label = t.status;
+            std::string label = t.short_name + " - ";
+            if (num_channels == 1) {
+                label += "mono";
+            } else if (num_channels == 2) {
+                label += "stereo";
             } else {
-                label = t.short_name + " - ";
-                if (num_channels == 1) {
-                    label += "mono";
-                } else if (num_channels == 2) {
-                    label += "stereo";
-                } else {
-                    label += std::to_string(num_channels) + " channels";
-                }
-                label += " - " + std::to_string(samplerate) + " Hz";
+                label += std::to_string(num_channels) + " channels";
             }
-            float y =
-                std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-            label_print_func(y, selected_track ? color_text_selected : color_text,
+            label += " - " + std::to_string(samplerate) + " Hz";
+            label_print_func(label_y, selected_track ? color_text_selected : color_text,
                              color_text_shadow, label.c_str());
         }
     }

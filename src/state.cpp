@@ -195,8 +195,11 @@ bool State::CreateResources(bool* view_reset) {
 
         // Asynchronous creation of audio buffer.
         if (!t.audio_buffer && !t.future_audio_buffer.valid()) {
+            t.status = "Loading: " + t.path;
             t.future_audio_buffer =
                 std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
+            ResetView();
+            *view_reset = true;
         }
 
         // Check if new audio buffer is loaded.
@@ -211,8 +214,6 @@ bool State::CreateResources(bool* view_reset) {
 
                 if (t.audio_buffer->NumChannels() == 0) {
                     t.status = "Failed to load: " + t.path;
-                } else {
-                    t.status = "";
                 }
                 ResetView();
                 *view_reset = true;
@@ -250,6 +251,10 @@ bool State::CreateResources(bool* view_reset) {
                         t.future_lowres_waveform.get();
                     t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer,
                                                                    lowres_waveform->GetBuffer());
+                    // Indicate that file is loaded.
+                    if (t.audio_buffer->NumChannels()) {
+                        t.status = "";
+                    }
                 }
             }
         }

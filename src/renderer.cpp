@@ -187,6 +187,12 @@ void RendererImpl::Draw(
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
+        // Cull tracks outside of the zoom window.
+        if (i + 1 <= z.Top())
+            continue;
+        if (i >= z.Bottom())
+            break;
+
         const Track& t = state->GetTrack(i);
         if (!t.audio_buffer) {
             continue;

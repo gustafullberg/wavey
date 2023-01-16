@@ -157,8 +157,7 @@ void State::StopMonitoringTrackChange() {
     }
 }
 
-bool State::CreateResources(bool* view_reset) {
-    *view_reset = false;
+bool State::CreateResources() {
     for (auto i = tracks.begin(); i != tracks.end();) {
         Track& t = *i;
         if (t.remove || t.reload) {
@@ -174,7 +173,6 @@ bool State::CreateResources(bool* view_reset) {
             if (t.remove) {
                 tracks.erase(i++);
                 ResetView();
-                *view_reset = true;
                 continue;
             }
 
@@ -199,7 +197,6 @@ bool State::CreateResources(bool* view_reset) {
             t.future_audio_buffer =
                 std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
             ResetView();
-            *view_reset = true;
         }
 
         // Check if new audio buffer is loaded.
@@ -216,7 +213,6 @@ bool State::CreateResources(bool* view_reset) {
                     t.status = "Failed to load: " + t.path;
                 }
                 ResetView();
-                *view_reset = true;
             }
         }
 

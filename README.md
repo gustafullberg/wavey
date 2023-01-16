@@ -8,12 +8,9 @@ Linux tool to analyze and play audio files.
 
 ### Usage
 #### General
-- ``Ctrl+O`` - Open files
-- ``Ctrl+S`` - Save selection to new file
 - ``Ctrl+W`` - Close the selected file
 - ``Ctrl+Shift+W`` - Close all files
 - ``Ctrl+R`` - Reload all modified files
-- ``r`` - Toggle file auto-reload
 - ``Ctrl+Q`` - Quit
 - ``Space`` - Start / stop playback from cursor
 - ``Shift+Space`` - Start / stop looping playback from cursor
@@ -51,6 +48,6 @@ Linux tool to analyze and play audio files.
 
 ### Build
 #### Build dependencies Debian
-``` apt-get install libgtkmm-3.0-dev libgl-dev libglm-dev portaudio19-dev libsndfile1-dev libfftw3-dev ```
+``` apt-get install libgl-dev libglm-dev portaudio19-dev libsndfile1-dev libfftw3-dev ```
 #### Build dependencies Arch Linux
-``` pacman -S gtkmm3 glm portaudio libsndfile fftw ```
+``` pacman -S glm portaudio libsndfile fftw ```

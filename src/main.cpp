@@ -193,17 +193,17 @@ int main(int argc, char** argv) {
                         state.zoom_window.ZoomRange(state.Cursor(), *state.Selection());
                     }
 
-                    // Zoom toggle one tracks.
+                    // Zoom toggle single track.
                     if (key == SDLK_z && !shift) {
                         state.ToggleViewSingleTrack();
                     }
 
-                    // Zoom toggle one channels on selected track.
+                    // Zoom toggle single channel on selected track.
                     if (key == SDLK_z && shift && !ctrl) {
                         state.ToggleViewSingleChannel(mouse_y);
                     }
 
-                    // Zoom toggle one channels and one track on selected track.
+                    // Zoom toggle single channel and one track on selected track.
                     if (key == SDLK_z && shift && ctrl) {
                         state.ToggleViewSingleChannel(mouse_y);
                         state.ToggleViewSingleTrack();
@@ -355,9 +355,6 @@ int main(int argc, char** argv) {
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
-
-        // static bool show_demo = true;
-        // ImGui::ShowDemoWindow(&show_demo);
 
         ImGuiStyle& style = ImGui::GetStyle();
         timeline_height = ImGui::GetFrameHeight() * 2.0f;
@@ -522,8 +519,7 @@ int main(int argc, char** argv) {
 
         ImGui::End();  // End of overlay window.
 
-        bool view_reset;
-        state.CreateResources(&view_reset);
+        state.CreateResources();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

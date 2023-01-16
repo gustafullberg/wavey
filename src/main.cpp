@@ -386,7 +386,11 @@ int main(int argc, char** argv) {
                 ImGui::TableNextColumn();
                 ImGui::Text("Selection");
                 ImGui::TableNextColumn();
-                if (!state.Selection()) {
+                if (playing) {
+                    const float play_time_minutes = std::floor(play_time / 60.0f);
+                    const float play_time_seconds = play_time - 60.0f * play_time_minutes;
+                    ImGui::Text("%02.f:%06.03f", play_time_minutes, play_time_seconds);
+                } else if (!state.Selection()) {
                     const float cursor_time = state.Cursor();
                     const float cursor_minutes = std::floor(cursor_time / 60.0f);
                     const float cursor_seconds = cursor_time - 60.0f * cursor_minutes;

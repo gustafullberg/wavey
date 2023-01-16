@@ -203,12 +203,17 @@ bool State::CreateResources(bool* view_reset) {
         if (t.future_audio_buffer.valid()) {
             resources_to_load = true;
             if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
-                std ::future_status::ready) {
+                std::future_status::ready) {
                 t.audio_buffer = t.future_audio_buffer.get();
                 t.spectrogram.reset();
                 t.gpu_waveform.reset();
                 t.gpu_spectrogram.reset();
 
+                if (t.audio_buffer->NumChannels() == 0) {
+                    t.status = "Failed to load: " + t.path;
+                } else {
+                    t.status = "";
+                }
                 ResetView();
                 *view_reset = true;
             }

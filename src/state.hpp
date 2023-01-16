@@ -21,6 +21,7 @@ struct Track {
     Track(const std::string& filename, std::optional<std::string> track_label = std::nullopt);
     std::string path;
     std::string short_name;
+    std::string status;
     uint64_t mod_time;
     std::shared_ptr<AudioBuffer> audio_buffer;
     std::unique_ptr<Spectrogram> spectrogram;

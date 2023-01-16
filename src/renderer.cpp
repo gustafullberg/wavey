@@ -247,10 +247,14 @@ void RendererImpl::Draw(
             }
 
             if (t.selected_channel) {
-                std::string label = t.short_name + " - channel " +
-                                    std::to_string(*t.selected_channel + 1) + "/" +
-                                    std::to_string(t.audio_buffer->NumChannels()) + " - " +
-                                    std::to_string(samplerate) + " Hz";
+                std::string label;
+                if (t.status.size()) {
+                    label = t.status;
+                } else {
+                    label = t.short_name + " - channel " + std::to_string(*t.selected_channel + 1) +
+                            "/" + std::to_string(t.audio_buffer->NumChannels()) + " - " +
+                            std::to_string(samplerate) + " Hz";
+                }
                 float y = std::round(timeline_height +
                                      view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
                 label_print_func(y, selected_track ? color_text_selected : color_text,
@@ -259,15 +263,20 @@ void RendererImpl::Draw(
         }
 
         if (!t.selected_channel) {
-            std::string label = t.short_name + " - ";
-            if (num_channels == 1) {
-                label += "mono";
-            } else if (num_channels == 2) {
-                label += "stereo";
+            std::string label;
+            if (t.status.size()) {
+                label = t.status;
             } else {
-                label += std::to_string(num_channels) + " channels";
+                label = t.short_name + " - ";
+                if (num_channels == 1) {
+                    label += "mono";
+                } else if (num_channels == 2) {
+                    label += "stereo";
+                } else {
+                    label += std::to_string(num_channels) + " channels";
+                }
+                label += " - " + std::to_string(samplerate) + " Hz";
             }
-            label += " - " + std::to_string(samplerate) + " Hz";
             float y =
                 std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
             label_print_func(y, selected_track ? color_text_selected : color_text,

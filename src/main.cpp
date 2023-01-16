@@ -373,8 +373,16 @@ int main(int argc, char** argv) {
             ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoSavedSettings |
             ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
         if (ImGui::Begin("StatusBar", nullptr, flags)) {
-            ImGui::PushItemWidth(ImGui::GetWindowWidth() - 2.0f * style.WindowPadding.x);
+            float slider_width = ImGui::GetWindowWidth() - 2.0f * style.WindowPadding.x;
+            ImGui::PushItemWidth(slider_width);
+            const float orig_min_grab_size = style.GrabMinSize;
+            style.GrabMinSize =
+                std::max(slider_width * (state.zoom_window.Right() - state.zoom_window.Left()) /
+                             (state.zoom_window.MaxX() + 1e-6f),
+                         orig_min_grab_size);
             ImGui::SliderFloat("##Time", &scroll_value, 0.0f, scroll_max, "");
+            style.GrabMinSize = orig_min_grab_size;
+            ImGui::PopItemWidth();
             state.zoom_window.PanTo(scroll_value);
             if (ImGui::BeginTable("status_table", 3, ImGuiTableFlags_SizingFixedFit)) {
                 ImGui::TableNextRow();

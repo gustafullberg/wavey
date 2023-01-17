@@ -46,6 +46,7 @@ int main(int argc, char** argv) {
 
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
+    style.Colors[ImGuiCol_Text] = ImVec4(0.5f, 0.9f, 0.5f, 1.0f);
     style.Colors[ImGuiCol_FrameBg] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
     style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.5f, 0.9f, 0.5f, 0.1f);
     style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.5f, 0.9f, 0.5f, 0.2f);

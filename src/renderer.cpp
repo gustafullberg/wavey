@@ -186,6 +186,11 @@ void RendererImpl::Draw(
     glViewport(0, ui_bottom, win_width, view_height);
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
+    // Message when no files are loaded.
+    if(!state->tracks.size()){
+            label_print_func(0.0f, color_text, color_text_shadow, "Drag and drop audio files here.");
+    }
+
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
         // Cull tracks outside of the zoom window.
         if (i + 1 <= z.Top())

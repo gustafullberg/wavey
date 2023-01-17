@@ -45,6 +45,12 @@ int main(int argc, char** argv) {
     io.IniFilename = nullptr;
 
     ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.2f, 0.2f, 0.2f, 1.0f);
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.5f, 0.9f, 0.5f, 0.1f);
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.5f, 0.9f, 0.5f, 0.2f);
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.5f, 0.9f, 0.5f, 0.8f);
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.5f, 0.9f, 0.5f, 1.0f);
 
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init("#version 150");
@@ -356,7 +362,6 @@ int main(int argc, char** argv) {
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
-        ImGuiStyle& style = ImGui::GetStyle();
         timeline_height = ImGui::GetFrameHeight() * 2.0f;
         status_bar_height = ImGui::GetFrameHeight() * 3.0f + 2.0f * style.WindowPadding.y;
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -380,6 +385,7 @@ int main(int argc, char** argv) {
             ImGui::SliderFloat("##Time", &scroll_value, 0.0f, scroll_max, "");
             style.GrabMinSize = orig_min_grab_size;
             ImGui::PopItemWidth();
+            scroll_value = std::max(0.0f, std::min(scroll_max, scroll_value));
             state.zoom_window.PanTo(scroll_value);
             if (ImGui::BeginTable("status_table", 3, ImGuiTableFlags_SizingFixedFit)) {
                 ImGui::TableNextRow();

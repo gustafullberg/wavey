@@ -7,7 +7,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "label_renderer.hpp"
 #include "primitive_renderer.hpp"
 #include "sample_line_shader.hpp"
 #include "sample_point_shader.hpp"
@@ -73,15 +72,23 @@ class RendererImpl : public Renderer {
    public:
     RendererImpl();
     virtual ~RendererImpl();
-    virtual void Draw(State* state,
-                      int win_width,
-                      int win_height,
-                      float scale_factor,
-                      bool view_spectrogram,
-                      bool view_bark_scale,
-                      bool playing,
-                      float play_time);
-    virtual float TimelineHeight() { return timeline_height; }
+    virtual void Draw(
+        State* state,
+        int win_width,
+        int win_height,
+        int ui_bottom,
+        float timeline_height,
+        float scale_factor,
+        bool view_spectrogram,
+        bool view_bark_scale,
+        bool playing,
+        float play_time,
+        const std::function<
+            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+            label_print_func,
+        const std::function<
+            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+            time_print_func);
 
    private:
     WaveShader wave_shader;
@@ -89,8 +96,6 @@ class RendererImpl : public Renderer {
     SamplePointShader sample_point_shader;
     SpectrogramShader spectrogram_shader;
     PrimitiveRenderer prim_renderer;
-    LabelRenderer label_renderer;
-    float timeline_height = 0;
 
     // Color palette.
     glm::vec4 color_background{0.2f, 0.2f, 0.2f, 1.0f};
@@ -114,7 +119,6 @@ RendererImpl::RendererImpl() {
     sample_point_shader.Init(color_sample_point);
     spectrogram_shader.Init();
     prim_renderer.Init();
-    label_renderer.Init();
 
     glClearColor(color_background.r, color_background.g, color_background.b, color_background.a);
     glEnable(GL_BLEND);
@@ -128,17 +132,25 @@ RendererImpl::~RendererImpl() {
     sample_point_shader.Terminate();
     spectrogram_shader.Terminate();
     prim_renderer.Terminate();
-    label_renderer.Terminate();
 }
 
-void RendererImpl::Draw(State* state,
-                        int win_width,
-                        int win_height,
-                        float scale_factor,
-                        bool view_spectrogram,
-                        bool view_bark_scale,
-                        bool playing,
-                        float play_time) {
+void RendererImpl::Draw(
+    State* state,
+    int win_width,
+    int win_height,
+    int ui_bottom,
+    float timeline_height,
+    float scale_factor,
+    bool view_spectrogram,
+    bool view_bark_scale,
+    bool playing,
+    float play_time,
+    const std::function<
+        void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+        label_print_func,
+    const std::function<
+        void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
+        time_print_func) {
     const ZoomWindow& z = state->zoom_window;
     const float cursor_x = state->Cursor() - z.Left();
     const float view_length = z.Right() - z.Left();
@@ -150,7 +162,6 @@ void RendererImpl::Draw(State* state,
     float dt_labeled;
     int unlabeled_ratio;
     TimelineResolution(view_length, dt_labeled, unlabeled_ratio);
-    timeline_height = 2.f * (state->max_timelabel_height * scale_factor);
     glViewport(0, win_height - timeline_height, win_width, timeline_height);
     const glm::mat4 mvp_timeline = glm::ortho(0.f, view_length, 0.f, 1.f, -1.f, 1.f);
     const float start = TimelineStart(z.Left(), dt_labeled) - z.Left();
@@ -165,29 +176,42 @@ void RendererImpl::Draw(State* state,
             const float t = t_view + z.Left();
             if (t > 0.f) {
                 std::string key = TimeToString(t, dt_labeled, show_minutes);
-                if (state->HasTimeLabel(key)) {
-                    const float x = t_view / view_length * win_width;
-                    const GpuLabel& label = state->GetTimeLabel(key);
-                    label_renderer.Draw(label, x, 0.f, win_width, timeline_height, scale_factor,
-                                        color_text_timeline, color_text_shadow, true);
-                }
+                const float x = t_view / view_length * win_width;
+                time_print_func(x, color_timeline, color_text_shadow, key.c_str());
             }
         }
     }
 
-    const float view_height = win_height - timeline_height;
-    glViewport(0, 0, win_width, view_height);
+    const float view_height = win_height - ui_bottom - timeline_height;
+    glViewport(0, ui_bottom, win_width, view_height);
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
-    for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
-        const Track& t = state->GetTrack(i);
-        if (!t.audio_buffer) {
-            continue;
-        }
+    // Message when no files are loaded.
+    if(!state->tracks.size()){
+            label_print_func(0.0f, color_text, color_text_shadow, "Drag and drop audio files here.");
+    }
 
-        if (state->SelectedTrack() && i == state->SelectedTrack()) {
+    for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
+        // Cull tracks outside of the zoom window.
+        if (i + 1 <= z.Top())
+            continue;
+        if (i >= z.Bottom())
+            break;
+
+        const bool selected_track = state->SelectedTrack() && i == state->SelectedTrack();
+        if (selected_track) {
             prim_renderer.DrawQuad(mvp, glm::vec2(0.f, i + 1), glm::vec2(view_length, i),
                                    color_selection);
+        }
+
+        const Track& t = state->GetTrack(i);
+
+        // Y-coordinate of track label (or status message).
+        float label_y =
+            std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
+        if (t.status.size() || !t.audio_buffer) {
+            label_print_func(label_y, color_text, color_text_shadow, t.status.c_str());
+            continue;
         }
 
         const int num_channels = t.selected_channel ? 1 : t.audio_buffer->NumChannels();
@@ -232,20 +256,28 @@ void RendererImpl::Draw(State* state,
                 }
             }
 
-            if (t.selected_channel && t.gpu_channel_labels[*t.selected_channel]) {
-                float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-                label_renderer.Draw(*t.gpu_channel_labels[*t.selected_channel], 0.f, y, win_width,
-                                    view_height, scale_factor, color_text_selected,
-                                    color_text_shadow, false);
+            if (t.selected_channel) {
+                std::string label = t.short_name + " - channel " +
+                                    std::to_string(*t.selected_channel + 1) + "/" +
+                                    std::to_string(t.audio_buffer->NumChannels()) + " - " +
+                                    std::to_string(samplerate) + " Hz";
+                label_print_func(label_y, selected_track ? color_text_selected : color_text,
+                                 color_text_shadow, label.c_str());
             }
         }
 
-        if (!t.selected_channel && t.gpu_track_label) {
-            float y = std::round(view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
-            bool selected = state->SelectedTrack() && *state->SelectedTrack() == i;
-            label_renderer.Draw(*t.gpu_track_label, 0.f, y, win_width, view_height, scale_factor,
-                                selected ? color_text_selected : color_text, color_text_shadow,
-                                false);
+        if (!t.selected_channel) {
+            std::string label = t.short_name + " - ";
+            if (num_channels == 1) {
+                label += "mono";
+            } else if (num_channels == 2) {
+                label += "stereo";
+            } else {
+                label += std::to_string(num_channels) + " channels";
+            }
+            label += " - " + std::to_string(samplerate) + " Hz";
+            label_print_func(label_y, selected_track ? color_text_selected : color_text,
+                             color_text_shadow, label.c_str());
         }
     }
 

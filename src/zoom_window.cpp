@@ -71,6 +71,22 @@ void ZoomWindow::PanTo(float time) {
     x_right = time + zoom_level;
 }
 
+void ZoomWindow::PanLeft() {
+    const float view_length = x_right - x_left;
+    const float scroll_max = x_max - view_length;
+    const float scroll_increment = std::max(0.1f * view_length, 0.001f);
+    x_left = std::max(0.0f, std::min(scroll_max, x_left - scroll_increment));
+    x_right = x_left + view_length;
+}
+
+void ZoomWindow::PanRight() {
+    const float view_length = x_right - x_left;
+    const float scroll_max = x_max - view_length;
+    const float scroll_increment = std::max(0.1f * view_length, 0.001f);
+    x_left = std::max(0.0f, std::min(scroll_max, x_left + scroll_increment));
+    x_right = x_left + view_length;
+}
+
 float ZoomWindow::GetTime(float x) const {
     return x_left + x * (x_right - x_left);
 }

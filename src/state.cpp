@@ -110,8 +110,6 @@ void State::UnloadFiles() {
 
     tracks.clear();
     ResetView();
-    time_labels.clear();
-    gpu_time_labels.clear();
 }
 
 void State::UnloadSelectedTrack() {
@@ -140,9 +138,14 @@ void State::UnmonitorTrack(Track& t) {
     t.watch_id_.reset();
 }
 
-void State::StartMonitoringTrackChange(std::function<void(int)> on_track_change) {
-    on_track_changed_ = std::move(on_track_change);
-    track_change_notifier_.emplace([this](int id) { on_track_changed_(id); });
+void State::StartMonitoringTrackChange() {
+    track_change_notifier_.emplace([this](int id) {
+        for (Track& t : tracks) {
+            if (t.watch_id_ == id) {
+                t.Reload();
+            }
+        }
+    });
     for (Track& t : tracks) {
         MonitorTrack(t);
     }
@@ -152,11 +155,9 @@ void State::StopMonitoringTrackChange() {
     for (Track& t : tracks) {
         t.watch_id_.reset();
     }
-    on_track_changed_ = [](int) {};
 }
 
-bool State::CreateResources(bool* view_reset) {
-    *view_reset = false;
+bool State::CreateResources() {
     for (auto i = tracks.begin(); i != tracks.end();) {
         Track& t = *i;
         if (t.remove || t.reload) {
@@ -172,7 +173,6 @@ bool State::CreateResources(bool* view_reset) {
             if (t.remove) {
                 tracks.erase(i++);
                 ResetView();
-                *view_reset = true;
                 continue;
             }
 
@@ -188,49 +188,31 @@ bool State::CreateResources(bool* view_reset) {
 
     bool resources_to_load = false;
     for (Track& t : tracks) {
-        resources_to_load = resources_to_load || !t.audio_buffer || !t.gpu_waveform ||
-                            !t.gpu_spectrogram || !t.gpu_track_label;
+        resources_to_load =
+            resources_to_load || !t.audio_buffer || !t.gpu_waveform || !t.gpu_spectrogram;
 
         // Asynchronous creation of audio buffer.
         if (!t.audio_buffer && !t.future_audio_buffer.valid()) {
+            t.status = "Loading: " + t.path;
             t.future_audio_buffer =
                 std::async([&t] { return std::make_shared<AudioBuffer>(t.path); });
+            ResetView();
         }
 
         // Check if new audio buffer is loaded.
         if (t.future_audio_buffer.valid()) {
             resources_to_load = true;
             if (t.future_audio_buffer.wait_for(std::chrono::seconds(0)) ==
-                std ::future_status::ready) {
+                std::future_status::ready) {
                 t.audio_buffer = t.future_audio_buffer.get();
-
                 t.spectrogram.reset();
-                t.label.reset();
-                t.channel_labels.resize(0);
-                t.channel_labels.resize(t.audio_buffer->NumChannels());
                 t.gpu_waveform.reset();
                 t.gpu_spectrogram.reset();
-                t.gpu_track_label.reset();
-                t.gpu_channel_labels.resize(0);
-                t.gpu_channel_labels.resize(t.audio_buffer->NumChannels());
 
+                if (t.audio_buffer->NumChannels() == 0) {
+                    t.status = "Failed to load: " + t.path;
+                }
                 ResetView();
-                *view_reset = true;
-            }
-        }
-
-        // Create track label.
-        if (!t.label && t.audio_buffer) {
-            t.label = Label::CreateTrackLabel(t.path, t.short_name, t.audio_buffer->NumChannels(),
-                                              t.audio_buffer->Samplerate());
-        }
-
-        // Create channel lables.
-        for (size_t i = 0; i < t.channel_labels.size(); ++i) {
-            if (!t.channel_labels[i]) {
-                t.channel_labels[i] = Label::CreateChannelLabel(t.path, t.short_name, i + 1,
-                                                                t.audio_buffer->NumChannels(),
-                                                                t.audio_buffer->Samplerate());
             }
         }
 
@@ -265,6 +247,10 @@ bool State::CreateResources(bool* view_reset) {
                         t.future_lowres_waveform.get();
                     t.gpu_waveform = std::make_unique<GpuWaveform>(*t.audio_buffer,
                                                                    lowres_waveform->GetBuffer());
+                    // Indicate that file is loaded.
+                    if (t.audio_buffer->NumChannels()) {
+                        t.status = "";
+                    }
                 }
             }
         }
@@ -274,38 +260,6 @@ bool State::CreateResources(bool* view_reset) {
             t.gpu_spectrogram =
                 std::make_unique<GpuSpectrogram>(*t.spectrogram, t.audio_buffer->Samplerate());
             t.spectrogram.reset();
-        }
-
-        // Create GPU representation of track label.
-        if (!t.gpu_track_label && t.label && t.label->HasImageData()) {
-            t.gpu_track_label = std::make_unique<GpuLabel>(t.label->ImageData(), t.label->Width(),
-                                                           t.label->Height());
-        }
-
-        // Create GPU representations of channel labels.
-        for (size_t i = 0; i < t.gpu_channel_labels.size(); ++i) {
-            if (!t.gpu_channel_labels[i]) {
-                resources_to_load = true;
-                if (t.channel_labels[i] && t.channel_labels[i]->HasImageData()) {
-                    t.gpu_channel_labels[i] = std::make_unique<GpuLabel>(
-                        t.channel_labels[i]->ImageData(), t.channel_labels[i]->Width(),
-                        t.channel_labels[i]->Height());
-                }
-            }
-        }
-    }
-
-    // Timeline labels.
-    if (time_labels.size() != gpu_time_labels.size()) {
-        resources_to_load = true;
-        for (const auto& it : time_labels) {
-            if (gpu_time_labels.find(it.first) == gpu_time_labels.end() &&
-                it.second->HasImageData()) {
-                gpu_time_labels.insert(std::pair<std::string, std::unique_ptr<GpuLabel>>(
-                    it.first, std::make_unique<GpuLabel>(it.second->ImageData(), it.second->Width(),
-                                                         it.second->Height())));
-                max_timelabel_height = std::max(max_timelabel_height, it.second->Height());
-            }
         }
     }
 
@@ -507,20 +461,4 @@ void State::MoveTrackDown() {
                   *std::next(tracks.begin(), *selected_track + 1));
         selected_track = *selected_track + 1;
     }
-}
-
-bool State::HasTimeLabel(const std::string& time) {
-    const auto& it = gpu_time_labels.find(time);
-    if (it != gpu_time_labels.end())
-        return true;
-
-    if (time_labels.find(time) == time_labels.end()) {
-        time_labels.insert(
-            std::pair<std::string, std::unique_ptr<Label>>(time, Label::CreateTimeLabel(time)));
-    }
-    return false;
-}
-
-const GpuLabel& State::GetTimeLabel(const std::string& time) const {
-    return *gpu_time_labels.find(time)->second;
 }

@@ -1,13 +1,11 @@
 #include "audio_system.hpp"
 
+#include <SDL2/SDL_audio.h>
+#include <cassert>
 #include <cmath>
 #include <cstring>
-#include "assert.h"
-
 #include <iostream>
 #include <memory>
-
-#include "SDL2/SDL_audio.h"
 
 AudioSystem::AudioSystem() {}
 

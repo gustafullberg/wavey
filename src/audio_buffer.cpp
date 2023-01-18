@@ -25,11 +25,3 @@ AudioBuffer::AudioBuffer(std::string file_name) {
     // Trim end of vector.
     samples.resize(num_frames * num_channels);
 }
-
-void AudioBuffer::SaveTo(float start, float end, const std::string& filename) {
-    // assert(start < end);
-    SndfileHandle file(filename, SFM_WRITE, format, num_channels, samplerate);
-    size_t number_of_frames = (end - start) * samplerate;
-    float* begin = samples.data() + static_cast<size_t>(start * num_channels * samplerate);
-    file.writef(begin, number_of_frames);
-}

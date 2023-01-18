@@ -182,11 +182,6 @@ int main(int argc, char** argv) {
                         run = false;
                     }
 
-                    // Open Files.
-                    if (key == SDLK_o && ctrl) {
-                        // TODO.
-                    }
-
                     // Copy file path of selected track.
                     if (key == SDLK_c && ctrl) {
                         std::optional<int> track_index = state.SelectedTrack();
@@ -306,11 +301,6 @@ int main(int argc, char** argv) {
                         state.ScrollTrackDown();
                     }
 
-                    // Save selection.
-                    if (key == SDLK_s && ctrl) {
-                        // TODO.
-                    }
-
                     // Toggle spectrogram view.
                     if (key == SDLK_s) {
                         view_spectrogram = !view_spectrogram;
@@ -340,11 +330,6 @@ int main(int argc, char** argv) {
                     // Reload all files.
                     if (key == SDLK_r && ctrl) {
                         state.ReloadFiles();
-                    }
-
-                    // Toggle auto-reload.
-                    if (key == SDLK_r && !ctrl) {
-                        // TODO.
                     }
 
                     // dB scale waveform.

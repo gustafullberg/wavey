@@ -36,7 +36,7 @@ class AudioSystem {
    private:
     static void Callback(void* user_data, Uint8* stream, int len);
 
-    std::optional<SDL_AudioDeviceID> stream;
+    std::optional<SDL_AudioDeviceID> active_audio_device_;
     SDL_AudioSpec audio_spec_;
     int num_channels = 0;
     int samplerate = 0;

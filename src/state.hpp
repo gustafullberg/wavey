@@ -1,7 +1,6 @@
 #ifndef STATE_HPP
 #define STATE_HPP
 
-#include <chrono>
 #include <future>
 #include <list>
 #include <map>

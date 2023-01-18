@@ -1,5 +1,4 @@
 #include "gpu_spectrogram.hpp"
-#include <chrono>
 #include <glm/glm.hpp>
 #include <iostream>
 
@@ -22,8 +21,6 @@ int NumTiles(int size, int max_size) {
 }  // namespace
 
 GpuSpectrogram::GpuSpectrogram(const Spectrogram& spectrogram, int samplerate) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
     // Time duration of one spectrum.
     const float spectrum_duration = static_cast<float>(spectrogram.Advance()) / samplerate;
     const int num_spectrum = spectrogram.NumPowerSpectrumPerChannel();
@@ -93,11 +90,6 @@ GpuSpectrogram::GpuSpectrogram(const Spectrogram& spectrogram, int samplerate) {
                           (const void*)offsetof(vertex, texCoord));
     glBindVertexArray(0);
     num_vertices = vertices.size();
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cerr << "Spectrogram uploaded to GPU in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms"
-              << std::endl;
 }
 
 GpuSpectrogram::~GpuSpectrogram() {

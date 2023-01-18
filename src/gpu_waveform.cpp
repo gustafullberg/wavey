@@ -1,11 +1,8 @@
 #include "gpu_waveform.hpp"
-#include <chrono>
 #include <cmath>
 #include <iostream>
 
 GpuWaveform::GpuWaveform(const AudioBuffer& ab, const std::vector<float>& buffer_lod) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
     num_channels = ab.NumChannels();
     num_vertices = ab.NumFrames();
     samplerate = ab.Samplerate();
@@ -25,11 +22,6 @@ GpuWaveform::GpuWaveform(const AudioBuffer& ab, const std::vector<float>& buffer
     glBufferData(GL_ARRAY_BUFFER, buffer_lod.size() * sizeof(float), buffer_lod.data(),
                  GL_STATIC_DRAW);
     glBindVertexArray(0);
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cerr << "Waveform uploaded to GPU in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms"
-              << std::endl;
 }
 
 GpuWaveform::~GpuWaveform() {

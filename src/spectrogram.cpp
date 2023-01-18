@@ -1,7 +1,6 @@
 #include "spectrogram.hpp"
 #include <fftw3.h>
 #include <omp.h>
-#include <chrono>
 #include <cmath>
 #include <iostream>
 
@@ -12,8 +11,6 @@ constexpr float kDftScaleFactor = 1.f / kInputSize;
 std::mutex Spectrogram::mtx;
 
 Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
     std::unique_lock<std::mutex> lck(mtx, std::defer_lock);
 
     // Hann window.
@@ -99,9 +96,4 @@ Spectrogram::Spectrogram(const float* samples, int num_channels, int num_frames)
         fftwf_free(output_buffers[t]);
     }
     lck.unlock();
-
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    std::cerr << "Power spectrum computed in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << " ms"
-              << std::endl;
 }

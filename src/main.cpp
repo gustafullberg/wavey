@@ -6,6 +6,17 @@
 #include "renderer.hpp"
 #include "state.hpp"
 
+namespace {
+struct Time {
+    Time(float seconds) {
+        min = std::floor(seconds / 60.0f);
+        sec = seconds - 60.0f * min;
+    }
+    float min;
+    float sec;
+};
+}  // namespace
+
 float scroll_value = 0.0f;
 float scroll_max = 0.0f;
 float timeline_height = 0.0f;
@@ -394,30 +405,20 @@ int main(int argc, char** argv) {
                 ImGui::Text("Selection");
                 ImGui::TableNextColumn();
                 if (playing) {
-                    const float play_time_minutes = std::floor(play_time / 60.0f);
-                    const float play_time_seconds = play_time - 60.0f * play_time_minutes;
-                    ImGui::Text("%02.f:%06.03f", play_time_minutes, play_time_seconds);
+                    const Time play(play_time);
+                    ImGui::Text("%02.f:%06.03f", play.min, play.sec);
                 } else if (!state.Selection()) {
-                    const float cursor_time = state.Cursor();
-                    const float cursor_minutes = std::floor(cursor_time / 60.0f);
-                    const float cursor_seconds = cursor_time - 60.0f * cursor_minutes;
-                    ImGui::Text("%02.f:%06.03f", cursor_minutes, cursor_seconds);
+                    const Time cursor(state.Cursor());
+                    ImGui::Text("%02.f:%06.03f", cursor.min, cursor.sec);
                 } else {
                     float selection_start_time = state.Cursor();
                     float selection_end_time = *state.Selection();
                     if (selection_start_time > selection_end_time)
                         std::swap(selection_start_time, selection_end_time);
-                    const float selection_start_minutes = std::floor(selection_start_time / 60.0f);
-                    const float selection_start_seconds =
-                        selection_start_time - 60.0f * selection_start_minutes;
-                    const float selection_end_minutes = std::floor(selection_end_time / 60.0f);
-                    const float selection_end_seconds =
-                        selection_end_time - 60.0f * selection_end_minutes;
+                    const Time selection_start(selection_start_time);
+                    const Time selection_end(selection_end_time);
                     const float selection_length_time = selection_end_time - selection_start_time;
-                    const float selection_length_minutes =
-                        std::floor(selection_length_time / 60.0f);
-                    const float selection_length_seconds =
-                        selection_length_time - 60.0f * selection_length_minutes;
+                    const Time selection_length(selection_length_time);
                     const int samplerate = state.SelectedTrack() ? state.GetCurrentSamplerate() : 0;
                     const int samples = static_cast<int>(selection_length_time * samplerate);
                     const float frequency =
@@ -426,9 +427,9 @@ int main(int argc, char** argv) {
                             : 0.0f;
                     ImGui::Text(
                         "%02.f:%06.03f - %02.f:%06.03f  Length %02.f:%06.03f  %d samples  %.03f Hz",
-                        selection_start_minutes, selection_start_seconds, selection_end_minutes,
-                        selection_end_seconds, selection_length_minutes, selection_length_seconds,
-                        samples, frequency);
+                        selection_start.min, selection_start.sec, selection_end.min,
+                        selection_end.sec, selection_length.min, selection_length.sec, samples,
+                        frequency);
                 }
 
                 ImGui::TableNextRow();
@@ -436,10 +437,7 @@ int main(int argc, char** argv) {
                 ImGui::Text("Pointer");
                 ImGui::TableNextColumn();
                 if (state.tracks.size()) {
-                    const float pointer_time = state.zoom_window.GetTime(mouse_x);
-                    const float pointer_minutes = std::floor(pointer_time / 60.0f);
-                    const float pointer_seconds = pointer_time - 60.0f * pointer_minutes;
-
+                    const Time pointer(state.zoom_window.GetTime(mouse_x));
                     ZoomWindow& z = state.zoom_window;
                     int track_number = z.GetTrack(mouse_y);
                     if (track_number < static_cast<int>(state.tracks.size())) {
@@ -465,7 +463,7 @@ int main(int argc, char** argv) {
                                     f = y * nyquist_freq;
                                 }
                                 ImGui::Text("%02.f:%06.03f  Frequency %.0f Hz  Gain %.1f dB",
-                                            pointer_minutes, pointer_seconds, std::round(f),
+                                            pointer.min, pointer.sec, std::round(f),
                                             display_gain_db);
                             } else {
                                 float a = 0;
@@ -476,7 +474,7 @@ int main(int argc, char** argv) {
                                         std::log10(2.f * std::abs(y - 0.5f) / z.VerticalZoom());
                                 }
                                 ImGui::Text("%02.f:%06.03f  Amplitude %.1f dBFS  Gain %.1f dB",
-                                            pointer_minutes, pointer_seconds, a, display_gain_db);
+                                            pointer.min, pointer.sec, a, display_gain_db);
                             }
                         }
                     }

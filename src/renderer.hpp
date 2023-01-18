@@ -20,12 +20,8 @@ class Renderer {
         bool view_bark_scale,
         bool playing,
         float play_time,
-        const std::function<
-            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
-            label_print_func,
-        const std::function<
-            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
-            time_print_func) = 0;
+        const std::function<void(float, bool selected, const char*)>& label_print_func,
+        const std::function<void(float, const char*)>& time_print_func) = 0;
     static Renderer* Create();
 };
 

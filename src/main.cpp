@@ -494,37 +494,37 @@ int main(int argc, char** argv) {
             ImGuiWindowFlags_NoMouseInputs;
         ImGui::Begin("##Overlay", nullptr, overlay_flags);
 
-        renderer->Draw(
-            &state, static_cast<int>(io.DisplaySize.x), static_cast<int>(io.DisplaySize.y),
-            static_cast<int>(status_bar_height), timeline_height, 1.0f, view_spectrogram,
-            view_bark_scale, playing, play_time,
-            [&style](float y, const glm::vec4& color, const glm::vec4& color_shadow,
-                     const char* text) {
-                ImVec2 pos(style.WindowPadding.x, y + style.WindowPadding.y);
-                ImGui::SetCursorPos(ImVec2(pos.x + 1.0f, pos.y + 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color_shadow.r, color_shadow.g,
-                                                            color_shadow.b, color_shadow.a));
-                ImGui::Text("%s", text);
-                ImGui::PopStyleColor();
-                ImGui::SetCursorPos(pos);
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
-                ImGui::Text("%s", text);
-                ImGui::PopStyleColor();
-            },
-            [&style](float x, const glm::vec4& color, const glm::vec4& color_shadow,
-                     const char* text) {
-                ImVec2 text_size = ImGui::CalcTextSize(text);
-                ImVec2 pos(x - 0.5f * text_size.x, 0.5f * style.WindowPadding.y);
-                ImGui::SetCursorPos(ImVec2(pos.x + 1.0f, pos.y + 1.0f));
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color_shadow.r, color_shadow.g,
-                                                            color_shadow.b, color_shadow.a));
-                ImGui::Text("%s", text);
-                ImGui::PopStyleColor();
-                ImGui::SetCursorPos(pos);
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
-                ImGui::Text("%s", text);
-                ImGui::PopStyleColor();
-            });
+        auto print = [](float x, float y, const glm::vec4& color, const char* text) {
+            ImVec2 pos(x, y);
+            // Print shadow.
+            glm::vec4 color_shadow{0.1f, 0.2f, 0.1f, 1.f};
+            ImGui::SetCursorPos(ImVec2(pos.x + 1.0f, pos.y + 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color_shadow.r, color_shadow.g,
+                                                        color_shadow.b, color_shadow.a));
+            ImGui::Text("%s", text);
+            ImGui::PopStyleColor();
+
+            // Print text.
+            ImGui::SetCursorPos(pos);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(color.r, color.g, color.b, color.a));
+            ImGui::Text("%s", text);
+            ImGui::PopStyleColor();
+        };
+        auto print_label = [&style, print](float y, bool selected, const char* text) {
+            glm::vec4 color_text{0.5f, 0.9f, 0.5f, 1.0f};
+            glm::vec4 color_text_selected{0.9f, 0.9f, 0.5f, 1.0f};
+            glm::vec4 color = selected ? color_text_selected : color_text;
+            print(style.WindowPadding.x, y + style.WindowPadding.y, color, text);
+        };
+        auto print_timeline = [&style, print](float x, const char* text) {
+            glm::vec4 color_timeline{0.7f, 0.7f, 0.7f, 0.5f};
+            ImVec2 text_size = ImGui::CalcTextSize(text);
+            print(x - 0.5f * text_size.x, 0.5f * style.WindowPadding.y, color_timeline, text);
+        };
+        renderer->Draw(&state, static_cast<int>(io.DisplaySize.x),
+                       static_cast<int>(io.DisplaySize.y), static_cast<int>(status_bar_height),
+                       timeline_height, 1.0f, view_spectrogram, view_bark_scale, playing, play_time,
+                       print_label, print_timeline);
 
         ImGui::End();  // End of overlay window.
 

@@ -83,12 +83,8 @@ class RendererImpl : public Renderer {
         bool view_bark_scale,
         bool playing,
         float play_time,
-        const std::function<
-            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
-            label_print_func,
-        const std::function<
-            void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
-            time_print_func);
+        const std::function<void(float, bool selected, const char*)>& label_print_func,
+        const std::function<void(float, const char*)>& time_print_func);
 
    private:
     WaveShader wave_shader;
@@ -145,12 +141,8 @@ void RendererImpl::Draw(
     bool view_bark_scale,
     bool playing,
     float play_time,
-    const std::function<
-        void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
-        label_print_func,
-    const std::function<
-        void(float, const glm::vec4& color, const glm::vec4& color_shadow, const char*)>&
-        time_print_func) {
+    const std::function<void(float, bool selected, const char*)>& label_print_func,
+    const std::function<void(float, const char*)>& time_print_func) {
     const ZoomWindow& z = state->zoom_window;
     const float cursor_x = state->Cursor() - z.Left();
     const float view_length = z.Right() - z.Left();
@@ -177,7 +169,7 @@ void RendererImpl::Draw(
             if (t > 0.f) {
                 std::string key = TimeToString(t, dt_labeled, show_minutes);
                 const float x = t_view / view_length * win_width;
-                time_print_func(x, color_timeline, color_text_shadow, key.c_str());
+                time_print_func(x, key.c_str());
             }
         }
     }
@@ -187,8 +179,8 @@ void RendererImpl::Draw(
     glm::mat4 mvp = glm::ortho(0.f, view_length, z.Bottom(), z.Top(), -1.f, 1.f);
 
     // Message when no files are loaded.
-    if(!state->tracks.size()){
-            label_print_func(0.0f, color_text, color_text_shadow, "Drag and drop audio files here.");
+    if (!state->tracks.size()) {
+        label_print_func(0.0f, false, "Drag and drop audio files here.");
     }
 
     for (int i = 0; i < static_cast<int>(state->tracks.size()); i++) {
@@ -210,7 +202,7 @@ void RendererImpl::Draw(
         float label_y =
             std::round(timeline_height + view_height * (i - z.Top()) / (z.Bottom() - z.Top()));
         if (t.status.size() || !t.audio_buffer) {
-            label_print_func(label_y, color_text, color_text_shadow, t.status.c_str());
+            label_print_func(label_y, selected_track, t.status.c_str());
             continue;
         }
 
@@ -261,8 +253,7 @@ void RendererImpl::Draw(
                                     std::to_string(*t.selected_channel + 1) + "/" +
                                     std::to_string(t.audio_buffer->NumChannels()) + " - " +
                                     std::to_string(samplerate) + " Hz";
-                label_print_func(label_y, selected_track ? color_text_selected : color_text,
-                                 color_text_shadow, label.c_str());
+                label_print_func(label_y, selected_track, label.c_str());
             }
         }
 
@@ -276,8 +267,7 @@ void RendererImpl::Draw(
                 label += std::to_string(num_channels) + " channels";
             }
             label += " - " + std::to_string(samplerate) + " Hz";
-            label_print_func(label_y, selected_track ? color_text_selected : color_text,
-                             color_text_shadow, label.c_str());
+            label_print_func(label_y, selected_track, label.c_str());
         }
     }
 

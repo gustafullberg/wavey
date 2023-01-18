@@ -20,4 +20,4 @@ src = files(
   'zoom_window.cpp'
   )
 
-executable('wavey', src, dependencies : [gl, glm, portaudio, sndfile, fftw, openmp, sdl2, imgui], install : true)
+executable('wavey', src, dependencies : [gl, glm, sndfile, fftw, openmp, sdl2, imgui], install : true)

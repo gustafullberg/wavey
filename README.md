@@ -48,6 +48,6 @@ Linux tool to analyze and play audio files.
 
 ### Build
 #### Build dependencies Debian
-``` apt-get install libgl-dev libglm-dev portaudio19-dev libsndfile1-dev libfftw3-dev ```
+``` apt-get install libgl-dev libglm-dev libsndfile1-dev libfftw3-dev ```
 #### Build dependencies Arch Linux
-``` pacman -S glm portaudio libsndfile fftw ```
+``` pacman -S glm libsndfile fftw ```

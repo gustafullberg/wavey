@@ -7,19 +7,19 @@
 #include <iostream>
 #include <memory>
 
-AudioSystem::AudioSystem() {
-    Pa_Initialize();
-    output_device_ = Pa_GetDefaultOutputDevice();
-}
+#include "SDL2/SDL_audio.h"
+
+AudioSystem::AudioSystem() {}
 
 AudioSystem::~AudioSystem() {
-    if (stream) {
-        Pa_CloseStream(stream);
+    if (stream.has_value()) {
+        SDL_PauseAudioDevice(stream.value(), /*pause_on=*/1);
+        SDL_CloseAudioDevice(stream.value());
+        stream.reset();
     }
-    Pa_Terminate();
 }
 
-int AudioSystem::NumOutputChannels() {
+uint8_t AudioSystem::NumOutputChannels() {
     return 2;
 }
 
@@ -31,8 +31,8 @@ void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab,
                                  std::unique_ptr<AudioMixer> mixer,
                                  float start,
                                  std::optional<float> end) {
-    if (stream && Pa_IsStreamActive(stream)) {
-        Pa_AbortStream(stream);
+    if (stream && SDL_GetAudioDeviceStatus(stream.value()) == SDL_AUDIO_PLAYING) {
+        SDL_PauseAudioDevice(stream.value(), /*pauseon=*/1);
     } else {
         Play(ab, std::move(mixer), start, end);
     }
@@ -45,30 +45,33 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab,
     mixer_ = std::move(mixer);
     assert(mixer_->NumOutputChannels() == NumOutputChannels());
     if (stream && samplerate != ab->Samplerate()) {
-        Pa_CloseStream(stream);
-        stream = nullptr;
+        SDL_PauseAudioDevice(stream.value(), /*pauseon=*/1);
+        SDL_CloseAudioDevice(stream.value());
+        stream.reset();
     } else if (stream) {
-        Pa_AbortStream(stream);
+        SDL_PauseAudioDevice(stream.value(), /*pauseon=*/1);
     }
 
-    const PaDeviceInfo* output_device_info = Pa_GetDeviceInfo(output_device_);
-    PaStreamParameters output_stream_parameter = {
-        .device = output_device_,
-        .channelCount = NumOutputChannels(),
-        .sampleFormat = paFloat32,
-        .suggestedLatency = output_device_info->defaultHighOutputLatency,
-        .hostApiSpecificStreamInfo = nullptr,
-    };
+    constexpr int kBufferSizeInFrames = 1024;
 
     if (!stream) {
         num_channels = NumOutputChannels();
         samplerate = ab->Samplerate();
-        PaError err = Pa_OpenStream(&stream, nullptr, &output_stream_parameter, samplerate,
-                                    paFramesPerBufferUnspecified, paNoFlag, Callback, this);
-        if (err != paNoError) {
-            std::cerr << "An error occured while opening audio stream: " << Pa_GetErrorText(err)
-                      << " (" << err << ")" << std::endl;
-            return;
+        const SDL_AudioSpec desired = {
+            .freq = samplerate,
+            .format = AUDIO_F32,
+            .channels = NumOutputChannels(),
+            .samples = kBufferSizeInFrames,
+            .callback = &Callback,
+            .userdata = this,
+        };
+        stream = SDL_OpenAudioDevice(NULL, /*iscapture=*/0, &desired, &audio_spec_,
+                                     SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+        if (desired.format != audio_spec_.format || desired.channels != audio_spec_.channels ||
+            desired.freq != samplerate) {
+            std::cerr << "Unable to open sound device with correct parameters.";
+            SDL_CloseAudioDevice(stream.value());
+            stream.reset();
         }
     }
     playingBuffer = ab;
@@ -82,27 +85,22 @@ void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab,
     end_index = std::min(end_index, ab->NumFrames());
     index = start_index;
     if (end_index != start_index) {
-        Pa_StartStream(stream);
+        SDL_PauseAudioDevice(stream.value(), /*pause_on=*/0);
     }
 }
 
 bool AudioSystem::Playing(float* time) {
-    if (stream && Pa_IsStreamActive(stream)) {
-        *time = static_cast<float>(index) / playingBuffer->Samplerate();
+    if (stream && SDL_GetAudioDeviceStatus(stream.value()) == SDL_AUDIO_PLAYING) {
+        *time = (static_cast<float>(index) + audio_spec_.samples) / playingBuffer->Samplerate();
         return true;
     }
     return false;
 }
 
-int AudioSystem::Callback(const void* input_buffer,
-                          void* output_buffer,
-                          unsigned long frames_per_buffer,
-                          const PaStreamCallbackTimeInfo* time_info,
-                          PaStreamCallbackFlags status_flags,
-                          void* user_data) {
-    float* out = static_cast<float*>(output_buffer);
+void AudioSystem::Callback(void* user_data, Uint8* output_buffer, int len) {
+    float* out = reinterpret_cast<float*>(output_buffer);
     AudioSystem* t = static_cast<AudioSystem*>(user_data);
-    const int frames = static_cast<int>(frames_per_buffer);
+    const int frames = len / (sizeof(float) * t->audio_spec_.channels);
     const int frames_to_copy = std::min(frames, t->end_index - t->index);
     const float* samples = t->playingBuffer->Samples();
 
@@ -112,15 +110,16 @@ int AudioSystem::Callback(const void* input_buffer,
         if (t->loop) {
             t->index = t->start_index;
             // Call the callback recursively.
-            return Callback(input_buffer, &out[t->num_channels * frames_to_copy],
-                            frames_per_buffer - frames_to_copy, time_info, status_flags, user_data);
+            return Callback(
+                user_data, reinterpret_cast<Uint8*>(&out[t->audio_spec_.channels * frames_to_copy]),
+                frames - frames_to_copy);
         } else {
-            for (int i = frames_to_copy * t->num_channels; i < frames * t->num_channels; i++) {
+            for (int i = frames_to_copy * t->num_channels; i < frames * t->audio_spec_.channels;
+                 i++) {
                 out[i] = 0.f;
             }
-            return paComplete;
+            SDL_PauseAudioDevice(t->stream.value(), /*pause_on=*/1);
+            return;
         }
     }
-
-    return paContinue;
 }

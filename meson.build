@@ -1,7 +1,6 @@
 project('wavey', 'cpp', default_options : ['cpp_std=c++17'])
 gl = dependency('gl')
 glm = dependency('glm')
-portaudio = dependency('portaudio-2.0')
 sndfile = dependency('sndfile')
 fftw = dependency('fftw3f')
 openmp = dependency('openmp')

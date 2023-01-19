@@ -2,9 +2,11 @@
 Linux tool to analyze and play audio files.
 
 ### Screenshots
-![Bark-scale spectrogram](https://user-images.githubusercontent.com/5707617/131128638-0470e049-801a-494b-a492-65e153ca4040.png)
+![Waveform](https://user-images.githubusercontent.com/5707617/213416739-2d8cf37e-f925-4758-b508-1a54c92ae93a.png)
 
-![Waveform](https://user-images.githubusercontent.com/5707617/131128660-0270f8ac-b391-4508-abb8-35d7441c5d9b.png)
+![Bark-scale spectrogram](https://user-images.githubusercontent.com/5707617/213416746-eac57b6d-2677-47c8-abc3-4e0a2df03fbf.png)
+
+![Samples](https://user-images.githubusercontent.com/5707617/213416751-5f335dcc-6281-4389-a66a-156ecf15e360.png)
 
 ### Usage
 #### General

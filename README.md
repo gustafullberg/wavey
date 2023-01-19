@@ -48,6 +48,19 @@ Linux tool to analyze and play audio files.
 
 ### Build
 #### Build dependencies Debian
-``` apt-get install libgl-dev libglm-dev libsndfile1-dev libfftw3-dev ```
+``` apt-get install libsdl2-dev libgl-dev libglm-dev libsndfile1-dev libfftw3-dev ```
+
 #### Build dependencies Arch Linux
-``` pacman -S glm libsndfile fftw ```
+``` pacman -S glm sdl2 libsndfile fftw ```
+
+
+#### Get the source, build and install
+```
+git clone https://github.com/gustafullberg/wavey.git
+cd wavey
+git submodule update --init
+mkdir build
+cd build
+meson ..
+ninja install
+```

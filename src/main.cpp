@@ -3,6 +3,7 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl.h"
+#include "load_client.hpp"
 #include "renderer.hpp"
 #include "state.hpp"
 
@@ -26,6 +27,8 @@ float mouse_y = 0.0f;
 bool mouse_down = false;
 
 int main(int argc, char** argv) {
+    if (LoadClient::Load(argc, argv))
+        return 0;
     AudioSystem audio;
     State state(&audio);
     for (int i = 1; i < argc; i++) {

@@ -5,6 +5,8 @@ src = files(
   'file_notification.cpp',
   'gpu_spectrogram.cpp',
   'gpu_waveform.cpp',
+  'load_client.cpp',
+  'load_server.cpp',
   'low_res_waveform.cpp',
   'low_res_waveform.hpp',
   'main.cpp',

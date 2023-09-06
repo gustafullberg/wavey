@@ -11,7 +11,7 @@
 #include "file_notification.hpp"
 #include "gpu_spectrogram.hpp"
 #include "gpu_waveform.hpp"
-#include "load_server.hpp"
+#include "file_load_server.hpp"
 #include "low_res_waveform.hpp"
 #include "spectrogram.hpp"
 #include "zoom_window.hpp"
@@ -43,7 +43,7 @@ class State {
    public:
     State(AudioSystem* audio)
         : audio(audio),
-          load_server([this](const std::string& file_name) { this->LoadFile(file_name); }) {}
+          file_load_server([this](const std::string& file_name) { this->LoadFile(file_name); }) {}
     void LoadFile(const std::string& file_name, std::optional<std::string> label = std::nullopt);
     void UnloadFiles();
     void UnloadSelectedTrack();
@@ -105,7 +105,7 @@ class State {
     std::optional<int> selected_track;
 
     std::optional<FileModificationNotifier> track_change_notifier_;
-    LoadServer load_server;
+    FileLoadServer file_load_server;
 };
 
 #endif

@@ -1,17 +1,16 @@
 #include "file_load_server.hpp"
 
 #include <assert.h>
+#include <limits.h>
 #include <poll.h>
-#include <stdlib.h>
 #include <sys/eventfd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+#include <cstdlib>
 #include <cstring>
 
 namespace {
-constexpr size_t BUFFER_LENGTH = 4096;
-
 sockaddr_un GetServerAddress() {
     sockaddr_un addr_server;
     memset(&addr_server, 0, sizeof(addr_server));
@@ -41,7 +40,7 @@ FileLoadServer::~FileLoadServer() {
 }
 
 void FileLoadServer::Monitor() {
-    char buffer[BUFFER_LENGTH];
+    char buffer[PATH_MAX];
     constexpr int kSocketIndex = 0;
     constexpr int kCloseIndex = 1;
     struct pollfd poll_fds[2];
@@ -53,7 +52,6 @@ void FileLoadServer::Monitor() {
         .fd = close_fd,
         .events = POLLIN,
     };
-    buffer[BUFFER_LENGTH - 1] = '\0';
 
     for (;;) {
         int poll_num = poll(poll_fds, 2, -1);
@@ -79,17 +77,19 @@ void FileLoadServer::Monitor() {
 }
 
 bool FileLoadServer::Load(int argc, char** argv) {
-    // No files to load?
-    if (argc <= 1)
-        return false;
+    int files_loaded = 0;
 
     int socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
     sockaddr_un addr_server = GetServerAddress();
+    char full_path[PATH_MAX];
     for (int i = 1; i < argc; ++i) {
-        if (sendto(socket_fd, argv[i], strlen(argv[i]), 0, (const struct sockaddr*)&addr_server,
-                   sizeof(addr_server)) < 0)
-            return false;
+        if (realpath(argv[i], full_path)) {
+            if (sendto(socket_fd, full_path, strlen(full_path), 0,
+                       (const struct sockaddr*)&addr_server, sizeof(addr_server)) > 0) {
+                ++files_loaded;
+            }
+        }
     }
     close(socket_fd);
-    return true;
+    return files_loaded > 0;
 }

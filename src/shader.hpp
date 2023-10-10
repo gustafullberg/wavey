@@ -8,9 +8,9 @@
 class Shader {
    public:
     virtual ~Shader() = default;
-    virtual void Init(const std::string& vertex_shader_source,
+    void Init(const std::string& vertex_shader_source,
                       const std::string& fragment_shader_source);
-    virtual void Init(const std::string& vertex_shader_source,
+    void Init(const std::string& vertex_shader_source,
                       const std::string& geometry_shader_source,
                       const std::string& fragment_shader_source);
     virtual void Terminate();

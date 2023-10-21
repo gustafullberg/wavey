@@ -107,10 +107,12 @@ int main(int argc, char** argv) {
                         mouse_x = std::max(
                             std::min(static_cast<float>(event.motion.x) / io.DisplaySize.x, 1.0f),
                             0.0f);
+                        const float view_size_y =
+                            io.DisplaySize.y - timeline_height - status_bar_height;
                         mouse_y = std::max(
                             std::min((static_cast<float>(event.motion.y) - timeline_height) /
-                                         (io.DisplaySize.y - timeline_height - status_bar_height),
-                                     1.0f),
+                                         view_size_y,
+                                     (view_size_y - 1) / view_size_y),
                             0.0f);
 
                         if (mouse_down) {
@@ -129,25 +131,30 @@ int main(int argc, char** argv) {
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
-                    if (event.button.button == SDL_BUTTON_LEFT) {
-                        if (event.button.clicks == 1) {
-                            mouse_down = true;
-                            const float time = state.zoom_window.GetTime(mouse_x);
-                            state.SetCursor(time);
-                        } else if (event.button.clicks == 2) {
-                            if (state.SelectedTrack() && state.GetSelectedTrack().audio_buffer) {
-                                state.SetCursor(0.f);
-                                state.SetSelection(
-                                    state.GetSelectedTrack().audio_buffer->Duration());
+                    if (!io.WantCaptureMouse) {
+                        if (event.button.button == SDL_BUTTON_LEFT) {
+                            if (event.button.clicks == 1) {
+                                mouse_down = true;
+                                const float time = state.zoom_window.GetTime(mouse_x);
+                                state.SetCursor(time);
+                            } else if (event.button.clicks == 2) {
+                                if (state.SelectedTrack() &&
+                                    state.GetSelectedTrack().audio_buffer) {
+                                    state.SetCursor(0.f);
+                                    state.SetSelection(
+                                        state.GetSelectedTrack().audio_buffer->Duration());
+                                }
                             }
                         }
                     }
                     break;
 
                 case SDL_MOUSEBUTTONUP:
-                    if (event.button.button == SDL_BUTTON_LEFT) {
-                        mouse_down = false;
-                        state.FixSelection();
+                    if (!io.WantCaptureMouse) {
+                        if (event.button.button == SDL_BUTTON_LEFT) {
+                            mouse_down = false;
+                            state.FixSelection();
+                        }
                     }
                     break;
 

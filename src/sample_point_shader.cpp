@@ -9,25 +9,15 @@ layout(location = 0) in float y;
 layout(location = 0) uniform mat4 mvp;
 layout(location = 1) uniform float sample_time;
 layout(location = 2) uniform float vertical_zoom;
-out float y_scaled;
 
 void main() {
-    y_scaled = y * vertical_zoom;
+    float y_scaled = y * vertical_zoom;
     gl_Position = mvp * vec4(gl_VertexID * sample_time, y_scaled, 0.0, 1.0);
-})";
 
-const std::string kGeometrySource = R"(
-layout(points) in;
-layout(points, max_vertices = 1) out;
-in float y_scaled[];
-
-void main() {
-    vec4 pos_sample = gl_in[0].gl_Position;
-
-    if(y_scaled[0] <= 1. && y_scaled[0] >= -1.) {
-        gl_Position = pos_sample;
+    if(y_scaled <= 1.0 && y_scaled >= -1.0) {
         gl_PointSize = 3.;
-        EmitVertex();
+    } else {
+        gl_PointSize = 1.;
     }
 })";
 
@@ -42,7 +32,7 @@ void main() {
 }  // namespace
 
 void SamplePointShader::Init(const glm::vec4& color) {
-    Shader::Init(kVertexSource, kGeometrySource, kFragmentSource);
+    Shader::Init(kVertexSource, kFragmentSource);
     glUseProgram(program);
     glUniform4fv(3, 1, glm::value_ptr(color));
 }

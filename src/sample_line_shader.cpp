@@ -13,7 +13,7 @@ out float y0;
 
 void main() {
     float y_scaled = clamp(y * vertical_zoom, -1., 1.);
-    gl_Position = mvp * vec4(gl_VertexID * sample_time, y_scaled, 0.0, 1.0);
+    gl_Position = mvp * vec4(float(gl_VertexID) * sample_time, y_scaled, 0.0, 1.0);
 
     // Y-coord at amplitude 0.
     y0 = mvp[3].y;

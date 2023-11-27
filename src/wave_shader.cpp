@@ -15,18 +15,18 @@ layout(location = 4) uniform bool db_vertical_scale;
 void main() {
     float y_ = y;
     if(db_vertical_scale) {
-        float epsilon = 0.0001;
-        float log10 = log(10.0);
-        if(y_ > 0) {
-            y_ = max(20 * log(y_ + epsilon) / log10, -60) / 60  + 1.0;
-        } else if (y_ < 0) {
-            y_ =  -1. * max(20 * log(-1.0 * y_ + epsilon) / log10, -60) / 60 - 1.;
+        const float epsilon = 0.0001;
+        const float log10 = log(10.0);
+        if(y_ > 0.) {
+            y_ = max(20. * log(y_ + epsilon) / log10, -60.) / 60.  + 1.;
+        } else if (y_ < 0.) {
+            y_ =  -1. * max(20. * log(-1. * y_ + epsilon) / log10, -60.) / 60. - 1.;
         } else {
-            y_ = 0;
+            y_ = 0.;
         }
     }
     float y_scaled = clamp(y_ * vertical_zoom, -1., 1.);
-    gl_Position = mvp * vec4(gl_VertexID * sample_time, y_scaled, 0.0, 1.0);
+    gl_Position = mvp * vec4(float(gl_VertexID) * sample_time, y_scaled, 0., 1.);
 })";
 
 const std::string kFragmentSource = R"(

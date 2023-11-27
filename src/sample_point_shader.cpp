@@ -12,7 +12,7 @@ layout(location = 2) uniform float vertical_zoom;
 
 void main() {
     float y_scaled = y * vertical_zoom;
-    gl_Position = mvp * vec4(gl_VertexID * sample_time, y_scaled, 0.0, 1.0);
+    gl_Position = mvp * vec4(float(gl_VertexID) * sample_time, y_scaled, 0.0, 1.0);
 
     if(y_scaled <= 1.0 && y_scaled >= -1.0) {
         gl_PointSize = 3.;

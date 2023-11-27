@@ -3,8 +3,10 @@
 
 namespace {
 const std::string kShaderHeader =
-    R"(#version 330 core
-#extension GL_ARB_explicit_uniform_location : require
+    R"(#version 310 es
+#extension GL_OES_geometry_shader : require
+precision highp float;
+precision highp sampler2DArray;
 )";
 
 GLuint CompileShader(GLenum shader_type, const std::string& source) {

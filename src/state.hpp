@@ -8,10 +8,10 @@
 
 #include "audio_buffer.hpp"
 #include "audio_system.hpp"
+#include "file_load_server.hpp"
 #include "file_notification.hpp"
 #include "gpu_spectrogram.hpp"
 #include "gpu_waveform.hpp"
-#include "file_load_server.hpp"
 #include "low_res_waveform.hpp"
 #include "spectrogram.hpp"
 #include "zoom_window.hpp"

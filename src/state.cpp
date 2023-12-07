@@ -280,6 +280,7 @@ void State::TogglePlayback() {
             if (t.selected_channel) {
                 mixer->Solo(*t.selected_channel);
             }
+            mixer->Gain(zoom_window.VerticalZoom());
             audio->TogglePlayback(t.audio_buffer, std::move(mixer), Cursor(), Selection());
             last_played_track = *selected_track;
         }

@@ -27,7 +27,7 @@ void AudioMixer::Solo(int channel) {
 void AudioMixer::Gain(float linear_gain) {
     for (std::vector<float>& output_channel : gain_) {
         for (float& gain : output_channel) {
-            gain *= linear_gain;
+            gain = linear_gain;
         }
     }
 }

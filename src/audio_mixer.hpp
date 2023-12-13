@@ -14,7 +14,8 @@ class AudioMixer {
     void Gain(float linear_gain);
 
    private:
-    std::vector<std::vector<float>> gain_;
+    std::vector<std::vector<float>> mix_matrix_;
+    float gain_;
     int num_output_channels_;
     int num_input_channels_;
 };

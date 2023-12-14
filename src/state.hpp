@@ -37,7 +37,7 @@ struct Track {
     int GetSamplerate() { return audio_buffer ? audio_buffer->Samplerate() : 0; }
     void Reload();
     std::optional<int> selected_channel;
-    std::unordered_map<int, std::vector<Label>> labels;
+  std::unordered_map<int, std::vector<Label>> labels;
 };
 
 enum ViewMode { ALL, TRACK };

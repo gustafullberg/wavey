@@ -107,6 +107,7 @@ class RendererImpl : public Renderer {
     glm::vec4 color_wave{0.5f, 0.9f, 0.5f, 1.0f};
     glm::vec4 color_sample_point{0.5f, 0.9f, 0.5f, 1.0f};
     glm::vec4 color_sample_line{0.5f, 0.9f, 0.5f, 0.3f};
+  glm::vec4 color_label{1.0f, 0.6f, 0.0f, 0.5f};
 };
 
 RendererImpl::RendererImpl() {
@@ -222,6 +223,13 @@ void RendererImpl::Draw(
                                    color_line);
             prim_renderer.DrawLine(mvp_channel, glm::vec2(0.f, 0.f),
                                    glm::vec2(length - z.Left(), 0.f), color_line);
+
+            if(auto iter = t.labels.find(c); iter != t.labels.end()) {
+              for(const Label& l: iter->second) {
+                prim_renderer.DrawLine(mvp_channel, glm::vec2(l.begin - z.Left(), -1.0f), glm::vec2(l.begin - z.Left(), 1.0f), color_label);
+              }
+            }
+
             if (view_spectrogram) {
                 if (t.gpu_spectrogram) {
                     spectrogram_shader.Draw(mvp_channel, z.Left(), samplerate, view_bark_scale,

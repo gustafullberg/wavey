@@ -5,8 +5,8 @@
 #include <string>
 
 struct Label {
-    float start;
-    std::optional<float> stop;
+    float begin;
+    std::optional<float> end;
     std::optional<std::string> label;
 };
 

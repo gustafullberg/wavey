@@ -348,6 +348,10 @@ int main(int argc, char** argv) {
                         state.zoom_window.ToggleDbVerticalScale();
                     }
 
+                    if (key == SDLK_g) {
+                        state.DetectGlitchesCurrentChannel();
+                    }
+
                     break;
                 }
             }

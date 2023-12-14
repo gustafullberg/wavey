@@ -4,6 +4,7 @@ src = files(
   'audio_system.cpp',
   'file_load_server.cpp',
   'file_notification.cpp',
+  'glitch_detector.cpp',
   'gpu_spectrogram.cpp',
   'gpu_waveform.cpp',
   'low_res_waveform.cpp',

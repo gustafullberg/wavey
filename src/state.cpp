@@ -7,6 +7,7 @@
 
 #include "audio_mixer.hpp"
 #include "file_notification.hpp"
+#include "glitch_detector.hpp"
 
 namespace {
 uint64_t GetModTime(std::string path) {
@@ -418,6 +419,19 @@ void State::ScrollTrackDown() {
             if (view_mode == TRACK) {
                 zoom_window.ShowSingleTrack(selected_track);
             }
+        }
+    }
+}
+
+void State::DetectGlitchesCurrentChannel() {
+    GlitchDetector detector;
+    Track& t = GetSelectedTrack();
+    if (t.selected_channel) {
+        const int channel = *t.selected_channel;
+        t.labels[channel] = detector.Detect(t.audio_buffer, channel);
+    } else {
+        for (int channel = 0; channel < t.audio_buffer->NumChannels(); ++channel) {
+          t.labels[channel] = detector.Detect(t.audio_buffer, channel);
         }
     }
 }

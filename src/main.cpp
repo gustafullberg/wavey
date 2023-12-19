@@ -1,4 +1,7 @@
 #include <SDL2/SDL.h>
+#include <getopt.h>
+#include <iostream>
+#include <system_error>
 #include "audio_system.hpp"
 #include "file_load_server.hpp"
 #include "imgui.h"
@@ -16,6 +19,13 @@ struct Time {
     float min;
     float sec;
 };
+
+void print_usage(const std::string& prog_name) {
+    std::cerr << "usage: " << prog_name << " [OPTIONS] FILE" << std::endl;
+    std::cerr << "  -d, --detach  Run a different instance of wavey." << std::endl;
+    std::cerr << "  -h, --help    Print this help message." << std::endl;
+}
+
 }  // namespace
 
 float scroll_value = 0.0f;
@@ -27,13 +37,45 @@ float mouse_y = 0.0f;
 bool mouse_down = false;
 
 int main(int argc, char** argv) {
-    // Load input files in an already running Wavey instance if available.
-    if (FileLoadServer::Load(argc, argv))
-        return 0;
+    bool run_file_load_server = true;
+
+    const struct option long_options[] = {
+        {"detach", no_argument, 0, 'd'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0},
+    };
+
+    for (;;) {
+        int option_index = 0;
+        int c = getopt_long(argc, argv, "dh", long_options, &option_index);
+        if (c == -1)
+            break;
+
+        switch (c) {
+            case 'd':
+                run_file_load_server = false;
+                break;
+            case 'h':
+                print_usage(argv[0]);
+                return -1;
+            case '?':
+                std::cerr << "Failed to parse command line" << std::endl;
+                return -1;
+            default:
+                std::cerr << "Failed to parse command line" << std::endl;
+                return -1;
+        }
+    }
+    if (run_file_load_server) {
+        std::cerr << "File server" << std::endl;
+        // Load input files in an already running Wavey instance if available.
+        if (FileLoadServer::Load(argc - optind, argv + optind))
+            return 0;
+    }
 
     AudioSystem audio;
     State state(&audio);
-    for (int i = 1; i < argc; i++) {
+    for (int i = optind; i < argc; i++) {
         state.LoadFile(argv[i]);
     }
 

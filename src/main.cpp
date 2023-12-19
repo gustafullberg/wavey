@@ -67,7 +67,6 @@ int main(int argc, char** argv) {
         }
     }
     if (run_file_load_server) {
-        std::cerr << "File server" << std::endl;
         // Load input files in an already running Wavey instance if available.
         if (FileLoadServer::Load(argc - optind, argv + optind))
             return 0;

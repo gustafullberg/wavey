@@ -15,3 +15,17 @@ imgui_lib = static_library('imgui', imgui_src, include_directories: imgui_inc, d
 imgui = declare_dependency(link_with: imgui_lib, include_directories: imgui_inc)
 
 
+
+
+implot_src = files(
+  'implot/implot.h', 
+  'implot/implot_internal.h', 
+  'implot/implot.cpp', 
+  'implot/implot_items.cpp',
+  'implot/implot_demo.cpp',
+)
+implot_inc = include_directories(
+  'implot'
+)
+implot_lib = static_library('implot', implot_src, include_directories: implot_inc, dependencies : [imgui, dl])
+implot= declare_dependency(link_with: implot_lib, include_directories: implot_inc)

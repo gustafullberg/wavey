@@ -7,7 +7,10 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl.h"
+#include "implot.h"
 #include "renderer.hpp"
+#include "spectrum_state.hpp"
+#include "spectrum_window.hpp"
 #include "state.hpp"
 
 namespace {
@@ -74,6 +77,7 @@ int main(int argc, char** argv) {
 
     AudioSystem audio;
     State state(&audio);
+    SpectrumState spectrum_state;
     for (int i = optind; i < argc; i++) {
         state.LoadFile(argv[i]);
     }
@@ -95,9 +99,15 @@ int main(int argc, char** argv) {
     SDL_GL_SetSwapInterval(1);
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
+    SpectrumWindow spectrum_window(&spectrum_state);
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
+#if DOCKING
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+#endif
     io.IniFilename = nullptr;
 
     ImGui::StyleColorsDark();
@@ -108,6 +118,11 @@ int main(int argc, char** argv) {
     style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.5f, 0.9f, 0.5f, 0.2f);
     style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.5f, 0.9f, 0.5f, 0.8f);
     style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.5f, 0.9f, 0.5f, 1.0f);
+
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        style.WindowRounding = 0.0f;
+        style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+    }
 
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init("#version 300 es");
@@ -355,7 +370,23 @@ int main(int argc, char** argv) {
 
                     // Toggle spectrogram view.
                     if (key == SDLK_s) {
-                        view_spectrogram = !view_spectrogram;
+                        if (ctrl) {
+                            const Track& selected_track = state.GetSelectedTrack();
+                            float begin = 0.0f;
+                            float end =
+                                static_cast<float>(selected_track.audio_buffer->NumFrames()) /
+                                static_cast<float>(selected_track.GetSamplerate());
+                            if (state.Selection()) {
+                                state.FixSelection();
+                                begin = state.Cursor();
+                                end = *state.Selection();
+                            }
+                            spectrum_state.Add(selected_track, begin, end,
+                                               selected_track.selected_channel.value_or(0));
+                            spectrum_window.SetVisible(true);
+                        } else {
+                            view_spectrogram = !view_spectrogram;
+                        }
                     }
 
                     // Toggle bark scale spectrograms.
@@ -565,10 +596,26 @@ int main(int argc, char** argv) {
 
         ImGui::End();  // End of overlay window.
 
+        spectrum_window.Draw();
+
         state.CreateResources();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#if DOCKING
+        // Update and Render additional Platform Windows
+        // (Platform functions may change the current OpenGL context, so we save/restore it to make
+        // it easier to paste this code elsewhere.
+        //  For this specific demo app we could also call SDL_GL_MakeCurrent(window, gl_context)
+        //  directly)
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            SDL_Window* backup_current_window = SDL_GL_GetCurrentWindow();
+            SDL_GLContext backup_current_context = SDL_GL_GetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            SDL_GL_MakeCurrent(backup_current_window, backup_current_context);
+        }
+#endif
         SDL_GL_SwapWindow(window);
     }
 
@@ -576,6 +623,7 @@ int main(int argc, char** argv) {
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     SDL_GL_DeleteContext(gl_context);

@@ -32,7 +32,7 @@ struct Track {
     bool reload = false;
     bool remove = false;
     std::optional<int> watch_id_;
-    int GetSamplerate() { return audio_buffer ? audio_buffer->Samplerate() : 0; }
+    int GetSamplerate() const { return audio_buffer ? audio_buffer->Samplerate() : 0; }
     void Reload();
     std::optional<int> selected_channel;
 };

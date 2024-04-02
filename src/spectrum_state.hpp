@@ -1,33 +1,33 @@
 #ifndef SPECTRUM_STATE_HPP_
 #define SPECTRUM_STATE_HPP_
 
+#include <complex>
 #include <list>
 #include <string>
-#include <complex>
 #include <vector>
 #include "state.hpp"
 
 struct Spectrum {
-  std::string name;
-  std::future<std::vector<float>> future_spectrum;
-  std::optional<std::vector<float>> spectrum;
-  std::vector<float> frequencies;
-  float color[3];
-  float gain = 1.0f;
-  bool visible = true;
+    std::string name;
+    std::future<std::vector<float>> future_spectrum;
+    std::optional<std::vector<float>> spectrum;
+    std::vector<float> frequencies;
+    float color[3];
+    float gain = 1.0f;
+    bool visible = true;
 };
 
 class SpectrumState {
- public:
-  SpectrumState() = default;
+   public:
+    SpectrumState() = default;
 
-  void Add(const Track& track, float begin, float end, int channel);
+    void Add(const Track& track, float begin, float end, int channel);
+    void Remove(std::list<Spectrum>::iterator it) { spectrums_.erase(it); }
 
-  std::list<Spectrum>& spectrums() {return spectrums_; }
+    std::list<Spectrum>& spectrums() { return spectrums_; }
 
- private:
-  std::list<Spectrum> spectrums_;
+   private:
+    std::list<Spectrum> spectrums_;
 };
-
 
 #endif  // SPECTRUM_STATE_HPP_

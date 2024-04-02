@@ -8,9 +8,12 @@
 
 #include <fftw3.h>
 
+#include "implot.h"
+
 constexpr int kFftSize = 4096;
+static_assert((kFftSize & (kFftSize - 1)) == 0, "kFftSize must be a power of 2");
 constexpr int kHalfFftSize = kFftSize / 2 + 1;
-constexpr int kStepSize = 512;
+constexpr int kStepSize = 1024;
 
 namespace {
 template <class T>
@@ -18,17 +21,18 @@ struct FftwDeleter {
     void operator()(T* p) const { fftwf_free(p); }
 };
 
-template<typename ... Args>
-std::string string_format( const std::string& format, Args ... args )
-{
-    int size_s = std::snprintf( nullptr, 0, format.c_str(), args ... ) + 1; // Extra space for '\0'
-    if( size_s <= 0 ){ throw std::runtime_error( "Error during formatting." ); }
-    auto size = static_cast<size_t>( size_s );
-    std::unique_ptr<char[]> buf( new char[ size ] );
-    std::snprintf( buf.get(), size, format.c_str(), args ... );
-    return std::string( buf.get(), buf.get() + size - 1 ); // We don't want the '\0' inside
+template <typename... Args>
+std::string string_format(const std::string& format, Args... args) {
+    int size_s = std::snprintf(nullptr, 0, format.c_str(), args...) + 1;  // Extra space for '\0'
+    if (size_s <= 0) {
+        throw std::runtime_error("Error during formatting.");
+    }
+    auto size = static_cast<size_t>(size_s);
+    std::unique_ptr<char[]> buf(new char[size]);
+    std::snprintf(buf.get(), size, format.c_str(), args...);
+    return std::string(buf.get(), buf.get() + size - 1);  // We don't want the '\0' inside
 }
-    
+
 }  // namespace
 
 void SpectrumState::Add(const Track& track, float begin, float end, int channel) {
@@ -37,6 +41,15 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
     Spectrum s;
     s.name = string_format("%s #%d [%.3f - %.3f]", track.short_name.c_str(), channel, begin, end);
     s.frequencies.resize(kHalfFftSize);
+
+    {
+        const int csize = ImPlot::GetColormapSize();
+        ImVec4 color = ImPlot::GetColormapColor(spectrums_.size() % csize);
+        s.color[0] = color.x;
+        s.color[1] = color.y;
+        s.color[2] = color.z;
+    }
+
     for (int n = 0; n < kHalfFftSize; ++n) {
         s.frequencies[n] = static_cast<float>(track.audio_buffer->Samplerate()) * n / kFftSize;
     }
@@ -62,14 +75,16 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
             for (int k = 0; k < kHalfFftSize; ++k) {
                 const float r = fft_output.get()[k][0];
                 const float i = fft_output.get()[k][1];
-                output[k] = r * r + i * i;
+                output[k] += r * r + i * i;
             }
         }
 
         fftwf_destroy_plan(plan);
         if (count > 0) {
+            const float scale =
+                (static_cast<float>(kStepSize) / static_cast<float>(kFftSize)) / (kFftSize * count);
             for (int k = 0; k < kHalfFftSize; ++k) {
-                output[k] = 20.0f * log10f(output[k] / (kFftSize * count));
+                output[k] = 20.0f * log10f(output[k] * scale);
             }
         } else {
             // No spectrum

@@ -10,9 +10,10 @@ class SpectrumState;
 class SpectrumWindow {
    public:
     explicit SpectrumWindow(SpectrumState* state);
-  ~SpectrumWindow() = default;
+    ~SpectrumWindow() = default;
 
-    void SetVisible(bool visible) { visible_ = true; }
+    void SetVisible(bool visible) { visible_ = visible; }
+    bool visible() const { return visible_; }
     void Draw();
 
     void AddSpectrumFromTrack(const Track& t, float begin, float end, int channel);
@@ -21,7 +22,7 @@ class SpectrumWindow {
     SpectrumState* state_ = nullptr;
 
     bool visible_ = false;
-    bool log_scale_ = true;
+    bool log_scale_ = false;
 
     SDL_Window* window_;
     SDL_GLContext gl_context_;

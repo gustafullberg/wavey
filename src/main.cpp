@@ -119,10 +119,12 @@ int main(int argc, char** argv) {
     style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.5f, 0.9f, 0.5f, 0.8f);
     style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.5f, 0.9f, 0.5f, 1.0f);
 
+#if DOCKING
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
+#endif
 
     ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init("#version 300 es");
@@ -214,6 +216,8 @@ int main(int argc, char** argv) {
                     break;
 
                 case SDL_MOUSEWHEEL: {
+                    if (io.WantCaptureMouse)
+                        continue;
                     const uint8_t* keyboard = SDL_GetKeyboardState(nullptr);
                     const bool ctrl = keyboard[SDL_SCANCODE_LCTRL] || keyboard[SDL_SCANCODE_RCTRL];
                     int x, y;
@@ -240,6 +244,8 @@ int main(int argc, char** argv) {
                 }
 
                 case SDL_KEYDOWN: {
+                    if (io.WantTextInput)
+                        continue;
                     SDL_Keycode key = event.key.keysym.sym;
                     bool shift = event.key.keysym.mod & KMOD_SHIFT;
                     bool ctrl = event.key.keysym.mod & KMOD_CTRL;
@@ -366,6 +372,11 @@ int main(int argc, char** argv) {
                     // Scroll one track down.
                     if (key == SDLK_DOWN && !shift && !ctrl) {
                         state.ScrollTrackDown();
+                    }
+
+                    // Toggle spectrogram view.
+                    if (key == SDLK_F2) {
+                        spectrum_window.SetVisible(!spectrum_window.visible());
                     }
 
                     // Toggle spectrogram view.
@@ -599,6 +610,8 @@ int main(int argc, char** argv) {
         spectrum_window.Draw();
 
         state.CreateResources();
+
+        ImGui::ShowDemoWindow();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

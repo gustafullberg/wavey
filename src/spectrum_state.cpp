@@ -1,6 +1,7 @@
 #include "spectrum_state.hpp"
 
 #include <assert.h>
+#include <complex.h>
 #include <string.h>
 
 #include <iostream>
@@ -17,9 +18,36 @@ constexpr int kStepSize = 1024;
 
 namespace {
 template <class T>
-struct FftwDeleter {
-    void operator()(T* p) const { fftwf_free(p); }
+struct FftwAllocator {
+    typedef T value_type;
+
+    FftwAllocator() = default;
+
+    template <class U>
+    constexpr FftwAllocator(const FftwAllocator<U>&) noexcept {}
+
+    [[nodiscard]] T* allocate(std::size_t n) {
+        if (n > std::numeric_limits<std::size_t>::max() / sizeof(T))
+            throw std::bad_array_new_length();
+
+        if (auto p = static_cast<T*>(fftwf_malloc(n * sizeof(T)))) {
+            return p;
+        }
+        throw std::bad_alloc();
+    }
+
+    void deallocate(T* p, std::size_t n) noexcept { fftwf_free(p); }
 };
+
+template <class T, class U>
+bool operator==(const FftwAllocator<T>&, const FftwAllocator<U>&) {
+    return true;
+}
+
+template <class T, class U>
+bool operator!=(const FftwAllocator<T>&, const FftwAllocator<U>&) {
+    return false;
+}
 
 template <typename... Args>
 std::string string_format(const std::string& format, Args... args) {
@@ -58,23 +86,24 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
         const float duration = end - begin;
         const int num_frames = duration * audio->Samplerate();
         std::vector<float> output(kHalfFftSize);
-        std::unique_ptr<float, FftwDeleter<float>> input(fftwf_alloc_real(kFftSize));
-        std::unique_ptr<fftwf_complex, FftwDeleter<fftwf_complex>> fft_output(
-            fftwf_alloc_complex(kHalfFftSize));
+        std::vector<float, FftwAllocator<float>> input(kFftSize);
+        std::vector<std::complex<float>, FftwAllocator<std::complex<float>>> fft_output(
+            kHalfFftSize);
 
-        fftwf_plan plan =
-            fftwf_plan_dft_r2c_1d(kFftSize, input.get(), fft_output.get(), FFTW_ESTIMATE);
+        fftwf_plan plan = fftwf_plan_dft_r2c_1d(kFftSize, input.data(),
+                                                reinterpret_cast<fftwf_complex*>(fft_output.data()),
+                                                FFTW_ESTIMATE);
         int count = 0;
         for (int start = 0; start + kFftSize < num_frames; start += kStepSize, ++count) {
             const float* a = audio->Samples() + start * audio->NumChannels() + channel;
             for (int k = 0; k < kFftSize; k++) {
-                input.get()[k] = *a;
+                input[k] = *a;
                 a += audio->NumChannels();
             }
             fftwf_execute(plan);
             for (int k = 0; k < kHalfFftSize; ++k) {
-                const float r = fft_output.get()[k][0];
-                const float i = fft_output.get()[k][1];
+                const float r = fft_output[k].real();
+                const float i = fft_output[k].imag();
                 output[k] += r * r + i * i;
             }
         }

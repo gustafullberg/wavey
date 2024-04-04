@@ -611,7 +611,7 @@ int main(int argc, char** argv) {
 
         state.CreateResources();
 
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

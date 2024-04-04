@@ -1,7 +1,7 @@
 #ifndef SPECTRUM_STATE_HPP_
 #define SPECTRUM_STATE_HPP_
 
-#include <complex>
+#include <complex.h>
 #include <list>
 #include <string>
 #include <vector>

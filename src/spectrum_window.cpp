@@ -37,7 +37,7 @@ void SpectrumWindow::Draw() {
     // closing button that will clear the bool when clicked)
     ImGui::BeginGroup();
     if (ImPlot::BeginPlot("Spectrum##graph", ImVec2(-1, 0),
-                          ImPlotFlags_NoLegend | ImPlotFlags_Crosshairs | ImPlotFlags_NoChild)) {
+                          ImPlotFlags_NoLegend | ImPlotFlags_Crosshairs | ImPlotFlags_NoChild )) {
         float max_xaxis_hz = 0;
         for (const Spectrum& s : state_->spectrums()) {
             max_xaxis_hz = std::max(max_xaxis_hz, *s.frequencies.crbegin());

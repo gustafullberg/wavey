@@ -92,7 +92,7 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
             std::min(audio->NumFrames(), static_cast<int>(duration * audio->Samplerate()));
         std::vector<float> output(kFftOutputSize);
         std::vector<float, FftwAllocator<float>> input(kFftSize);
-        std::vector<fftwf_complex, FftwAllocator<fftwf_complex>> fft_output(kFftOutputSize);
+        std::vector<std::complex<float>, FftwAllocator<std::complex<float>>> fft_output(kFftOutputSize);
 
         fftwf_plan plan = fftwf_plan_dft_r2c_1d(kFftSize, input.data(),
                                                 reinterpret_cast<fftwf_complex*>(fft_output.data()),
@@ -109,8 +109,8 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
             std::fill(input_it, input.end(), 0.0f);
             fftwf_execute(plan);
             for (int k = 0; k < kFftOutputSize; ++k) {
-                const float r = fft_output[k][0];
-                const float i = fft_output[k][1];
+                const float r = fft_output[k].real();
+                const float i = fft_output[k].imag();
                 output[k] += r * r + i * i;
             }
         }

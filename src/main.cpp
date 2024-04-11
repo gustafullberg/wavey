@@ -392,8 +392,15 @@ int main(int argc, char** argv) {
                                 begin = state.Cursor();
                                 end = *state.Selection();
                             }
-                            spectrum_state.Add(selected_track, begin, end,
-                                               selected_track.selected_channel.value_or(0));
+                            if (selected_track.selected_channel) {
+                                spectrum_state.Add(selected_track, begin, end,
+                                                   *(selected_track.selected_channel));
+                            } else {
+                                for (int ch = 0; ch < selected_track.audio_buffer->NumChannels();
+                                     ++ch) {
+                                    spectrum_state.Add(selected_track, begin, end, ch);
+                                }
+                            }
                             spectrum_window.SetVisible(true);
                         } else {
                             view_spectrogram = !view_spectrogram;

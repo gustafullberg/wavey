@@ -41,9 +41,10 @@ enum ViewMode { ALL, TRACK };
 
 class State {
    public:
-    State(AudioSystem* audio)
+    State(AudioSystem* audio, std::mutex& fftw_mutex)
         : audio(audio),
-          file_load_server([this](const std::string& file_name) { this->LoadFile(file_name); }) {}
+          file_load_server([this](const std::string& file_name) { this->LoadFile(file_name); }),
+          fftw_mutex_(fftw_mutex) {}
     void LoadFile(const std::string& file_name, std::optional<std::string> label = std::nullopt);
     void UnloadFiles();
     void UnloadSelectedTrack();
@@ -106,6 +107,8 @@ class State {
 
     std::optional<FileModificationNotifier> track_change_notifier_;
     FileLoadServer file_load_server;
+
+    std::mutex& fftw_mutex_;
 };
 
 #endif

@@ -221,10 +221,10 @@ bool State::CreateResources() {
         if (!t.spectrogram && t.audio_buffer && !t.gpu_spectrogram) {
             if (!t.future_spectrogram.valid()) {
                 // Asynchronous creation of spectrogram.
-                t.future_spectrogram = std::async([&t] {
+                t.future_spectrogram = std::async([&t, &fftw_mutex = fftw_mutex_] {
                     return std::make_unique<Spectrogram>(t.audio_buffer->Samples(),
                                                          t.audio_buffer->NumChannels(),
-                                                         t.audio_buffer->NumFrames());
+                                                         t.audio_buffer->NumFrames(), fftw_mutex);
                 });
             } else {
                 // Check if spectrogram is ready.

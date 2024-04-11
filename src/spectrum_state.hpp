@@ -29,7 +29,7 @@ struct Spectrum {
 
 class SpectrumState {
    public:
-    SpectrumState() = default;
+    explicit SpectrumState(std::mutex& fftw_mutex) : fftw_mutex_(fftw_mutex) {}
 
     void Add(const Track& track, float begin, float end, int channel);
     void Remove(std::list<Spectrum>::iterator it) { spectrums_.erase(it); }
@@ -38,6 +38,7 @@ class SpectrumState {
 
    private:
     std::list<Spectrum> spectrums_;
+    std::mutex& fftw_mutex_;
 };
 
 #endif  // SPECTRUM_STATE_HPP_

@@ -75,9 +75,10 @@ int main(int argc, char** argv) {
             return 0;
     }
 
+    std::mutex fftw_mutex;
     AudioSystem audio;
-    State state(&audio);
-    SpectrumState spectrum_state;
+    State state(&audio, fftw_mutex);
+    SpectrumState spectrum_state(fftw_mutex);
     for (int i = optind; i < argc; i++) {
         state.LoadFile(argv[i]);
     }

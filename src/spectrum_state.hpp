@@ -10,11 +10,21 @@
 struct Spectrum {
     std::string name;
     std::future<std::vector<float>> future_spectrum;
-    std::optional<std::vector<float>> spectrum;
+    std::optional<std::vector<float>> spectrum() {
+        if (future_spectrum.valid()) {
+            if (future_spectrum.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                spectrum_ = future_spectrum.get();
+            }
+        }
+        return spectrum_;
+    }
     std::vector<float> frequencies;
     float color[3];
     float gain = 1.0f;
     bool visible = true;
+
+   private:
+    std::optional<std::vector<float>> spectrum_;
 };
 
 class SpectrumState {

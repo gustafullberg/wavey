@@ -11,6 +11,13 @@
 #include "state.hpp"
 
 namespace {
+
+class ScopedImGuiID {
+   public:
+    explicit ScopedImGuiID(const void* ptr) { ImGui::PushID(ptr); }
+    ~ScopedImGuiID() { ImGui::PopID(); }
+};
+
 template <class T>
 std::string MakeId(const std::string& prefix, const T& obj) {
     constexpr char kIdFormat[] = "%s##%p";
@@ -37,7 +44,7 @@ void SpectrumWindow::Draw() {
     // closing button that will clear the bool when clicked)
     ImGui::BeginGroup();
     if (ImPlot::BeginPlot("Spectrum##graph", ImVec2(-1, 0),
-                          ImPlotFlags_NoLegend | ImPlotFlags_Crosshairs | ImPlotFlags_NoChild )) {
+                          ImPlotFlags_NoLegend | ImPlotFlags_Crosshairs | ImPlotFlags_NoChild)) {
         float max_xaxis_hz = 0;
         for (const Spectrum& s : state_->spectrums()) {
             max_xaxis_hz = std::max(max_xaxis_hz, *s.frequencies.crbegin());
@@ -47,17 +54,14 @@ void SpectrumWindow::Draw() {
         ImPlot::SetupAxes("Frequency (Hz)", "Amplitude (dB)");
 
         for (Spectrum& s : state_->spectrums()) {
-            if (s.future_spectrum.valid()) {
-                if (s.future_spectrum.wait_for(std::chrono::seconds(0)) ==
-                    std::future_status::ready) {
-                    s.spectrum = s.future_spectrum.get();
-                }
-            }
-            if (!s.spectrum || !s.visible)
+            ScopedImGuiID scoped_id(&s);
+
+            const std::optional<std::vector<float>>& data = s.spectrum();
+            if (!data.has_value() || !s.visible)
                 continue;
             // Set the line color and weight for the next item only.
             ImPlot::SetNextLineStyle(ImVec4(s.color[0], s.color[1], s.color[2], 1.0f));
-            ImPlot::PlotLine(MakeId(s.name, s).c_str(), s.frequencies.data(), s.spectrum->data(),
+            ImPlot::PlotLine(s.name.c_str(), s.frequencies.data(), data->data(),
                              s.frequencies.size());
         }
         ImPlot::EndPlot();
@@ -68,16 +72,17 @@ void SpectrumWindow::Draw() {
     std::vector<std::list<Spectrum>::iterator> spectrums_to_remove;
     for (auto s_it = state_->spectrums().begin(); s_it != state_->spectrums().end(); ++s_it) {
         Spectrum& s = *s_it;
-        if (ImGui::Button(MakeId("D##Delete", s).c_str())) {
+        ScopedImGuiID scoped_id(&s);
+        if (ImGui::Button("D##Delete")) {
             spectrums_to_remove.push_back(s_it);
             continue;
         }
         ImGui::SameLine();
-        ImGui::Checkbox(MakeId("##spectrumVisible", s).c_str(), &s.visible);
+        ImGui::Checkbox("##spectrumVisible", &s.visible);
         ImGui::SameLine();
-        ImGui::ColorEdit3(MakeId("##Color", s).c_str(), s.color, ImGuiColorEditFlags_NoInputs);
+        ImGui::ColorEdit3("##Color", s.color, ImGuiColorEditFlags_NoInputs);
         ImGui::SameLine();
-        ImGui::InputText(MakeId("##spectrumName", s).c_str(), &s.name);
+        ImGui::InputText("##spectrumName", &s.name);
     }
     ImGui::EndGroup();
     ImGui::End();

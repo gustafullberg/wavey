@@ -13,8 +13,9 @@
 
 constexpr int kFftSize = 4096;
 static_assert((kFftSize & (kFftSize - 1)) == 0, "kFftSize must be a power of 2");
-constexpr int kHalfFftSize = kFftSize / 2 + 1;
+constexpr int kFftOutputSize = kFftSize / 2 + 1;
 constexpr int kStepSize = 1024;
+constexpr float kWindowSizeMs = 10.0f;
 
 namespace {
 template <class T>
@@ -64,11 +65,15 @@ std::string string_format(const std::string& format, Args... args) {
 }  // namespace
 
 void SpectrumState::Add(const Track& track, float begin, float end, int channel) {
+    if (end < begin)
+        std::swap(end, begin);
     if (track.audio_buffer == nullptr)
+        return;
+    if ((end - begin) * 1000.0f < kWindowSizeMs)
         return;
     Spectrum s;
     s.name = string_format("%s #%d [%.3f - %.3f]", track.short_name.c_str(), channel, begin, end);
-    s.frequencies.resize(kHalfFftSize);
+    s.frequencies.resize(kFftOutputSize);
 
     {
         const int csize = ImPlot::GetColormapSize();
@@ -78,32 +83,34 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
         s.color[2] = color.z;
     }
 
-    for (int n = 0; n < kHalfFftSize; ++n) {
+    for (int n = 0; n < kFftOutputSize; ++n) {
         s.frequencies[n] = static_cast<float>(track.audio_buffer->Samplerate()) * n / kFftSize;
     }
-    std::shared_ptr<AudioBuffer> audio = track.audio_buffer;
-    s.future_spectrum = std::async([audio, channel, begin, end]() {
+    s.future_spectrum = std::async([audio = track.audio_buffer, channel, begin, end]() {
         const float duration = end - begin;
-        const int num_frames = duration * audio->Samplerate();
-        std::vector<float> output(kHalfFftSize);
+        const int num_frames =
+            std::min(audio->NumFrames(), static_cast<int>(duration * audio->Samplerate()));
+        std::vector<float> output(kFftOutputSize);
         std::vector<float, FftwAllocator<float>> input(kFftSize);
-        std::vector<std::complex<float>, FftwAllocator<std::complex<float>>> fft_output(
-            kHalfFftSize);
+        std::vector<fftwf_complex, FftwAllocator<fftwf_complex>> fft_output(kFftOutputSize);
 
         fftwf_plan plan = fftwf_plan_dft_r2c_1d(kFftSize, input.data(),
                                                 reinterpret_cast<fftwf_complex*>(fft_output.data()),
                                                 FFTW_ESTIMATE);
+        const int window_size = kWindowSizeMs * audio->Samplerate() / 1000;
         int count = 0;
-        for (int start = 0; start + kFftSize < num_frames; start += kStepSize, ++count) {
+        for (int start = 0; start + window_size < num_frames; start += window_size, ++count) {
+            auto input_it = input.begin();
             const float* a = audio->Samples() + start * audio->NumChannels() + channel;
-            for (int k = 0; k < kFftSize; k++) {
-                input[k] = *a;
+            for (int k = 0; k < window_size; ++k, ++input_it) {
+                *input_it = *a;
                 a += audio->NumChannels();
             }
+            std::fill(input_it, input.end(), 0.0f);
             fftwf_execute(plan);
-            for (int k = 0; k < kHalfFftSize; ++k) {
-                const float r = fft_output[k].real();
-                const float i = fft_output[k].imag();
+            for (int k = 0; k < kFftOutputSize; ++k) {
+                const float r = fft_output[k][0];
+                const float i = fft_output[k][1];
                 output[k] += r * r + i * i;
             }
         }
@@ -111,13 +118,13 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
         fftwf_destroy_plan(plan);
         if (count > 0) {
             const float scale =
-                (static_cast<float>(kStepSize) / static_cast<float>(kFftSize)) / (kFftSize * count);
-            for (int k = 0; k < kHalfFftSize; ++k) {
-                output[k] = 20.0f * log10f(output[k] * scale);
+                1.0f / (static_cast<float>(window_size) * static_cast<float>(window_size) * count);
+            for (int k = 0; k < kFftOutputSize; ++k) {
+                output[k] = 10.0f * log10f(output[k] * scale);
             }
         } else {
             // No spectrum
-            return std::vector<float>(kHalfFftSize);
+            return std::vector<float>(kFftOutputSize);
         }
         return output;
     });

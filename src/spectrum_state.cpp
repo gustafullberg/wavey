@@ -14,7 +14,6 @@
 constexpr int kFftSize = 4096;
 static_assert((kFftSize & (kFftSize - 1)) == 0, "kFftSize must be a power of 2");
 constexpr int kFftOutputSize = kFftSize / 2 + 1;
-constexpr int kStepSize = 1024;
 constexpr float kWindowSizeMs = 10.0f;
 
 namespace {
@@ -86,54 +85,54 @@ void SpectrumState::Add(const Track& track, float begin, float end, int channel)
     for (int n = 0; n < kFftOutputSize; ++n) {
         s.frequencies[n] = static_cast<float>(track.audio_buffer->Samplerate()) * n / kFftSize;
     }
-    s.future_spectrum =
-        std::async([audio = track.audio_buffer, channel, begin, end, &fftw_mutex = fftw_mutex_]() {
-            const float duration = end - begin;
-            const int num_frames =
-                std::min(audio->NumFrames(), static_cast<int>(duration * audio->Samplerate()));
-            std::vector<float> output(kFftOutputSize);
-            std::vector<float, FftwAllocator<float>> input(kFftSize);
-            std::vector<std::complex<float>, FftwAllocator<std::complex<float>>> fft_output(
-                kFftOutputSize);
-            fftwf_plan plan;
-            {
-                std::scoped_lock locked_fftw_mutex(fftw_mutex);
-                plan = fftwf_plan_dft_r2c_1d(kFftSize, input.data(),
-                                             reinterpret_cast<fftwf_complex*>(fft_output.data()),
-                                             FFTW_ESTIMATE);
+    s.future_spectrum = std::async([audio = track.audio_buffer, channel, begin, end,
+                                    &fftw_mutex = fftw_mutex_]() {
+        const float duration = end - begin;
+        const int num_frames =
+            std::min(audio->NumFrames(), static_cast<int>(duration * audio->Samplerate()));
+        std::vector<float> output(kFftOutputSize);
+        std::vector<float, FftwAllocator<float>> input(kFftSize);
+        std::vector<std::complex<float>, FftwAllocator<std::complex<float>>> fft_output(
+            kFftOutputSize);
+        fftwf_plan plan;
+        {
+            std::scoped_lock locked_fftw_mutex(fftw_mutex);
+            plan = fftwf_plan_dft_r2c_1d(kFftSize, input.data(),
+                                         reinterpret_cast<fftwf_complex*>(fft_output.data()),
+                                         FFTW_ESTIMATE);
+        }
+        const int window_size = kWindowSizeMs * audio->Samplerate() / 1000;
+        int count = 0;
+        for (int start = 0; start + window_size < num_frames; start += window_size / 4, ++count) {
+            auto input_it = input.begin();
+            const float* a = audio->Samples() + start * audio->NumChannels() + channel;
+            for (int k = 0; k < window_size; ++k, ++input_it) {
+                *input_it = *a;
+                a += audio->NumChannels();
             }
-            const int window_size = kWindowSizeMs * audio->Samplerate() / 1000;
-            int count = 0;
-            for (int start = 0; start + window_size < num_frames; start += window_size, ++count) {
-                auto input_it = input.begin();
-                const float* a = audio->Samples() + start * audio->NumChannels() + channel;
-                for (int k = 0; k < window_size; ++k, ++input_it) {
-                    *input_it = *a;
-                    a += audio->NumChannels();
-                }
-                std::fill(input_it, input.end(), 0.0f);
-                fftwf_execute(plan);
-                for (int k = 0; k < kFftOutputSize; ++k) {
-                    const float r = fft_output[k].real();
-                    const float i = fft_output[k].imag();
-                    output[k] += r * r + i * i;
-                }
+            std::fill(input_it, input.end(), 0.0f);
+            fftwf_execute(plan);
+            for (int k = 0; k < kFftOutputSize; ++k) {
+                const float r = fft_output[k].real();
+                const float i = fft_output[k].imag();
+                output[k] += r * r + i * i;
             }
-            {
-                std::scoped_lock locked_fftw_mutex(fftw_mutex);
-                fftwf_destroy_plan(plan);
+        }
+        {
+            std::scoped_lock locked_fftw_mutex(fftw_mutex);
+            fftwf_destroy_plan(plan);
+        }
+        if (count > 0) {
+            const float scale =
+                1.0f / (static_cast<float>(window_size) * static_cast<float>(window_size) * count);
+            for (int k = 0; k < kFftOutputSize; ++k) {
+                output[k] = 10.0f * log10f(output[k] * scale);
             }
-            if (count > 0) {
-                const float scale = 1.0f / (static_cast<float>(window_size) *
-                                            static_cast<float>(window_size) * count);
-                for (int k = 0; k < kFftOutputSize; ++k) {
-                    output[k] = 10.0f * log10f(output[k] * scale);
-                }
-            } else {
-                // No spectrum
-                return std::vector<float>(kFftOutputSize);
-            }
-            return output;
-        });
+        } else {
+            // No spectrum
+            return std::vector<float>(kFftOutputSize);
+        }
+        return output;
+    });
     spectrums_.push_back(std::move(s));
 }

@@ -6,6 +6,7 @@
 #include <sys/eventfd.h>
 #include <sys/inotify.h>
 #include <unistd.h>
+#include <algorithm>
 
 constexpr size_t BUFFER_LENGTH = 4096;
 

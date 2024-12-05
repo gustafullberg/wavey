@@ -5,7 +5,7 @@
 AudioBuffer::AudioBuffer(std::string file_name) {
     // Open file.
     SndfileHandle file(file_name);
-    if (!file)
+    if (!file || file.samplerate() == 0)
         return;
 
     samplerate = file.samplerate();

@@ -6,13 +6,13 @@ imgui_src = files(
   'imgui/imgui_widgets.cpp',
   'imgui/misc/cpp/imgui_stdlib.cpp',
   'imgui/backends/imgui_impl_opengl3.cpp',
-  'imgui/backends/imgui_impl_sdl.cpp',
+  'imgui/backends/imgui_impl_sdl3.cpp',
 )
 imgui_inc = include_directories(
   'imgui',
   'imgui/backends',
 )
-imgui_lib = static_library('imgui', imgui_src, include_directories: imgui_inc, dependencies : [sdl2, dl])
+imgui_lib = static_library('imgui', imgui_src, include_directories: imgui_inc, dependencies : [sdl3, dl])
 imgui = declare_dependency(link_with: imgui_lib, include_directories: imgui_inc)
 
 

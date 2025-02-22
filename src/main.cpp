@@ -1,4 +1,7 @@
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_mouse.h>
 #include <getopt.h>
 #include <iostream>
 #include <system_error>
@@ -6,7 +9,7 @@
 #include "file_load_server.hpp"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
-#include "imgui_impl_sdl.h"
+#include "imgui_impl_sdl3.h"
 #include "implot.h"
 #include "renderer.hpp"
 #include "spectrum_state.hpp"
@@ -75,14 +78,6 @@ int main(int argc, char** argv) {
             return 0;
     }
 
-    std::mutex fftw_mutex;
-    AudioSystem audio;
-    State state(&audio, fftw_mutex);
-    SpectrumState spectrum_state(fftw_mutex);
-    for (int i = optind; i < argc; i++) {
-        state.LoadFile(argv[i]);
-    }
-
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -93,13 +88,23 @@ int main(int argc, char** argv) {
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
     SDL_Window* window =
-        SDL_CreateWindow("Wavey", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720,
-                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+        SDL_CreateWindow("Wavey", 1280, 720,
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     SDL_GL_MakeCurrent(window, gl_context);
     SDL_GL_SetSwapInterval(1);
-    SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
+    SDL_SetEventEnabled(SDL_EVENT_DROP_FILE, true);
 
+
+    std::mutex fftw_mutex;
+    std::unique_ptr<AudioSystem> audio = std::make_unique<AudioSystem>();
+    State state(audio.get(), fftw_mutex);
+    SpectrumState spectrum_state(fftw_mutex);
+    for (int i = optind; i < argc; i++) {
+        state.LoadFile(argv[i]);
+    }
+
+    
     SpectrumWindow spectrum_window(&spectrum_state);
 
     IMGUI_CHECKVERSION();
@@ -127,10 +132,10 @@ int main(int argc, char** argv) {
     }
 #endif
 
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplSDL3_InitForOpenGL(window, gl_context);
     ImGui_ImplOpenGL3_Init("#version 300 es");
 
-    Renderer* renderer = Renderer::Create();
+    std::unique_ptr<Renderer> renderer = Renderer::Create();
 
     bool view_spectrogram = false;
     bool view_bark_scale = false;
@@ -144,23 +149,23 @@ int main(int argc, char** argv) {
     while (run) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-            ImGui_ImplSDL2_ProcessEvent(&event);
+            ImGui_ImplSDL3_ProcessEvent(&event);
             switch (event.type) {
-                case SDL_QUIT:
+	    case SDL_EVENT_QUIT:
                     run = false;
                     break;
 
-                case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_CLOSE) {
+	    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+                   
                         run = false;
-                    }
+                    
                     break;
 
-                case SDL_DROPFILE:
-                    state.LoadFile(event.drop.file);
+                case SDL_EVENT_DROP_FILE:
+                    state.LoadFile(event.drop.data);
                     break;
 
-                case SDL_MOUSEMOTION:
+                case SDL_EVENT_MOUSE_MOTION:
                     if (!io.WantCaptureMouse) {
                         mouse_x = std::max(
                             std::min(static_cast<float>(event.motion.x) / io.DisplaySize.x, 1.0f),
@@ -188,7 +193,7 @@ int main(int argc, char** argv) {
                     }
                     break;
 
-                case SDL_MOUSEBUTTONDOWN:
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
                     if (!io.WantCaptureMouse) {
                         if (event.button.button == SDL_BUTTON_LEFT) {
                             if (event.button.clicks == 1) {
@@ -207,7 +212,7 @@ int main(int argc, char** argv) {
                     }
                     break;
 
-                case SDL_MOUSEBUTTONUP:
+                case SDL_EVENT_MOUSE_BUTTON_UP:
                     if (!io.WantCaptureMouse) {
                         if (event.button.button == SDL_BUTTON_LEFT) {
                             mouse_down = false;
@@ -216,12 +221,12 @@ int main(int argc, char** argv) {
                     }
                     break;
 
-                case SDL_MOUSEWHEEL: {
+                case SDL_EVENT_MOUSE_WHEEL: {
                     if (io.WantCaptureMouse)
                         continue;
-                    const uint8_t* keyboard = SDL_GetKeyboardState(nullptr);
+                    const bool* keyboard = SDL_GetKeyboardState(nullptr);
                     const bool ctrl = keyboard[SDL_SCANCODE_LCTRL] || keyboard[SDL_SCANCODE_RCTRL];
-                    int x, y;
+                    float x, y;
                     SDL_GetMouseState(&x, &y);
                     if (event.wheel.y > 0) {
                         if (ctrl) {
@@ -244,20 +249,20 @@ int main(int argc, char** argv) {
                     break;
                 }
 
-                case SDL_KEYDOWN: {
+                case SDL_EVENT_KEY_DOWN: {
                     if (io.WantTextInput)
                         continue;
-                    SDL_Keycode key = event.key.keysym.sym;
-                    bool shift = event.key.keysym.mod & KMOD_SHIFT;
-                    bool ctrl = event.key.keysym.mod & KMOD_CTRL;
+                    SDL_Keycode key = event.key.key;
+                    bool shift = event.key.mod & SDL_KMOD_SHIFT;
+                    bool ctrl = event.key.mod & SDL_KMOD_CTRL;
 
                     // Quit.
-                    if (key == SDLK_q && ctrl) {
+                    if (key == SDLK_Q && ctrl) {
                         run = false;
                     }
 
                     // Copy file path of selected track.
-                    if (key == SDLK_c && ctrl) {
+                    if (key == SDLK_C && ctrl) {
                         std::optional<int> track_index = state.SelectedTrack();
                         if (track_index) {
                             Track& track = state.GetTrack(*track_index);
@@ -266,32 +271,32 @@ int main(int argc, char** argv) {
                     }
 
                     // Full zoom out.
-                    if (key == SDLK_f && ctrl) {
+                    if (key == SDLK_F && ctrl) {
                         state.zoom_window.ZoomOutFull();
                     }
 
                     // Follow playback.
-                    if (key == SDLK_f && !ctrl) {
+                    if (key == SDLK_F && !ctrl) {
                         follow_playback = !follow_playback;
                     }
 
                     // Zoom to selection.
-                    if (key == SDLK_e && ctrl && state.Selection()) {
+                    if (key == SDLK_E && ctrl && state.Selection()) {
                         state.zoom_window.ZoomRange(state.Cursor(), *state.Selection());
                     }
 
                     // Zoom toggle single track.
-                    if (key == SDLK_z && !shift) {
+                    if (key == SDLK_Z && !shift) {
                         state.ToggleViewSingleTrack();
                     }
 
                     // Zoom toggle single channel on selected track.
-                    if (key == SDLK_z && shift && !ctrl) {
+                    if (key == SDLK_Z && shift && !ctrl) {
                         state.ToggleViewSingleChannel(mouse_y);
                     }
 
                     // Zoom toggle single channel and one track on selected track.
-                    if (key == SDLK_z && shift && ctrl) {
+                    if (key == SDLK_Z && shift && ctrl) {
                         state.ToggleViewSingleChannel(mouse_y);
                         state.ToggleViewSingleTrack();
                     }
@@ -381,7 +386,7 @@ int main(int argc, char** argv) {
                     }
 
                     // Toggle spectrogram view.
-                    if (key == SDLK_s) {
+                    if (key == SDLK_S) {
                         if (ctrl) {
                             const Track& selected_track = state.GetSelectedTrack();
                             float begin = 0.0f;
@@ -409,7 +414,7 @@ int main(int argc, char** argv) {
                     }
 
                     // Toggle bark scale spectrograms.
-                    if (key == SDLK_b) {
+                    if (key == SDLK_B) {
                         view_bark_scale = !view_bark_scale;
                     }
 
@@ -420,22 +425,22 @@ int main(int argc, char** argv) {
                     }
 
                     // Close selected track.
-                    if (key == SDLK_w && ctrl && !shift) {
+                    if (key == SDLK_W && ctrl && !shift) {
                         state.UnloadSelectedTrack();
                     }
 
                     // Close all tracks.
-                    if (key == SDLK_w && ctrl && shift) {
+                    if (key == SDLK_W && ctrl && shift) {
                         state.UnloadFiles();
                     }
 
                     // Reload all files.
-                    if (key == SDLK_r && ctrl) {
+                    if (key == SDLK_R && ctrl) {
                         state.ReloadFiles();
                     }
 
                     // dB scale waveform.
-                    if (key == SDLK_d) {
+                    if (key == SDLK_D) {
                         state.zoom_window.ToggleDbVerticalScale();
                     }
 
@@ -458,7 +463,7 @@ int main(int argc, char** argv) {
             state.zoom_window.MaxX() - (state.zoom_window.Right() - state.zoom_window.Left());
 
         ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL2_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
         timeline_height = ImGui::GetFrameHeight() * 2.0f;
@@ -640,14 +645,14 @@ int main(int argc, char** argv) {
         SDL_GL_SwapWindow(window);
     }
 
-    delete renderer;
-
+    renderer.reset();
+    audio.reset();
     ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
-    SDL_GL_DeleteContext(gl_context);
+    SDL_GL_DestroyContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;

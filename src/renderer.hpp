@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <glm/glm.hpp>
+#include <memory>
 
 class State;
 
@@ -22,7 +23,7 @@ class Renderer {
         float play_time,
         const std::function<void(float, bool selected, const char*)>& label_print_func,
         const std::function<void(float, const char*)>& time_print_func) = 0;
-    static Renderer* Create();
+  static std::unique_ptr<Renderer> Create();
 };
 
 #endif

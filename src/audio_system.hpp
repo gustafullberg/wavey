@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#include "SDL2/SDL_audio.h"
+#include "SDL3/SDL_audio.h"
 #include "audio_buffer.hpp"
 #include "audio_mixer.hpp"
 
@@ -26,7 +26,7 @@ class AudioSystem {
     void SetLooping(bool do_loop);
     bool Looping() const { return loop; }
 
-    uint8_t NumOutputChannels();
+  int NumOutputChannels() const { return 2; }
 
     std::shared_ptr<AudioBuffer> playingBuffer;
 
@@ -34,15 +34,19 @@ class AudioSystem {
     int end_index;
 
    private:
-    static void Callback(void* user_data, Uint8* stream, int len);
+    static void Callback(void* userdata,
+                         SDL_AudioStream* stream,
+                         int additional_amount,
+                         int total_amount);
 
-    std::optional<SDL_AudioDeviceID> active_audio_device_;
+    SDL_AudioStream* audio_stream_ = nullptr;
     SDL_AudioSpec audio_spec_;
     int num_channels = 0;
     int samplerate = 0;
     bool loop = false;
     int start_index;
     std::unique_ptr<AudioMixer> mixer_;
+    std::vector<float> stream_buffer_;
 };
 
 #endif

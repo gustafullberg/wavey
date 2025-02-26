@@ -4,9 +4,8 @@
 #include <memory>
 #include <optional>
 
-#include <stdint.h>
+#include <portaudio.h>
 
-#include "SDL2/SDL_audio.h"
 #include "audio_buffer.hpp"
 #include "audio_mixer.hpp"
 
@@ -26,7 +25,7 @@ class AudioSystem {
     void SetLooping(bool do_loop);
     bool Looping() const { return loop; }
 
-    uint8_t NumOutputChannels();
+    int NumOutputChannels();
 
     std::shared_ptr<AudioBuffer> playingBuffer;
 
@@ -34,10 +33,14 @@ class AudioSystem {
     int end_index;
 
    private:
-    static void Callback(void* user_data, Uint8* stream, int len);
-
-    std::optional<SDL_AudioDeviceID> active_audio_device_;
-    SDL_AudioSpec audio_spec_;
+    static int Callback(const void* input_buffer,
+                        void* output_buffer,
+                        unsigned long frames_per_buffer,
+                        const PaStreamCallbackTimeInfo* time_info,
+                        PaStreamCallbackFlags status_flags,
+                        void* user_data);
+    PaDeviceIndex output_device_;
+    PaStream* stream = nullptr;
     int num_channels = 0;
     int samplerate = 0;
     bool loop = false;

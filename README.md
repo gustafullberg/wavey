@@ -50,10 +50,10 @@ Linux tool to analyze and play audio files.
 
 ### Build
 #### Build dependencies Debian
-``` apt-get install libsdl2-dev libgl-dev libglm-dev libsndfile1-dev libfftw3-dev ```
+``` apt-get install libgl-dev libglm-dev portaudio19-dev libsndfile1-dev libfftw3-dev ```
 
 #### Build dependencies Arch Linux
-``` pacman -S glm sdl2 libsndfile fftw ```
+``` pacman -S glm portaudio libsndfile fftw ```
 
 
 #### Get the source, build and install

@@ -75,14 +75,6 @@ int main(int argc, char** argv) {
             return 0;
     }
 
-    std::mutex fftw_mutex;
-    AudioSystem audio;
-    State state(&audio, fftw_mutex);
-    SpectrumState spectrum_state(fftw_mutex);
-    for (int i = optind; i < argc; i++) {
-        state.LoadFile(argv[i]);
-    }
-
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
@@ -100,6 +92,15 @@ int main(int argc, char** argv) {
     SDL_GL_SetSwapInterval(1);
     SDL_EventState(SDL_DROPFILE, SDL_ENABLE);
 
+    std::mutex fftw_mutex;
+    std::unique_ptr<AudioSystem> audio = std::make_unique<AudioSystem>();
+    State state(audio.get(), fftw_mutex);
+    SpectrumState spectrum_state(fftw_mutex);
+    for (int i = optind; i < argc; i++) {
+        state.LoadFile(argv[i]);
+    }
+
+    
     SpectrumWindow spectrum_window(&spectrum_state);
 
     IMGUI_CHECKVERSION();
@@ -641,6 +642,7 @@ int main(int argc, char** argv) {
     }
 
     delete renderer;
+    audio.reset();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();

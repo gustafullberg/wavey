@@ -100,7 +100,6 @@ int main(int argc, char** argv) {
         state.LoadFile(argv[i]);
     }
 
-    
     SpectrumWindow spectrum_window(&spectrum_state);
 
     IMGUI_CHECKVERSION();
@@ -417,6 +416,11 @@ int main(int argc, char** argv) {
                     // Toggle playback.
                     if (key == SDLK_SPACE) {
                         state.SetLooping(shift);
+                        float current_play_timecode = 0;
+                        if (!state.Selection().has_value() &&
+                            state.Playing(&current_play_timecode) && ctrl) {
+                            state.SetCursor(current_play_timecode);
+                        }
                         state.TogglePlayback();
                     }
 

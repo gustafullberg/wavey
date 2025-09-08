@@ -82,7 +82,7 @@ bool FileLoadServer::Load(int argc, char** argv) {
     int socket_fd = socket(AF_UNIX, SOCK_DGRAM, 0);
     sockaddr_un addr_server = GetServerAddress();
     char full_path[PATH_MAX];
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i) {
         if (realpath(argv[i], full_path)) {
             if (sendto(socket_fd, full_path, strlen(full_path), 0,
                        (const struct sockaddr*)&addr_server, sizeof(addr_server)) > 0) {

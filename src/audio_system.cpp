@@ -39,6 +39,15 @@ void AudioSystem::TogglePlayback(std::shared_ptr<AudioBuffer> ab,
     }
 }
 
+double AudioSystem::OutputLatencyMs() {
+    if (stream == nullptr)
+        return 0.0;
+    const PaStreamInfo* stream_info = Pa_GetStreamInfo(stream);
+    if (stream_info == nullptr)
+        return 0.0;
+    return stream_info->outputLatency * 1000.0;
+}
+
 void AudioSystem::Play(std::shared_ptr<AudioBuffer> ab,
                        std::unique_ptr<AudioMixer> mixer,
                        float start,

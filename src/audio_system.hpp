@@ -25,6 +25,9 @@ class AudioSystem {
     void SetLooping(bool do_loop);
     bool Looping() const { return loop; }
 
+    // Playout latency as reported by the soundcard.
+    double OutputLatencyMs();
+
     int NumOutputChannels();
 
     std::shared_ptr<AudioBuffer> playingBuffer;

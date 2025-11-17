@@ -451,6 +451,9 @@ int main(int argc, char** argv) {
 
         float play_time;
         bool playing = state.Playing(&play_time);
+        if (playing) {
+            play_time -= audio->OutputLatencyMs() / 1000.0;
+        }
 
         if (follow_playback) {
             if (play_time > state.zoom_window.Right() || play_time < state.zoom_window.Left()) {

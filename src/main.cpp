@@ -455,7 +455,7 @@ int main(int argc, char** argv) {
             play_time -= audio->OutputLatencyMs() / 1000.0;
         }
 
-        if (follow_playback) {
+        if (follow_playback && playing) {
             if (play_time > state.zoom_window.Right() || play_time < state.zoom_window.Left()) {
                 state.zoom_window.PanTo(play_time);
             }

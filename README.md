@@ -15,6 +15,7 @@ Linux tool to analyze and play audio files.
 - ``Ctrl+R`` - Reload all modified files
 - ``Ctrl+Q`` - Quit
 - ``Space`` - Start / stop playback from cursor
+- ``Ctrl+Space`` - Start / stop keep the cursor at its current location
 - ``Shift+Space`` - Start / stop looping playback from cursor
 
 #### Selection
@@ -24,7 +25,7 @@ Linux tool to analyze and play audio files.
 - ``End`` - Move cursor to the end
 - ``Up``, ``Down`` or ``mouse hover`` - Select file for playback
 - ``Shift+Up``or ``Shift+Down`` - Move selected track in the list
-- ``Ctrl+Up``or ``Ctrl+Down`` - Change displayed channel on the selected track 
+- ``Ctrl+Up``or ``Ctrl+Down`` - Change displayed channel on the selected track
 
 #### View
 - ``s`` - Spectrogram / waveform view

@@ -84,7 +84,7 @@ class State {
     void MoveTrackUp();
     void MoveTrackDown();
 
-    bool DoAutoRefresh() const { return track_change_notifier_.has_value(); }
+    bool DoAutoRefresh() const { return track_change_notifier_ != nullptr; }
     void StartMonitoringTrackChange();
     void StopMonitoringTrackChange();
 
@@ -105,7 +105,7 @@ class State {
     std::optional<float> selection;
     std::optional<int> selected_track;
 
-    std::optional<FileModificationNotifier> track_change_notifier_;
+    std::unique_ptr<FileModificationNotifier> track_change_notifier_;
     FileLoadServer file_load_server;
 
     std::mutex& fftw_mutex_;

@@ -3,7 +3,6 @@ src = files(
   'audio_mixer.cpp',
   'audio_system.cpp',
   'file_load_server.cpp',
-  'file_notification.cpp',
   'gpu_spectrogram.cpp',
   'gpu_waveform.cpp',
   'low_res_waveform.cpp',
@@ -22,5 +21,15 @@ src = files(
   'wave_shader.cpp',
   'zoom_window.cpp'
   )
+
+if target_machine.system() == 'darwinn'
+  src += [
+     'file_notification_macos.cpp',
+  ]
+elif target_machine.system() == 'linux'
+  src += [
+     'file_notification_linux.cpp',
+  ]
+endif
 
 executable('wavey', src, dependencies : [gl, glm, portaudio, sndfile, fftw, openmp, sdl2, imgui, implot], install : true)

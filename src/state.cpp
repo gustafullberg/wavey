@@ -140,7 +140,7 @@ void State::UnmonitorTrack(Track& t) {
 }
 
 void State::StartMonitoringTrackChange() {
-    track_change_notifier_.emplace([this](int id) {
+    track_change_notifier_ = FileModificationNotifier::Create([this](int id) {
         for (Track& t : tracks) {
             if (t.watch_id_ == id) {
                 t.Reload();

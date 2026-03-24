@@ -1,0 +1,110 @@
+#include "file_notification.hpp"
+
+#include <assert.h>
+#include <poll.h>
+#include <stdlib.h>
+#include <sys/eventfd.h>
+#include <sys/inotify.h>
+#include <unistd.h>
+#include <algorithm>
+#include <thread>
+#include <vector>
+
+namespace {
+constexpr size_t BUFFER_LENGTH = 4096;
+
+class LinuxFileModificationNotifier : public FileModificationNotifier {
+   public:
+    LinuxFileModificationNotifier(std::function<void(int)> on_modification)
+        : on_modification_(on_modification) {
+        inotify_fd_ = inotify_init();
+        close_fd_ = eventfd(0, 0);
+        assert(inotify_fd_ > 0);
+        monitor_thread_ =
+            std::make_unique<std::thread>(&LinuxFileModificationNotifier::Monitor, this);
+    }
+
+    ~LinuxFileModificationNotifier() {
+        for (int wd : watch_descriptor_) {
+            inotify_rm_watch(inotify_fd_, wd);
+        }
+        const uint64_t one = 1;
+        assert(write(close_fd_, &one, sizeof(uint64_t)) == sizeof(uint64_t));
+        monitor_thread_->join();
+        close(inotify_fd_);
+        close(close_fd_);
+    }
+
+    int Watch(const std::string& filename) override {
+        int wd = inotify_add_watch(inotify_fd_, filename.c_str(), IN_CLOSE_WRITE);
+        watch_descriptor_.push_back(wd);
+        return wd;
+    }
+
+    void Unwatch(int id) override {
+        std::vector<int>::iterator wd =
+            std::find(watch_descriptor_.begin(), watch_descriptor_.end(), id);
+        if (wd == watch_descriptor_.end()) {
+            return;
+        }
+        watch_descriptor_.erase(wd);
+        inotify_rm_watch(inotify_fd_, id);
+    }
+
+   private:
+    void Monitor() {
+        char buffer[BUFFER_LENGTH];
+        const struct inotify_event* event;
+        constexpr int kInotifyIndex = 0;
+        constexpr int kCloseIndex = 1;
+        struct pollfd poll_fds[2];
+        poll_fds[kInotifyIndex] = {
+            .fd = inotify_fd_,
+            .events = POLLIN,
+        };
+        poll_fds[kCloseIndex] = {
+            .fd = close_fd_,
+            .events = POLLIN,
+        };
+
+        for (;;) {
+            int poll_num = poll(poll_fds, 2, -1);
+            assert(poll_num != -1);
+            if (poll_num > 0) {
+                if (poll_fds[kCloseIndex].revents & POLLIN) {
+                    // Read the event counter.
+                    uint64_t c;
+                    read(close_fd_, &c, sizeof(c));
+                    break;
+                }
+
+                if (poll_fds[kInotifyIndex].revents & POLLIN) {
+                    ssize_t len = read(inotify_fd_, buffer, sizeof(buffer));
+                    if (len <= 0)
+                        break;
+                    event = (const struct inotify_event*)buffer;
+                    /* Loop over all events in the buffer */
+                    for (char* ptr = buffer; ptr < buffer + len;
+                         ptr += sizeof(struct inotify_event) + event->len) {
+                        event = (const struct inotify_event*)ptr;
+                        if (event->mask & IN_CLOSE_WRITE) {
+                            on_modification_(event->wd);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    std::function<void(int)> on_modification_;
+    int inotify_fd_;
+    int close_fd_;
+    std::vector<int> watch_descriptor_;
+    std::unique_ptr<std::thread> monitor_thread_;
+};
+}  // namespace
+
+std::unique_ptr<FileModificationNotifier> FileModificationNotifier::Create(
+    std::function<void(int)> on_modification) {
+    return std::make_unique<LinuxFileModificationNotifier>(on_modification);
+}

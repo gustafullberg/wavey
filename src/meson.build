@@ -32,4 +32,4 @@ elif target_machine.system() == 'linux'
   ]
 endif
 
-executable('wavey', src, dependencies : [gl, glm, portaudio, sndfile, fftw, openmp, sdl2, imgui, implot], install : true)
+executable('wavey', src, dependencies : [gl, glm, portaudio, sndfile, fftw, openmp, sdl3, imgui, implot], install : true)

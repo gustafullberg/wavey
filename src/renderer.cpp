@@ -290,8 +290,8 @@ void RendererImpl::Draw(
     }
 }
 
-Renderer* Renderer::Create() {
-    return new RendererImpl();
+std::unique_ptr<Renderer> Renderer::Create() {
+  return std::make_unique<RendererImpl>();
 }
 
 Renderer::~Renderer() {}
